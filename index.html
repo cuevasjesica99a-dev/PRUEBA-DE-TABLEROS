@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relevamiento Gastronómico — Banco Familiar</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --bg: #f5f3ee;
+  --surface: #ffffff;
+  --surface2: #f0ede6;
+  --border: #ddd9d0;
+  --text: #1a1916;
+  --text2: #6b6860;
+  --text3: #9b9890;
+  --accent: #1a5c3a;
+  --accent-light: #e8f2ec;
+  --accent2: #c94a1a;
+  --accent2-light: #fdf0eb;
+  --amber: #c47a15;
+  --amber-light: #fef6e4;
+  --blue: #1a4a8c;
+  --blue-light: #e8eef8;
+  --radius: 10px;
+  --radius-lg: 16px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+/* Layout */
+.page-wrap { max-width: 1280px; margin: 0 auto; padding: 0 24px 60px; }
+
+/* Header */
+.site-header {
+  background: var(--text);
+  color: white;
+  padding: 0 24px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+}
+.logo {
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  opacity: 0.85;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.logo-dot { width: 8px; height: 8px; background: #4ade80; border-radius: 50%; }
+.header-meta { font-size: 12px; opacity: 0.5; font-family: 'DM Mono', monospace; }
+
+/* Hero */
+.hero {
+  padding: 48px 0 32px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 32px;
+}
+.hero-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+.hero-title {
+  font-family: 'Instrument Serif', serif;
+  font-size: clamp(28px, 4vw, 44px);
+  line-height: 1.15;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+.hero-title em { font-style: italic; color: var(--accent); }
+.hero-sub { font-size: 14px; color: var(--text2); }
+
+/* Loading state */
+#loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 0;
+  gap: 16px;
+  color: var(--text2);
+}
+.spinner {
+  width: 32px; height: 32px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+#error-state {
+  display: none;
+  background: var(--accent2-light);
+  border: 1px solid #f5c6b0;
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  color: var(--accent2);
+  margin: 24px 0;
+}
+#dashboard { display: none; }
+
+/* Filters bar */
+.filters-bar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 16px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 24px;
+}
+.filters-bar label { font-size: 12px; color: var(--text2); font-weight: 500; white-space: nowrap; }
+.filters-bar select, .filters-bar input[type=text] {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.filters-bar select:focus, .filters-bar input:focus { border-color: var(--accent); }
+.filter-group { display: flex; align-items: center; gap: 6px; }
+.filter-sep { width: 1px; height: 24px; background: var(--border); }
+.btn-reset {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  padding: 7px 14px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-reset:hover { border-color: var(--accent2); color: var(--accent2); }
+#result-count { font-size: 12px; color: var(--text3); margin-left: auto; font-family: 'DM Mono', monospace; }
+
+/* KPI grid */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 28px;
+}
+.kpi-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  position: relative;
+  overflow: hidden;
+}
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--kpi-color, var(--accent));
+}
+.kpi-label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; font-weight: 500; }
+.kpi-value { font-size: 28px; font-weight: 300; color: var(--text); line-height: 1; font-family: 'Instrument Serif', serif; }
+.kpi-sub { font-size: 11px; color: var(--text3); margin-top: 4px; font-family: 'DM Mono', monospace; }
+.kpi-card.green { --kpi-color: #1a5c3a; }
+.kpi-card.amber { --kpi-color: #c47a15; }
+.kpi-card.red { --kpi-color: #c94a1a; }
+.kpi-card.blue { --kpi-color: #1a4a8c; }
+
+/* Charts row */
+.charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+@media (max-width: 720px) { .charts-row { grid-template-columns: 1fr; } }
+.chart-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+}
+.chart-title { font-size: 12px; font-weight: 500; color: var(--text2); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 16px; }
+
+/* Table section */
+.section-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.section-title {
+  font-family: 'Instrument Serif', serif;
+  font-size: 20px;
+  color: var(--text);
+}
+.section-count {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: var(--text3);
+}
+.table-wrapper {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  overflow-x: auto;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 900px;
+}
+thead tr {
+  background: var(--text);
+  color: white;
+}
+thead th {
+  text-align: left;
+  padding: 12px 14px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+}
+thead th:hover { background: #2a2926; }
+thead th.sorted-asc::after { content: ' ↑'; opacity: 0.6; }
+thead th.sorted-desc::after { content: ' ↓'; opacity: 0.6; }
+tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: var(--surface2); }
+td { padding: 11px 14px; font-size: 13px; vertical-align: middle; }
+td.local-name { font-weight: 500; color: var(--text); }
+td.obs-cell { font-size: 12px; color: var(--text2); max-width: 260px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Badges / pills */
+.pill {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.pill-green { background: var(--accent-light); color: var(--accent); }
+.pill-red { background: var(--accent2-light); color: var(--accent2); }
+.pill-amber { background: var(--amber-light); color: var(--amber); }
+.pill-blue { background: var(--blue-light); color: var(--blue); }
+.pill-gray { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
+
+/* Pagination */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+.page-btn {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.page-btn:hover { border-color: var(--accent); color: var(--accent); }
+.page-btn.active { background: var(--text); color: white; border-color: var(--text); }
+.page-btn.disabled { opacity: 0.3; cursor: default; pointer-events: none; }
+
+/* City pills filter */
+.city-pills {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.city-pill {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.city-pill:hover { border-color: var(--accent); color: var(--accent); }
+.city-pill.active { background: var(--text); color: white; border-color: var(--text); }
+.city-pill .city-count {
+  display: inline-block;
+  background: rgba(255,255,255,0.2);
+  border-radius: 10px;
+  padding: 0 6px;
+  font-size: 10px;
+  margin-left: 4px;
+}
+.city-pill:not(.active) .city-count { background: var(--border); color: var(--text3); }
+
+/* No data */
+.empty-row td { text-align: center; padding: 40px; color: var(--text3); font-style: italic; }
+
+/* Tooltips */
+[title] { cursor: help; }
+
+/* Responsive */
+@media (max-width: 600px) {
+  .hero-title { font-size: 26px; }
+  .kpi-grid { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="logo">
+    <span class="logo-dot"></span>
+    +MARKA · BANCO FAMILIAR
+  </div>
+  <div class="header-meta">Relevamiento gastronómico · Mayo 2026</div>
+</header>
+
+<div class="page-wrap">
+  <div class="hero">
+    <div class="hero-label">Reporte de campo</div>
+    <h1 class="hero-title">Relevamiento de materiales<br><em>gastronómico</em></h1>
+    <p class="hero-sub">63 locales · 12 ciudades · 20–23 mayo 2026</p>
+  </div>
+
+  <div id="loading-state">
+    <div class="spinner"></div>
+    <span>Cargando datos del relevamiento…</span>
+  </div>
+
+  <div id="error-state">
+    <strong>No se pudo cargar la hoja de datos.</strong><br>
+    Verificá que la URL del CSV sea pública y volvé a intentarlo.
+    <br><small id="error-detail"></small>
+  </div>
+
+  <div id="dashboard">
+    <!-- KPIs -->
+    <div class="kpi-grid" id="kpiGrid"></div>
+
+    <!-- Charts -->
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-title">Cobertura por ciudad</div>
+        <div style="position:relative;height:220px"><canvas id="chartCities" role="img" aria-label="Cobertura de material BF por ciudad">Gráfico de cobertura por ciudad</canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Estado de material</div>
+        <div style="position:relative;height:220px"><canvas id="chartStatus" role="img" aria-label="Distribución del estado del material">Gráfico de estado del material</canvas></div>
+      </div>
+    </div>
+
+    <!-- City pills -->
+    <div class="city-pills" id="cityPills"></div>
+
+    <!-- Filters -->
+    <div class="filters-bar">
+      <div class="filter-group">
+        <label>Material</label>
+        <select id="filterMat">
+          <option value="">Todos</option>
+          <option value="si">Con material</option>
+          <option value="no">Sin material</option>
+        </select>
+      </div>
+      <div class="filter-sep"></div>
+      <div class="filter-group">
+        <label>Exhibición</label>
+        <select id="filterExhib">
+          <option value="">Todas</option>
+        </select>
+      </div>
+      <div class="filter-sep"></div>
+      <div class="filter-group">
+        <label>Conoce promo</label>
+        <select id="filterPromo">
+          <option value="">Todos</option>
+        </select>
+      </div>
+      <div class="filter-sep"></div>
+      <div class="filter-group">
+        <label>Buscar local</label>
+        <input type="text" id="filterSearch" placeholder="Nombre del local…" style="width:180px">
+      </div>
+      <button class="btn-reset" onclick="resetFilters()">↺ Limpiar</button>
+      <span id="result-count"></span>
+    </div>
+
+    <!-- Table -->
+    <div class="section-header">
+      <h2 class="section-title">Detalle por local</h2>
+      <span class="section-count" id="tableCount"></span>
+    </div>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr id="tableHead"></tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="pagination"></div>
+  </div>
+</div>
+
+<script>
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR1Y4H9iM_EqiFOBOEU2SRERaH0KfH3dTfdy0DsFTBhBkWeaaaqlmCFwqip1gy010JR9iQn9TZzM06V/pub?output=csv";
+// URL alternativa visible en captura:
+// https://docs.google.com/spreadsheets/d/e/2PACX-1vR1Y4H9iM_EqiFOBOEU2SRERaH0KfH3dTfdy0DsFTBhBkWeaaaqlmCFwqip1gy0I0JR9iQn9TZzM06V/pub?output=csv
+const PAGE_SIZE = 20;
+
+let allData = [];
+let filteredData = [];
+let currentPage = 1;
+let sortCol = -1;
+let sortDir = 1;
+let activeCity = "all";
+let columns = [];
+let charts = {};
+
+// Column name guesses for key fields (will be matched case-insensitive)
+const COL_HINTS = {
+  local: ["local", "nombre", "establecimiento", "punto de venta", "local relevado"],
+  ciudad: ["ciudad", "city", "localidad", "zona"],
+  material: ["material", "tiene material", "mat.", "mat bf", "material bf", "material presente"],
+  exhibicion: ["exhibicion", "exhibición", "estado exhibicion", "estado exhibición", "estado del material", "estado"],
+  promo: ["conoce", "conoce promo", "conocimiento", "conoce la promo"],
+  obs: ["observacion", "observación", "obs", "observaciones", "nota", "notas", "comentario", "comentarios"],
+};
+
+function matchCol(headers, hints) {
+  for (const hint of hints) {
+    const idx = headers.findIndex(h => h.toLowerCase().includes(hint.toLowerCase()));
+    if (idx >= 0) return idx;
+  }
+  return -1;
+}
+
+let COL = {};
+
+function detectColumns(headers) {
+  for (const [key, hints] of Object.entries(COL_HINTS)) {
+    COL[key] = matchCol(headers, hints);
+  }
+}
+
+function getPill(value, colKey) {
+  if (!value || value === "—" || value === "-" || value.trim() === "") return `<span class="pill pill-gray">—</span>`;
+  const v = value.toLowerCase().trim();
+  if (colKey === "material") {
+    if (v === "sí" || v === "si" || v === "yes" || v === "true" || v === "1" || v === "con material" || v.startsWith("sí") || v.startsWith("si "))
+      return `<span class="pill pill-green">Con material</span>`;
+    return `<span class="pill pill-red">Sin material</span>`;
+  }
+  if (colKey === "exhibicion") {
+    if (v.includes("perfecto") || v.includes("bueno") || v.includes("buen")) return `<span class="pill pill-green">${value}</span>`;
+    if (v.includes("deteriorado") || v.includes("malo")) return `<span class="pill pill-red">${value}</span>`;
+    if (v.includes("colocar") || v.includes("parcial") || v.includes("regular")) return `<span class="pill pill-amber">${value}</span>`;
+    return `<span class="pill pill-gray">${value}</span>`;
+  }
+  if (colKey === "promo") {
+    if (v.includes("bien") || v.includes("completo") || v === "sí" || v === "si") return `<span class="pill pill-blue">${value}</span>`;
+    if (v.includes("parcial") || v.includes("poco")) return `<span class="pill pill-amber">${value}</span>`;
+    if (v.includes("no") || v.includes("desconoce")) return `<span class="pill pill-red">${value}</span>`;
+    return `<span class="pill pill-gray">${value}</span>`;
+  }
+  return value;
+}
+
+function hasMaterial(row) {
+  const v = (row[COL.material] || "").toLowerCase().trim();
+  return v === "sí" || v === "si" || v === "yes" || v === "1" || v === "con material" || v.startsWith("sí") || v.startsWith("si ");
+}
+
+function renderKPIs() {
+  const total = filteredData.length;
+  const conMat = filteredData.filter(r => hasMaterial(r)).length;
+  const sinMat = total - conMat;
+  const pct = total > 0 ? Math.round((conMat / total) * 100) : 0;
+
+  let conoceBien = 0, ciudadesSet = new Set();
+  filteredData.forEach(r => {
+    if (COL.promo >= 0) {
+      const v = (r[COL.promo] || "").toLowerCase();
+      if (v.includes("bien") || v.includes("completo") || v === "sí" || v === "si") conoceBien++;
+    }
+    if (COL.ciudad >= 0 && r[COL.ciudad]) ciudadesSet.add(r[COL.ciudad].trim());
+  });
+
+  document.getElementById("kpiGrid").innerHTML = `
+    <div class="kpi-card ${pct>=60?'green':pct>=40?'amber':'red'}">
+      <div class="kpi-label">Cobertura</div>
+      <div class="kpi-value">${pct}%</div>
+      <div class="kpi-sub">${conMat} / ${total} locales</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-label">Con material BF</div>
+      <div class="kpi-value">${conMat}</div>
+      <div class="kpi-sub">locales activos</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-label">Sin material</div>
+      <div class="kpi-value">${sinMat}</div>
+      <div class="kpi-sub">locales sin presencia</div>
+    </div>
+    <div class="kpi-card blue">
+      <div class="kpi-label">Ciudades</div>
+      <div class="kpi-value">${ciudadesSet.size}</div>
+      <div class="kpi-sub">en el filtro actual</div>
+    </div>
+    ${COL.promo >= 0 ? `<div class="kpi-card amber">
+      <div class="kpi-label">Conocen la promo</div>
+      <div class="kpi-value">${conoceBien}</div>
+      <div class="kpi-sub">encargados informados</div>
+    </div>` : ""}
+  `;
+}
+
+function renderCharts() {
+  // City coverage chart
+  const cityMap = {};
+  allData.forEach(r => {
+    const city = COL.ciudad >= 0 ? (r[COL.ciudad] || "Sin ciudad").trim() : "Sin ciudad";
+    if (!cityMap[city]) cityMap[city] = { con: 0, sin: 0 };
+    hasMaterial(r) ? cityMap[city].con++ : cityMap[city].sin++;
+  });
+  const cityNames = Object.keys(cityMap).sort((a,b) => {
+    const ta = cityMap[a].con + cityMap[a].sin;
+    const tb = cityMap[b].con + cityMap[b].sin;
+    return tb - ta;
+  });
+  const coveragePcts = cityNames.map(c => {
+    const t = cityMap[c].con + cityMap[c].sin;
+    return t > 0 ? Math.round((cityMap[c].con / t) * 100) : 0;
+  });
+
+  if (charts.cities) charts.cities.destroy();
+  charts.cities = new Chart(document.getElementById("chartCities"), {
+    type: "bar",
+    data: {
+      labels: cityNames,
+      datasets: [{
+        label: "Cobertura %",
+        data: coveragePcts,
+        backgroundColor: coveragePcts.map(p => p >= 60 ? "#1a5c3a" : p >= 40 ? "#c47a15" : "#c94a1a"),
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { font: { size: 10 }, maxRotation: 45 }, grid: { display: false } },
+        y: { max: 100, ticks: { callback: v => v + "%", font: { size: 10 } }, grid: { color: "#f0ede6" } }
+      }
+    }
+  });
+
+  // Status donut
+  const withMat = allData.filter(r => hasMaterial(r)).length;
+  const sinMat = allData.length - withMat;
+  const sinColocar = allData.filter(r => {
+    const e = (r[COL.exhibicion] || "").toLowerCase();
+    return e.includes("colocar");
+  }).length;
+  const deteriorado = allData.filter(r => {
+    const e = (r[COL.exhibicion] || "").toLowerCase();
+    return e.includes("deteriorado");
+  }).length;
+
+  if (charts.status) charts.status.destroy();
+  charts.status = new Chart(document.getElementById("chartStatus"), {
+    type: "doughnut",
+    data: {
+      labels: ["Perfecto", "Sin colocar", "Deteriorado", "Sin material"],
+      datasets: [{
+        data: [withMat - sinColocar - deteriorado, sinColocar, deteriorado, sinMat],
+        backgroundColor: ["#1a5c3a", "#c47a15", "#c94a1a", "#ddd9d0"],
+        borderWidth: 2,
+        borderColor: "#ffffff"
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: "65%",
+      plugins: {
+        legend: {
+          position: "right",
+          labels: { font: { size: 11 }, boxWidth: 12, padding: 12 }
+        }
+      }
+    }
+  });
+}
+
+function renderCityPills() {
+  const cityCount = {};
+  allData.forEach(r => {
+    const c = COL.ciudad >= 0 ? (r[COL.ciudad] || "").trim() : "";
+    if (c) cityCount[c] = (cityCount[c] || 0) + 1;
+  });
+  const sorted = Object.entries(cityCount).sort((a,b) => b[1]-a[1]);
+  let html = `<button class="city-pill ${activeCity==='all'?'active':''}" onclick="setCity('all')">
+    Todas <span class="city-count">${allData.length}</span></button>`;
+  sorted.forEach(([city, count]) => {
+    html += `<button class="city-pill ${activeCity===city?'active':''}" onclick="setCity('${city.replace(/'/g,"\\'")}')">
+      ${city} <span class="city-count">${count}</span></button>`;
+  });
+  document.getElementById("cityPills").innerHTML = html;
+}
+
+function populateFilterOptions() {
+  if (COL.exhibicion >= 0) {
+    const vals = [...new Set(allData.map(r => r[COL.exhibicion]).filter(Boolean).map(v=>v.trim()))].sort();
+    const sel = document.getElementById("filterExhib");
+    vals.forEach(v => { const o = document.createElement("option"); o.value = v; o.textContent = v; sel.appendChild(o); });
+  }
+  if (COL.promo >= 0) {
+    const vals = [...new Set(allData.map(r => r[COL.promo]).filter(Boolean).map(v=>v.trim()))].sort();
+    const sel = document.getElementById("filterPromo");
+    vals.forEach(v => { const o = document.createElement("option"); o.value = v; o.textContent = v; sel.appendChild(o); });
+  }
+}
+
+function buildTableHead() {
+  const th = document.getElementById("tableHead");
+  th.innerHTML = columns.map((col, i) =>
+    `<th onclick="sortBy(${i})" id="th-${i}">${col}</th>`
+  ).join("");
+}
+
+function applyFilters() {
+  const matF = document.getElementById("filterMat").value;
+  const exhibF = document.getElementById("filterExhib").value;
+  const promoF = document.getElementById("filterPromo").value;
+  const search = document.getElementById("filterSearch").value.toLowerCase().trim();
+
+  filteredData = allData.filter(row => {
+    if (activeCity !== "all" && COL.ciudad >= 0) {
+      if ((row[COL.ciudad] || "").trim() !== activeCity) return false;
+    }
+    if (matF) {
+      const has = hasMaterial(row);
+      if (matF === "si" && !has) return false;
+      if (matF === "no" && has) return false;
+    }
+    if (exhibF && COL.exhibicion >= 0) {
+      if ((row[COL.exhibicion] || "").trim() !== exhibF) return false;
+    }
+    if (promoF && COL.promo >= 0) {
+      if ((row[COL.promo] || "").trim() !== promoF) return false;
+    }
+    if (search) {
+      const rowText = row.join(" ").toLowerCase();
+      if (!rowText.includes(search)) return false;
+    }
+    return true;
+  });
+
+  currentPage = 1;
+  renderKPIs();
+  renderTable();
+  renderPagination();
+}
+
+function renderTable() {
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const pageData = filteredData.slice(start, start + PAGE_SIZE);
+  document.getElementById("tableCount").textContent = `${filteredData.length} registros`;
+  document.getElementById("result-count").textContent = `${filteredData.length} resultado${filteredData.length !== 1 ? "s" : ""}`;
+
+  if (pageData.length === 0) {
+    document.getElementById("tableBody").innerHTML = `<tr class="empty-row"><td colspan="${columns.length}">Sin registros para los filtros seleccionados.</td></tr>`;
+    return;
+  }
+
+  const rows = pageData.map(row => {
+    const cells = row.map((cell, i) => {
+      if (i === COL.material) return `<td>${getPill(cell, "material")}</td>`;
+      if (i === COL.exhibicion) return `<td>${getPill(cell, "exhibicion")}</td>`;
+      if (i === COL.promo) return `<td>${getPill(cell, "promo")}</td>`;
+      if (i === COL.local) return `<td class="local-name">${cell || "—"}</td>`;
+      if (i === COL.obs) return `<td class="obs-cell" title="${(cell||"").replace(/"/g,"&quot;")}">${cell || "—"}</td>`;
+      return `<td>${cell || "—"}</td>`;
+    }).join("");
+    return `<tr>${cells}</tr>`;
+  }).join("");
+
+  document.getElementById("tableBody").innerHTML = rows;
+
+  // Update sort indicators
+  document.querySelectorAll("thead th").forEach((th, i) => {
+    th.className = i === sortCol ? (sortDir === 1 ? "sorted-asc" : "sorted-desc") : "";
+  });
+}
+
+function renderPagination() {
+  const totalPages = Math.ceil(filteredData.length / PAGE_SIZE);
+  if (totalPages <= 1) { document.getElementById("pagination").innerHTML = ""; return; }
+
+  let html = `<button class="page-btn ${currentPage===1?'disabled':''}" onclick="goPage(${currentPage-1})">‹</button>`;
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || Math.abs(i - currentPage) <= 1) {
+      html += `<button class="page-btn ${i===currentPage?'active':''}" onclick="goPage(${i})">${i}</button>`;
+    } else if (Math.abs(i - currentPage) === 2) {
+      html += `<span style="padding:0 4px;color:var(--text3)">…</span>`;
+    }
+  }
+  html += `<button class="page-btn ${currentPage===totalPages?'disabled':''}" onclick="goPage(${currentPage+1})">›</button>`;
+  document.getElementById("pagination").innerHTML = html;
+}
+
+function goPage(p) {
+  const totalPages = Math.ceil(filteredData.length / PAGE_SIZE);
+  if (p < 1 || p > totalPages) return;
+  currentPage = p;
+  renderTable();
+  renderPagination();
+  document.querySelector(".table-wrapper").scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+function sortBy(colIdx) {
+  if (sortCol === colIdx) { sortDir *= -1; } else { sortCol = colIdx; sortDir = 1; }
+  filteredData.sort((a, b) => {
+    const va = (a[colIdx] || "").toLowerCase();
+    const vb = (b[colIdx] || "").toLowerCase();
+    return va < vb ? -sortDir : va > vb ? sortDir : 0;
+  });
+  currentPage = 1;
+  renderTable();
+  renderPagination();
+}
+
+function setCity(city) {
+  activeCity = city;
+  renderCityPills();
+  applyFilters();
+}
+
+function resetFilters() {
+  activeCity = "all";
+  document.getElementById("filterMat").value = "";
+  document.getElementById("filterExhib").value = "";
+  document.getElementById("filterPromo").value = "";
+  document.getElementById("filterSearch").value = "";
+  renderCityPills();
+  applyFilters();
+}
+
+// Event listeners for filters
+["filterMat","filterExhib","filterPromo"].forEach(id => {
+  document.getElementById(id).addEventListener("change", applyFilters);
+});
+document.getElementById("filterSearch").addEventListener("input", applyFilters);
+
+// Load data
+function loadData() {
+  Papa.parse(CSV_URL, {
+    download: true,
+    header: false,
+    skipEmptyLines: true,
+    complete: function(results) {
+      if (!results.data || results.data.length < 2) {
+        showError("La hoja está vacía o no tiene datos suficientes.");
+        return;
+      }
+      columns = results.data[0].map(h => h.trim());
+      allData = results.data.slice(1).filter(r => r.some(c => c.trim() !== ""));
+      detectColumns(columns);
+      filteredData = [...allData];
+
+      document.getElementById("loading-state").style.display = "none";
+      document.getElementById("dashboard").style.display = "block";
+
+      buildTableHead();
+      populateFilterOptions();
+      renderCityPills();
+      renderKPIs();
+      renderCharts();
+      renderTable();
+      renderPagination();
+    },
+    error: function(err) {
+      showError("Error al parsear el CSV: " + err.message);
+    }
+  });
+}
+
+function showError(msg) {
+  document.getElementById("loading-state").style.display = "none";
+  document.getElementById("error-state").style.display = "block";
+  document.getElementById("error-detail").textContent = msg;
+}
+
+loadData();
+</script>
+</body>
+</html>
