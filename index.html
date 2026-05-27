@@ -3,1112 +3,873 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard Relevamiento Gastro Interior — Banco Familiar</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<title>Dashboard Relevamiento — Banco Familiar</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-/* ===== TOKENS ===== */
 :root {
-  --bf-blue: #003F8A;
-  --bf-blue-mid: #1565C0;
-  --bf-blue-light: #E8F0FB;
-  --bf-blue-pale: #F0F5FF;
-  --accent: #0096FF;
-  --accent-glow: rgba(0,150,255,0.15);
-  --success: #0D8A4E;
-  --success-light: #E6F4ED;
-  --warning: #C47A15;
-  --warning-light: #FEF6E4;
-  --danger: #C0392B;
-  --danger-light: #FBEAEA;
-  --neutral: #64748B;
-  --bg: #F4F6FB;
-  --surface: #FFFFFF;
-  --surface2: #F8FAFF;
-  --border: #E2E8F4;
-  --border-strong: #C5D1E8;
-  --text: #0D1B35;
-  --text2: #4A5878;
-  --text3: #8A97B0;
-  --shadow-sm: 0 1px 3px rgba(0,40,120,0.07), 0 1px 2px rgba(0,40,120,0.04);
-  --shadow-md: 0 4px 16px rgba(0,40,120,0.10), 0 2px 6px rgba(0,40,120,0.06);
-  --shadow-lg: 0 12px 40px rgba(0,40,120,0.14), 0 4px 12px rgba(0,40,120,0.08);
-  --radius: 12px;
-  --radius-lg: 18px;
-  --radius-xl: 24px;
+  --bf: #003F8A; --bf-mid: #1565C0; --bf-light: #E8F0FB; --bf-pale: #F0F5FF;
+  --accent: #0096FF; --ok: #0D8A4E; --ok-l: #E6F4ED;
+  --warn: #C47A15; --warn-l: #FEF6E4; --err: #C0392B; --err-l: #FBEAEA;
+  --bg: #F4F6FB; --sur: #fff; --sur2: #F8FAFF;
+  --bdr: #E2E8F4; --bdr2: #C5D1E8;
+  --tx: #0D1B35; --tx2: #4A5878; --tx3: #8A97B0;
+  --sh1: 0 1px 3px rgba(0,40,120,.07); --sh2: 0 4px 16px rgba(0,40,120,.10);
+  --r: 12px; --rl: 18px; --rxl: 24px;
 }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);font-size:14px;line-height:1.6;min-height:100vh}
 
-/* ===== RESET ===== */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
-body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.6; min-height: 100vh; }
+/* Layout */
+.shell{display:flex;min-height:100vh}
+.sidebar{width:220px;min-height:100vh;background:var(--bf);position:fixed;top:0;left:0;z-index:200;display:flex;flex-direction:column;transition:transform .3s}
+.main{margin-left:220px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{background:var(--sur);border-bottom:1px solid var(--bdr);padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:var(--sh1)}
 
-/* ===== LAYOUT ===== */
-.app-shell { display: flex; min-height: 100vh; }
-.sidebar { width: 220px; min-height: 100vh; background: var(--bf-blue); position: fixed; top: 0; left: 0; z-index: 200; display: flex; flex-direction: column; transition: transform 0.3s; }
-.main-content { margin-left: 220px; flex: 1; min-height: 100vh; display: flex; flex-direction: column; }
-.topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 28px; height: 60px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow-sm); }
-.page-body { padding: 28px; flex: 1; }
+/* Sidebar */
+.sb-logo{padding:22px 20px 18px;border-bottom:1px solid rgba(255,255,255,.1)}
+.sb-mark{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:#fff;letter-spacing:-.02em}
+.sb-mark span{color:#60B4FF}
+.sb-sub{font-size:10px;color:rgba(255,255,255,.45);letter-spacing:.12em;text-transform:uppercase;margin-top:2px}
+.sb-nav{padding:16px 0;flex:1}
+.sb-lbl{font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.14em;text-transform:uppercase;padding:12px 20px 6px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;color:rgba(255,255,255,.65);font-size:13px;cursor:pointer;transition:all .15s;border-left:3px solid transparent;text-decoration:none}
+.nav-item:hover{color:#fff;background:rgba(255,255,255,.07)}
+.nav-item.active{color:#fff;background:rgba(255,255,255,.12);border-left-color:#60B4FF;font-weight:500}
+.sb-foot{padding:16px 20px;border-top:1px solid rgba(255,255,255,.1);font-size:10px;color:rgba(255,255,255,.3);line-height:1.5}
 
-/* ===== SIDEBAR ===== */
-.sidebar-logo { padding: 22px 20px 18px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-.sidebar-logo-mark { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; color: #fff; letter-spacing: -0.02em; }
-.sidebar-logo-mark span { color: #60B4FF; }
-.sidebar-logo-sub { font-size: 10px; color: rgba(255,255,255,0.45); letter-spacing: 0.12em; text-transform: uppercase; margin-top: 2px; }
-.sidebar-nav { padding: 16px 0; flex: 1; }
-.nav-section-label { font-size: 10px; color: rgba(255,255,255,0.35); letter-spacing: 0.14em; text-transform: uppercase; padding: 12px 20px 6px; }
-.nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 20px; color: rgba(255,255,255,0.65); font-size: 13px; font-weight: 400; cursor: pointer; transition: all 0.15s; border-left: 3px solid transparent; text-decoration: none; }
-.nav-item:hover { color: #fff; background: rgba(255,255,255,0.07); }
-.nav-item.active { color: #fff; background: rgba(255,255,255,0.12); border-left-color: #60B4FF; font-weight: 500; }
-.nav-item .nav-icon { width: 18px; text-align: center; font-size: 15px; }
-.sidebar-footer { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.1); }
-.sidebar-footer-text { font-size: 10px; color: rgba(255,255,255,0.3); line-height: 1.5; }
+/* Topbar */
+.tb-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:600;color:var(--bf)}
+.tb-sub{font-size:11px;color:var(--tx3)}
+.tb-right{display:flex;align-items:center;gap:12px}
+.upd-badge{font-size:11px;color:var(--tx3);background:var(--sur2);border:1px solid var(--bdr);border-radius:20px;padding:4px 12px}
+.btn-reload{font-family:'DM Sans',sans-serif;font-size:12px;padding:6px 14px;background:var(--bf);color:#fff;border:none;border-radius:8px;cursor:pointer;transition:background .15s}
+.btn-reload:hover{background:var(--bf-mid)}
+.hamburger{display:none;background:none;border:none;cursor:pointer;padding:4px}
 
-/* ===== TOPBAR ===== */
-.topbar-left { display: flex; flex-direction: column; }
-.topbar-title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 600; color: var(--bf-blue); }
-.topbar-sub { font-size: 11px; color: var(--text3); }
-.topbar-right { display: flex; align-items: center; gap: 12px; }
-.last-update { font-size: 11px; color: var(--text3); background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px; }
-.btn-refresh { font-family: 'DM Sans', sans-serif; font-size: 12px; padding: 6px 14px; background: var(--bf-blue); color: #fff; border: none; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: background 0.15s; }
-.btn-refresh:hover { background: var(--bf-blue-mid); }
-.hamburger { display: none; background: none; border: none; cursor: pointer; padding: 4px; }
+/* View switcher */
+.view-sw{display:flex;background:var(--sur);border-bottom:2px solid var(--bdr);padding:0 28px}
+.vsw-btn{font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;padding:14px 22px;border:none;background:transparent;color:var(--tx2);cursor:pointer;display:flex;align-items:center;gap:8px;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .18s;white-space:nowrap}
+.vsw-btn:hover{color:var(--bf);background:var(--bf-pale)}
+.vsw-btn.active{color:var(--bf);border-bottom-color:var(--bf);font-weight:600}
 
-/* ===== LOADER ===== */
-#loader { position: fixed; inset: 0; background: var(--bf-blue); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; transition: opacity 0.5s; }
-#loader.hidden { opacity: 0; pointer-events: none; }
-.loader-logo { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 700; color: #fff; }
-.loader-logo span { color: #60B4FF; }
-.loader-bar-track { width: 260px; height: 3px; background: rgba(255,255,255,0.15); border-radius: 3px; overflow: hidden; }
-.loader-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #60B4FF, #fff); border-radius: 3px; transition: width 0.4s ease; }
-.loader-text { font-size: 13px; color: rgba(255,255,255,0.55); }
+/* Loader */
+#loader{position:fixed;inset:0;background:var(--bf);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;transition:opacity .5s}
+#loader.hidden{opacity:0;pointer-events:none}
+.ld-logo{font-family:'Syne',sans-serif;font-size:28px;font-weight:700;color:#fff}
+.ld-logo span{color:#60B4FF}
+.ld-track{width:260px;height:3px;background:rgba(255,255,255,.15);border-radius:3px;overflow:hidden}
+.ld-fill{height:100%;width:0%;background:linear-gradient(90deg,#60B4FF,#fff);border-radius:3px;transition:width .4s ease}
+.ld-txt{font-size:13px;color:rgba(255,255,255,.55)}
 
-/* ===== SECTIONS ===== */
-.section { display: none; }
-.section.active { display: block; }
+/* Sections */
+.section{display:none}.section.active{display:block}
+.page-body{padding:28px;flex:1}
 
-/* ===== KPI GRID ===== */
-.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin-bottom: 24px; }
-.kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; position: relative; overflow: hidden; box-shadow: var(--shadow-sm); transition: transform 0.2s, box-shadow 0.2s; cursor: default; }
-.kpi-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
-.kpi-card::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--kpi-accent, var(--bf-blue)); }
-.kpi-icon { width: 36px; height: 36px; border-radius: 10px; background: var(--kpi-bg, var(--bf-blue-light)); display: flex; align-items: center; justify-content: center; font-size: 18px; margin-bottom: 12px; }
-.kpi-value { font-family: 'Syne', sans-serif; font-size: 30px; font-weight: 700; color: var(--text); line-height: 1; }
-.kpi-label { font-size: 11px; color: var(--text2); margin-top: 5px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; }
-.kpi-sub { font-size: 11px; color: var(--text3); margin-top: 3px; }
-.kpi-card.blue { --kpi-accent: var(--bf-blue); --kpi-bg: var(--bf-blue-light); }
-.kpi-card.green { --kpi-accent: var(--success); --kpi-bg: var(--success-light); }
-.kpi-card.amber { --kpi-accent: var(--warning); --kpi-bg: var(--warning-light); }
-.kpi-card.red { --kpi-accent: var(--danger); --kpi-bg: var(--danger-light); }
-.kpi-card.accent { --kpi-accent: var(--accent); --kpi-bg: rgba(0,150,255,0.1); }
+/* KPIs */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:24px}
+.kpi-card{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--rl);padding:20px;position:relative;overflow:hidden;box-shadow:var(--sh1);transition:transform .2s,box-shadow .2s;cursor:default}
+.kpi-card:hover{transform:translateY(-2px);box-shadow:var(--sh2)}
+.kpi-card::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--ka,var(--bf))}
+.kpi-ico{width:36px;height:36px;border-radius:10px;background:var(--kb,var(--bf-light));display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:12px}
+.kpi-val{font-family:'Syne',sans-serif;font-size:30px;font-weight:700;color:var(--tx);line-height:1}
+.kpi-lbl{font-size:11px;color:var(--tx2);margin-top:5px;font-weight:500;text-transform:uppercase;letter-spacing:.06em}
+.kpi-sub{font-size:11px;color:var(--tx3);margin-top:3px}
+.kpi-blue{--ka:var(--bf);--kb:var(--bf-light)}
+.kpi-green{--ka:var(--ok);--kb:var(--ok-l)}
+.kpi-amber{--ka:var(--warn);--kb:var(--warn-l)}
+.kpi-red{--ka:var(--err);--kb:var(--err-l)}
+.kpi-accent{--ka:var(--accent);--kb:rgba(0,150,255,.1)}
 
-/* ===== CHARTS ===== */
-.charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 24px; }
-.charts-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px; }
-.chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 22px; box-shadow: var(--shadow-sm); }
-.chart-card.full { grid-column: 1 / -1; }
-.chart-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
-.chart-title { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 600; color: var(--text); }
-.chart-badge { font-size: 10px; padding: 3px 10px; border-radius: 20px; background: var(--bf-blue-light); color: var(--bf-blue); font-weight: 600; letter-spacing: 0.05em; }
-.chart-wrap { position: relative; }
+/* Charts */
+.cgrid{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:24px}
+.cgrid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:24px}
+.cgrid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.chart-card{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--rl);padding:22px;box-shadow:var(--sh1)}
+.chart-card.full{grid-column:1/-1}
+.ch-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.ch-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:600;color:var(--tx)}
+.ch-badge{font-size:10px;padding:3px 10px;border-radius:20px;background:var(--bf-light);color:var(--bf);font-weight:600}
+.ch-wrap{position:relative}
 
-/* ===== FILTERS ===== */
-.filters-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 18px 22px; margin-bottom: 20px; box-shadow: var(--shadow-sm); }
-.filters-title { font-size: 12px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
-.filters-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; align-items: end; }
-.filter-group { display: flex; flex-direction: column; gap: 5px; }
-.filter-label { font-size: 11px; color: var(--text2); font-weight: 500; }
-.filter-control { font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 8px 12px; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--surface2); color: var(--text); outline: none; transition: border-color 0.15s, box-shadow 0.15s; }
-.filter-control:focus { border-color: var(--bf-blue-mid); box-shadow: 0 0 0 3px rgba(0,63,138,0.1); }
-.filter-actions { display: flex; gap: 8px; align-items: flex-end; }
-.btn { font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px; }
-.btn-primary { background: var(--bf-blue); color: #fff; }
-.btn-primary:hover { background: var(--bf-blue-mid); }
-.btn-outline { background: transparent; color: var(--text2); border: 1px solid var(--border-strong); }
-.btn-outline:hover { border-color: var(--bf-blue); color: var(--bf-blue); }
-.btn-success { background: var(--success); color: #fff; }
-.btn-success:hover { background: #0a7a44; }
+/* Filters */
+.flt-panel{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--rl);padding:18px 22px;margin-bottom:20px;box-shadow:var(--sh1)}
+.flt-title{font-size:12px;font-weight:600;color:var(--tx2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px}
+.flt-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;align-items:end}
+.flt-grp{display:flex;flex-direction:column;gap:5px}
+.flt-lbl{font-size:11px;color:var(--tx2);font-weight:500}
+.flt-ctrl{font-family:'DM Sans',sans-serif;font-size:13px;padding:8px 12px;border:1px solid var(--bdr2);border-radius:8px;background:var(--sur2);color:var(--tx);outline:none;transition:border-color .15s}
+.flt-ctrl:focus{border-color:var(--bf-mid);box-shadow:0 0 0 3px rgba(0,63,138,.1)}
+.btn{font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;padding:8px 16px;border-radius:8px;border:none;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.btn-out{background:transparent;color:var(--tx2);border:1px solid var(--bdr2)}
+.btn-out:hover{border-color:var(--bf);color:var(--bf)}
+.btn-ok{background:var(--ok);color:#fff}
+.btn-ok:hover{background:#0a7a44}
 
-/* ===== TABLE ===== */
-.table-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); overflow: hidden; }
-.table-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 16px 22px; border-bottom: 1px solid var(--border); gap: 12px; flex-wrap: wrap; }
-.table-toolbar-left { display: flex; align-items: center; gap: 12px; }
-.table-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 600; color: var(--text); }
-.table-count { font-size: 12px; color: var(--text3); background: var(--surface2); border: 1px solid var(--border); padding: 3px 10px; border-radius: 20px; }
-.search-box { display: flex; align-items: center; gap: 8px; background: var(--surface2); border: 1px solid var(--border-strong); border-radius: 8px; padding: 7px 12px; }
-.search-box input { font-family: 'DM Sans', sans-serif; font-size: 13px; border: none; background: transparent; outline: none; color: var(--text); width: 220px; }
-.search-box span { color: var(--text3); font-size: 14px; }
-.table-scroll { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; min-width: 1000px; }
-thead tr { background: var(--bf-blue-pale); }
-thead th { text-align: left; padding: 11px 14px; font-size: 11px; font-weight: 600; color: var(--bf-blue); text-transform: uppercase; letter-spacing: 0.07em; white-space: nowrap; border-bottom: 2px solid var(--border); cursor: pointer; user-select: none; }
-thead th:hover { background: var(--bf-blue-light); }
-thead th.sort-asc::after { content: ' ↑'; }
-thead th.sort-desc::after { content: ' ↓'; }
-tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
-tbody tr:last-child { border-bottom: none; }
-tbody tr:hover { background: var(--bf-blue-pale); }
-td { padding: 10px 14px; font-size: 13px; color: var(--text); vertical-align: middle; }
-td.name-cell { font-weight: 500; }
-td.obs-cell { color: var(--text2); font-size: 12px; max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.empty-state { text-align: center; padding: 48px; color: var(--text3); font-style: italic; }
+/* Table */
+.tbl-wrap{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--rl);box-shadow:var(--sh1);overflow:hidden}
+.tbl-bar{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid var(--bdr);gap:12px;flex-wrap:wrap}
+.tbl-bar-l{display:flex;align-items:center;gap:12px}
+.tbl-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:600;color:var(--tx)}
+.tbl-count{font-size:12px;color:var(--tx3);background:var(--sur2);border:1px solid var(--bdr);padding:3px 10px;border-radius:20px}
+.srch{display:flex;align-items:center;gap:8px;background:var(--sur2);border:1px solid var(--bdr2);border-radius:8px;padding:7px 12px}
+.srch input{font-family:'DM Sans',sans-serif;font-size:13px;border:none;background:transparent;outline:none;color:var(--tx);width:200px}
+.tbl-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:900px}
+thead tr{background:var(--bf-pale)}
+thead th{text-align:left;padding:11px 14px;font-size:11px;font-weight:600;color:var(--bf);text-transform:uppercase;letter-spacing:.07em;white-space:nowrap;border-bottom:2px solid var(--bdr);cursor:pointer;user-select:none}
+thead th:hover{background:var(--bf-light)}
+thead th.sa::after{content:' ↑'}
+thead th.sd::after{content:' ↓'}
+tbody tr{border-bottom:1px solid var(--bdr);transition:background .1s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--bf-pale)}
+td{padding:10px 14px;font-size:13px;color:var(--tx);vertical-align:middle}
+td.nm{font-weight:500}
+td.obs{color:var(--tx2);font-size:12px;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.empty{text-align:center;padding:48px;color:var(--tx3);font-style:italic}
 
-/* ===== PILLS ===== */
-.pill { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; }
-.pill-green { background: var(--success-light); color: var(--success); }
-.pill-red { background: var(--danger-light); color: var(--danger); }
-.pill-amber { background: var(--warning-light); color: var(--warning); }
-.pill-blue { background: var(--bf-blue-light); color: var(--bf-blue); }
-.pill-gray { background: #F1F3F7; color: var(--neutral); }
+/* Pills */
+.pill{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
+.p-g{background:var(--ok-l);color:var(--ok)}
+.p-r{background:var(--err-l);color:var(--err)}
+.p-a{background:var(--warn-l);color:var(--warn)}
+.p-b{background:var(--bf-light);color:var(--bf)}
+.p-x{background:#F1F3F7;color:#64748B}
 
-/* ===== PHOTO THUMBNAILS ===== */
-.photo-strip { display: flex; gap: 6px; flex-wrap: wrap; }
-.thumb { width: 40px; height: 40px; object-fit: cover; border-radius: 6px; cursor: zoom-in; border: 1px solid var(--border); transition: transform 0.15s, box-shadow 0.15s; }
-.thumb:hover { transform: scale(1.1); box-shadow: var(--shadow-md); z-index: 1; position: relative; }
-.thumb-placeholder { width: 40px; height: 40px; border-radius: 6px; background: var(--surface2); border: 1px dashed var(--border-strong); display: flex; align-items: center; justify-content: center; color: var(--text3); font-size: 16px; }
+/* Thumbs & gallery */
+.photo-strip{display:flex;gap:6px;flex-wrap:wrap}
+.thumb{width:40px;height:40px;object-fit:cover;border-radius:6px;cursor:zoom-in;border:1px solid var(--bdr);transition:transform .15s}
+.thumb:hover{transform:scale(1.12);box-shadow:var(--sh2);z-index:1;position:relative}
+.no-photo{width:40px;height:40px;border-radius:6px;background:var(--sur2);border:1px dashed var(--bdr2);display:flex;align-items:center;justify-content:center;color:var(--tx3);font-size:14px}
+.gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-top:12px}
+.gal-item{aspect-ratio:1;border-radius:var(--r);overflow:hidden;cursor:zoom-in;border:1px solid var(--bdr);background:var(--sur2);display:flex;align-items:center;justify-content:center;transition:transform .2s}
+.gal-item:hover{transform:scale(1.04)}
+.gal-item img{width:100%;height:100%;object-fit:cover}
 
-/* ===== MODAL ===== */
-#photoModal { display: none; position: fixed; inset: 0; z-index: 9000; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; padding: 24px; }
-#photoModal.open { display: flex; }
-.modal-inner { background: var(--surface); border-radius: var(--radius-xl); overflow: hidden; max-width: 860px; width: 100%; box-shadow: var(--shadow-lg); }
-.modal-header { padding: 16px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-.modal-header-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 600; color: var(--text); }
-.modal-close { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border); background: transparent; cursor: pointer; font-size: 18px; color: var(--text2); display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
-.modal-close:hover { background: var(--danger-light); color: var(--danger); border-color: var(--danger); }
-.modal-img-wrap { padding: 24px; display: flex; align-items: center; justify-content: center; min-height: 300px; background: #0a0e17; }
-.modal-img-wrap img { max-width: 100%; max-height: 60vh; border-radius: 8px; object-fit: contain; }
-.modal-footer { padding: 12px 22px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text3); }
+/* Modal */
+#photoModal{display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.85);align-items:center;justify-content:center;padding:24px}
+#photoModal.open{display:flex}
+.modal-in{background:var(--sur);border-radius:var(--rxl);overflow:hidden;max-width:860px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,.3)}
+.modal-hd{padding:16px 22px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between}
+.modal-hd-t{font-family:'Syne',sans-serif;font-size:15px;font-weight:600;color:var(--tx)}
+.modal-x{width:32px;height:32px;border-radius:8px;border:1px solid var(--bdr);background:transparent;cursor:pointer;font-size:18px;color:var(--tx2);display:flex;align-items:center;justify-content:center;transition:all .15s}
+.modal-x:hover{background:var(--err-l);color:var(--err);border-color:var(--err)}
+.modal-img{padding:24px;display:flex;align-items:center;justify-content:center;min-height:300px;background:#0a0e17}
+.modal-img img{max-width:100%;max-height:60vh;border-radius:8px;object-fit:contain}
+.modal-ft{padding:12px 22px;border-top:1px solid var(--bdr);font-size:11px;color:var(--tx3);word-break:break-all}
 
-/* ===== PAGINATION ===== */
-.pagination { display: flex; align-items: center; justify-content: center; gap: 4px; padding: 16px; border-top: 1px solid var(--border); }
-.page-btn { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text2); font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; font-family: 'DM Sans', sans-serif; }
-.page-btn:hover:not(.disabled) { border-color: var(--bf-blue); color: var(--bf-blue); }
-.page-btn.active { background: var(--bf-blue); color: #fff; border-color: var(--bf-blue); font-weight: 600; }
-.page-btn.disabled { opacity: 0.3; cursor: default; }
+/* Pagination */
+.pgn{display:flex;align-items:center;justify-content:center;gap:4px;padding:16px;border-top:1px solid var(--bdr)}
+.pg-btn{width:32px;height:32px;border-radius:8px;border:1px solid var(--bdr);background:var(--sur);color:var(--tx2);font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;font-family:'DM Sans',sans-serif}
+.pg-btn:hover:not(.dis){border-color:var(--bf);color:var(--bf)}
+.pg-btn.act{background:var(--bf);color:#fff;border-color:var(--bf);font-weight:600}
+.pg-btn.dis{opacity:.3;cursor:default}
 
-/* ===== COMPETENCIA SECTION ===== */
-.comp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
-.entity-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-.entity-name { width: 140px; font-size: 12px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.entity-track { flex: 1; height: 7px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
-.entity-fill { height: 100%; background: var(--danger); border-radius: 4px; transition: width 0.6s ease; }
-.entity-count { width: 24px; text-align: right; font-size: 12px; font-weight: 600; color: var(--text); }
+/* Entity bars */
+.ent-bar{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.ent-nm{width:140px;font-size:12px;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ent-trk{flex:1;height:7px;background:var(--sur2);border-radius:4px;overflow:hidden}
+.ent-fill{height:100%;background:var(--err);border-radius:4px;transition:width .6s ease}
+.ent-n{width:24px;text-align:right;font-size:12px;font-weight:600;color:var(--tx)}
 
-/* ===== TIENDAS SECTION ===== */
-.gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-top: 12px; }
-.gallery-item { aspect-ratio: 1; border-radius: var(--radius); overflow: hidden; cursor: zoom-in; border: 1px solid var(--border); background: var(--surface2); display: flex; align-items: center; justify-content: center; transition: transform 0.2s; }
-.gallery-item:hover { transform: scale(1.04); }
-.gallery-item img { width: 100%; height: 100%; object-fit: cover; }
+/* Section header */
+.sec-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.sec-lbl{font-size:11px;color:var(--bf);font-weight:600;text-transform:uppercase;letter-spacing:.1em;margin-bottom:3px}
+.sec-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:var(--tx)}
 
-/* ===== SECTION HEADER ===== */
-.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
-.section-title-group {}
-.section-label { font-size: 11px; color: var(--bf-blue); font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 3px; }
-.section-title { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700; color: var(--text); }
-.divider { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
-
-/* ===== RESPONSIVE ===== */
-@media (max-width: 900px) {
-  .sidebar { transform: translateX(-100%); }
-  .sidebar.open { transform: translateX(0); }
-  .main-content { margin-left: 0; }
-  .hamburger { display: flex; }
-  .charts-grid { grid-template-columns: 1fr; }
-  .charts-grid-3 { grid-template-columns: 1fr; }
-  .comp-grid { grid-template-columns: 1fr; }
-  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+/* Responsive */
+@media(max-width:900px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .main{margin-left:0}
+  .hamburger{display:flex}
+  .cgrid,.cgrid3,.cgrid2{grid-template-columns:1fr}
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
 }
-@media (max-width: 540px) {
-  .kpi-grid { grid-template-columns: 1fr; }
-  .page-body { padding: 16px; }
-  .topbar { padding: 0 16px; }
+@media(max-width:540px){
+  .kpi-grid{grid-template-columns:1fr}
+  .page-body{padding:16px}
+  .topbar{padding:0 16px}
 }
-.sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 199; }
-.sidebar-overlay.open { display: block; }
-
-/* ===== VIEW SWITCHER ===== */
-.view-switcher { display: flex; gap: 0; background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 28px; }
-.view-btn { font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; padding: 14px 22px; border: none; background: transparent; color: var(--text2); cursor: pointer; display: flex; align-items: center; gap: 8px; border-bottom: 3px solid transparent; margin-bottom: -1px; transition: all 0.18s; white-space: nowrap; }
-.view-btn:hover { color: var(--bf-blue); background: var(--bf-blue-pale); }
-.view-btn.active { color: var(--bf-blue); border-bottom-color: var(--bf-blue); font-weight: 600; }
-.view-btn-icon { font-size: 16px; }
-
+.sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:199}
+.sb-overlay.open{display:block}
 </style>
 </head>
 <body>
 
-<!-- LOADER -->
 <div id="loader">
-  <div class="loader-logo">+<span>MARKA</span></div>
-  <div>
-    <div class="loader-bar-track"><div class="loader-bar-fill" id="loaderBar"></div></div>
-  </div>
-  <div class="loader-text" id="loaderText">Conectando con la hoja de datos…</div>
+  <div class="ld-logo">+<span>MARKA</span></div>
+  <div><div class="ld-track"><div class="ld-fill" id="ldBar"></div></div></div>
+  <div class="ld-txt" id="ldTxt">Conectando con Google Sheets…</div>
 </div>
 
-<!-- SIDEBAR OVERLAY (mobile) -->
-<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+<div class="sb-overlay" id="sbOverlay" onclick="closeSb()"></div>
 
-<!-- APP SHELL -->
-<div class="app-shell">
-  <!-- SIDEBAR -->
+<div class="shell">
   <aside class="sidebar" id="sidebar">
-    <div class="sidebar-logo">
-      <div class="sidebar-logo-mark">+<span>MARKA</span></div>
-      <div class="sidebar-logo-sub">Banco Familiar</div>
+    <div class="sb-logo">
+      <div class="sb-mark">+<span>MARKA</span></div>
+      <div class="sb-sub">Banco Familiar</div>
     </div>
-    <nav class="sidebar-nav">
-      <div class="nav-section-label">Relevamiento</div>
-      <a class="nav-item active" onclick="showSection('resumen')" href="#">
-        <span class="nav-icon">📊</span> Resumen
-      </a>
-      <a class="nav-item" onclick="showSection('detalle')" href="#">
-        <span class="nav-icon">📋</span> Detalle locales
-      </a>
-      <a class="nav-item" onclick="showSection('fotos')" href="#">
-        <span class="nav-icon">🖼️</span> Fotos
-      </a>
-      <div class="nav-section-label">Análisis</div>
-      <a class="nav-item" onclick="showSection('competencia')" href="#">
-        <span class="nav-icon">⚔️</span> Competencia
-      </a>
-      <a class="nav-item" onclick="showSection('tiendas')" href="#">
-        <span class="nav-icon">🏪</span> Tiendas
-      </a>
+    <nav class="sb-nav">
+      <div class="sb-lbl">Gastronómico</div>
+      <a class="nav-item active" onclick="showSec('resumen')" href="#">📊 Resumen</a>
+      <a class="nav-item" onclick="showSec('detalle')" href="#">📋 Detalle locales</a>
+      <a class="nav-item" onclick="showSec('fotos')" href="#">🖼️ Fotos</a>
+      <a class="nav-item" onclick="showSec('competencia')" href="#">⚔️ Competencia</a>
+      <div class="sb-lbl">Tiendas</div>
+      <a class="nav-item" onclick="showSec('tiendas')" href="#">🏪 Tiendas</a>
     </nav>
-    <div class="sidebar-footer">
-      <div class="sidebar-footer-text">Dashboard Relevamiento<br>Gastro Interior · Mayo 2026</div>
-    </div>
+    <div class="sb-foot">Dashboard Relevamiento<br>Gastro Interior · Mayo 2026</div>
   </aside>
 
-  <!-- MAIN -->
-  <div class="main-content">
-    <!-- TOPBAR -->
+  <div class="main">
     <header class="topbar">
       <div style="display:flex;align-items:center;gap:12px">
-        <button class="hamburger" onclick="toggleSidebar()" aria-label="Abrir menú">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect y="3" width="20" height="2" rx="1" fill="#003F8A"/><rect y="9" width="20" height="2" rx="1" fill="#003F8A"/><rect y="15" width="20" height="2" rx="1" fill="#003F8A"/></svg>
+        <button class="hamburger" onclick="toggleSb()" aria-label="Menú">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <rect y="3" width="20" height="2" rx="1" fill="#003F8A"/>
+            <rect y="9" width="20" height="2" rx="1" fill="#003F8A"/>
+            <rect y="15" width="20" height="2" rx="1" fill="#003F8A"/>
+          </svg>
         </button>
-        <div class="topbar-left">
-          <div class="topbar-title">Dashboard Relevamiento Gastro Interior</div>
-          <div class="topbar-sub">+MARKA | Banco Familiar · 20–23 mayo 2026</div>
+        <div>
+          <div class="tb-title">Dashboard Relevamiento Gastro Interior</div>
+          <div class="tb-sub">+MARKA | Banco Familiar · 20–23 mayo 2026</div>
         </div>
       </div>
-      <div class="topbar-right">
-        <div class="last-update">🕐 Actualizado: <span id="lastUpdate">—</span></div>
-        <button class="btn-refresh" onclick="loadAllData()">↺ Recargar</button>
+      <div class="tb-right">
+        <div class="upd-badge">🕐 <span id="lastUpd">—</span></div>
+        <button class="btn-reload" onclick="loadAll()">↺ Recargar</button>
       </div>
     </header>
 
-    <!-- VIEW SWITCHER -->
-    <div class="view-switcher">
-      <button class="view-btn active" id="vbtn-gastro" onclick="switchView('gastro')">
-        <span class="view-btn-icon">🍽️</span>
-        Relevamiento Gastronómico
+    <!-- VIEW SWITCHER BUTTONS -->
+    <div class="view-sw">
+      <button class="vsw-btn active" id="vsw-gastro" onclick="switchView('gastro')">
+        🍽️ Relevamiento Gastronómico
       </button>
-      <button class="view-btn" id="vbtn-tiendas" onclick="switchView('tiendas')">
-        <span class="view-btn-icon">🏪</span>
-        Relevamiento de Tiendas
+      <button class="vsw-btn" id="vsw-tiendas" onclick="switchView('tiendas')">
+        🏪 Relevamiento de Tiendas
       </button>
     </div>
 
-    <!-- PAGE BODY -->
     <div class="page-body">
 
-      <!-- ===== SECCIÓN RESUMEN ===== -->
+      <!-- RESUMEN -->
       <section class="section active" id="sec-resumen">
-        <div class="section-header">
-          <div class="section-title-group">
-            <div class="section-label">Vista general</div>
-            <div class="section-title">Resumen del relevamiento</div>
-          </div>
+        <div class="sec-hd">
+          <div><div class="sec-lbl">Vista general</div><div class="sec-title">Resumen del relevamiento</div></div>
+        </div>
+        <div class="kpi-grid">
+          <div class="kpi-card kpi-blue"><div class="kpi-ico">📍</div><div class="kpi-val" id="k-total">—</div><div class="kpi-lbl">Total relevados</div><div class="kpi-sub">locales visitados</div></div>
+          <div class="kpi-card kpi-green"><div class="kpi-ico">✅</div><div class="kpi-val" id="k-mat">—</div><div class="kpi-lbl">Con material BF</div><div class="kpi-sub" id="k-mat-sub">—</div></div>
+          <div class="kpi-card kpi-accent"><div class="kpi-ico">🎯</div><div class="kpi-val" id="k-corr">—</div><div class="kpi-lbl">Material correcto</div><div class="kpi-sub">tipo corresponde</div></div>
+          <div class="kpi-card kpi-amber"><div class="kpi-ico">👁️</div><div class="kpi-val" id="k-exh">—</div><div class="kpi-lbl">Beneficio exhibido</div><div class="kpi-sub">visible al cliente</div></div>
+          <div class="kpi-card kpi-green"><div class="kpi-ico">💯</div><div class="kpi-val" id="k-ofe">—</div><div class="kpi-lbl">Oferta correcta</div><div class="kpi-sub">oferta exhibida OK</div></div>
+          <div class="kpi-card kpi-blue"><div class="kpi-ico">🧠</div><div class="kpi-val" id="k-con">—</div><div class="kpi-lbl">Conocen promo</div><div class="kpi-sub">encargados informados</div></div>
         </div>
 
-        <!-- KPIs -->
-        <div class="kpi-grid" id="kpiGrid">
-          <div class="kpi-card blue"><div class="kpi-icon">📍</div><div class="kpi-value" id="kpi-total">—</div><div class="kpi-label">Total relevados</div><div class="kpi-sub">locales visitados</div></div>
-          <div class="kpi-card green"><div class="kpi-icon">✅</div><div class="kpi-value" id="kpi-conmat">—</div><div class="kpi-label">Con material BF</div><div class="kpi-sub" id="kpi-conmat-sub">HAY_MATERIAL_DESIGNADO = SI</div></div>
-          <div class="kpi-card accent"><div class="kpi-icon">🎯</div><div class="kpi-value" id="kpi-correcto">—</div><div class="kpi-label">Material correcto</div><div class="kpi-sub">tipo corresponde</div></div>
-          <div class="kpi-card amber"><div class="kpi-icon">👁️</div><div class="kpi-value" id="kpi-exhibido">—</div><div class="kpi-label">Beneficio exhibido</div><div class="kpi-sub">visible al cliente</div></div>
-          <div class="kpi-card green"><div class="kpi-icon">💯</div><div class="kpi-value" id="kpi-oferta">—</div><div class="kpi-label">Oferta correcta</div><div class="kpi-sub">oferta exhibida OK</div></div>
-          <div class="kpi-card blue"><div class="kpi-icon">🧠</div><div class="kpi-value" id="kpi-conoce">—</div><div class="kpi-label">Conocen promo</div><div class="kpi-sub">encargados informados</div></div>
-        </div>
-
-        <!-- Filtros resumen -->
-        <div class="filters-panel">
-          <div class="filters-title">🔍 Filtros — todos los gráficos y KPIs se actualizan en tiempo real</div>
-          <div class="filters-grid">
-            <div class="filter-group">
-              <label class="filter-label">Ciudad</label>
-              <select class="filter-control" id="f-ciudad" onchange="applyFilters()"><option value="">Todas</option></select>
-            </div>
-            <div class="filter-group">
-              <label class="filter-label">Tipo de local</label>
-              <select class="filter-control" id="f-tipo" onchange="applyFilters()"><option value="">Todos</option></select>
-            </div>
-            <div class="filter-group">
-              <label class="filter-label">Estado material</label>
-              <select class="filter-control" id="f-estado" onchange="applyFilters()">
-                <option value="">Todos</option>
-                <option value="SI">Con material (SI)</option>
-                <option value="NO">Sin material (NO)</option>
+        <div class="flt-panel">
+          <div class="flt-title">🔍 Filtros — KPIs y gráficos se actualizan en tiempo real</div>
+          <div class="flt-grid">
+            <div class="flt-grp"><label class="flt-lbl">Ciudad</label><select class="flt-ctrl" id="f-ciudad" onchange="applyFilters()"><option value="">Todas</option></select></div>
+            <div class="flt-grp"><label class="flt-lbl">Tipo de local</label><select class="flt-ctrl" id="f-tipo" onchange="applyFilters()"><option value="">Todos</option></select></div>
+            <div class="flt-grp"><label class="flt-lbl">Estado material</label>
+              <select class="flt-ctrl" id="f-estado" onchange="applyFilters()">
+                <option value="">Todos</option><option value="SI">Con material (SI)</option><option value="NO">Sin material (NO)</option>
               </select>
             </div>
-            <div class="filter-group">
-              <label class="filter-label">Beneficio vigente</label>
-              <select class="filter-control" id="f-beneficio" onchange="applyFilters()"><option value="">Todos</option></select>
-            </div>
-            <div class="filter-group">
-              <label class="filter-label">Fecha desde</label>
-              <input type="date" class="filter-control" id="f-desde" onchange="applyFilters()">
-            </div>
-            <div class="filter-group">
-              <label class="filter-label">Fecha hasta</label>
-              <input type="date" class="filter-control" id="f-hasta" onchange="applyFilters()">
-            </div>
-            <div class="filter-actions">
-              <button class="btn btn-outline" onclick="resetFilters()">↺ Limpiar</button>
-            </div>
+            <div class="flt-grp"><label class="flt-lbl">Beneficio</label><select class="flt-ctrl" id="f-benef" onchange="applyFilters()"><option value="">Todos</option></select></div>
+            <div class="flt-grp"><label class="flt-lbl">Fecha desde</label><input type="date" class="flt-ctrl" id="f-desde" onchange="applyFilters()"></div>
+            <div class="flt-grp"><label class="flt-lbl">Fecha hasta</label><input type="date" class="flt-ctrl" id="f-hasta" onchange="applyFilters()"></div>
+            <div style="display:flex;align-items:flex-end"><button class="btn btn-out" onclick="resetFilters()">↺ Limpiar</button></div>
           </div>
         </div>
 
-        <!-- Charts row 1 -->
-        <div class="charts-grid">
+        <div class="cgrid">
           <div class="chart-card">
-            <div class="chart-header">
-              <div class="chart-title">Relevamientos por ciudad</div>
-              <span class="chart-badge">BARRAS</span>
-            </div>
-            <div class="chart-wrap" style="height:260px"><canvas id="chartCiudades" role="img" aria-label="Relevamientos por ciudad"></canvas></div>
+            <div class="ch-head"><div class="ch-title">Relevamientos por ciudad</div><span class="ch-badge">BARRAS</span></div>
+            <div class="ch-wrap" style="height:260px"><canvas id="cCiudad"></canvas></div>
           </div>
           <div class="chart-card">
-            <div class="chart-header">
-              <div class="chart-title">Estado del material</div>
-              <span class="chart-badge">TORTA</span>
-            </div>
-            <div class="chart-wrap" style="height:260px"><canvas id="chartEstado" role="img" aria-label="Estado del material"></canvas></div>
+            <div class="ch-head"><div class="ch-title">Estado del material</div><span class="ch-badge">TORTA</span></div>
+            <div class="ch-wrap" style="height:260px"><canvas id="cEstado"></canvas></div>
           </div>
         </div>
 
-        <!-- Charts row 2 -->
-        <div class="charts-grid-3">
+        <div class="cgrid3">
           <div class="chart-card">
-            <div class="chart-header">
-              <div class="chart-title">Tipo material: asignado vs encontrado</div>
-              <span class="chart-badge">BARRAS</span>
-            </div>
-            <div class="chart-wrap" style="height:220px"><canvas id="chartTipoMat" role="img" aria-label="Tipo de material asignado vs encontrado"></canvas></div>
+            <div class="ch-head"><div class="ch-title">Tipo material: asignado vs encontrado</div><span class="ch-badge">BARRAS</span></div>
+            <div class="ch-wrap" style="height:220px"><canvas id="cTipo"></canvas></div>
           </div>
           <div class="chart-card">
-            <div class="chart-header">
-              <div class="chart-title">Cumplimiento oferta</div>
-              <span class="chart-badge">DONA</span>
-            </div>
-            <div class="chart-wrap" style="height:220px"><canvas id="chartOferta" role="img" aria-label="Cumplimiento de oferta correcta"></canvas></div>
+            <div class="ch-head"><div class="ch-title">Cumplimiento oferta</div><span class="ch-badge">DONA</span></div>
+            <div class="ch-wrap" style="height:220px"><canvas id="cOferta"></canvas></div>
           </div>
           <div class="chart-card">
-            <div class="chart-header">
-              <div class="chart-title">Conocimiento de promo</div>
-              <span class="chart-badge">DONA</span>
-            </div>
-            <div class="chart-wrap" style="height:220px"><canvas id="chartConoce" role="img" aria-label="Conocimiento de la promoción"></canvas></div>
+            <div class="ch-head"><div class="ch-title">Conocimiento de promo</div><span class="ch-badge">DONA</span></div>
+            <div class="ch-wrap" style="height:220px"><canvas id="cConoce"></canvas></div>
           </div>
         </div>
       </section>
 
-      <!-- ===== SECCIÓN DETALLE ===== -->
+      <!-- DETALLE -->
       <section class="section" id="sec-detalle">
-        <div class="section-header">
-          <div class="section-title-group">
-            <div class="section-label">Hoja 1 · RE_BF_GASTRO_INT</div>
-            <div class="section-title">Detalle por local</div>
-          </div>
-          <button class="btn btn-success" onclick="exportExcel()">⬇ Exportar Excel</button>
+        <div class="sec-hd">
+          <div><div class="sec-lbl">Hoja 1 · RE_BF_GASTRO_INT</div><div class="sec-title">Detalle por local</div></div>
+          <button class="btn btn-ok" onclick="exportExcel()">⬇ Exportar Excel</button>
         </div>
-
-        <div class="table-section">
-          <div class="table-toolbar">
-            <div class="table-toolbar-left">
-              <div class="table-title">Locales relevados</div>
-              <div class="table-count" id="tableCount">— registros</div>
-            </div>
-            <div class="search-box">
-              <span>🔍</span>
-              <input type="text" id="tableSearch" placeholder="Buscar local, ciudad…" oninput="applyTableSearch()">
-            </div>
+        <div class="tbl-wrap">
+          <div class="tbl-bar">
+            <div class="tbl-bar-l"><div class="tbl-title">Locales relevados</div><div class="tbl-count" id="tblCount">—</div></div>
+            <div class="srch"><span>🔍</span><input type="text" id="tblSearch" placeholder="Buscar local, ciudad…" oninput="onSearch()"></div>
           </div>
-          <div class="table-scroll">
-            <table>
-              <thead><tr id="tableHead"></tr></thead>
-              <tbody id="tableBody"></tbody>
-            </table>
-          </div>
-          <div class="pagination" id="tablePagination"></div>
+          <div class="tbl-scroll"><table><thead><tr id="tblHead"></tr></thead><tbody id="tblBody"></tbody></table></div>
+          <div class="pgn" id="tblPgn"></div>
         </div>
       </section>
 
-      <!-- ===== SECCIÓN FOTOS ===== -->
+      <!-- FOTOS -->
       <section class="section" id="sec-fotos">
-        <div class="section-header">
-          <div class="section-title-group">
-            <div class="section-label">Evidencia fotográfica</div>
-            <div class="section-title">Fotos de materiales</div>
-          </div>
-        </div>
-        <div id="fotosGrid" class="gallery-grid" style="grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));">
-          <div class="empty-state" style="grid-column:1/-1">Cargando fotos…</div>
+        <div class="sec-hd"><div><div class="sec-lbl">Evidencia fotográfica</div><div class="sec-title">Fotos de materiales</div></div></div>
+        <div id="fotosGrid" class="gal" style="grid-template-columns:repeat(auto-fill,minmax(140px,1fr))">
+          <div class="empty" style="grid-column:1/-1">Cargando fotos…</div>
         </div>
       </section>
 
-      <!-- ===== SECCIÓN COMPETENCIA ===== -->
+      <!-- COMPETENCIA -->
       <section class="section" id="sec-competencia">
-        <div class="section-header">
-          <div class="section-title-group">
-            <div class="section-label">Hoja 2 · RE_COMPE_GASTRO_INT</div>
-            <div class="section-title">Análisis de competencia</div>
-          </div>
+        <div class="sec-hd"><div><div class="sec-lbl">Hoja 2 · RE_COMPE_GASTRO_INT</div><div class="sec-title">Análisis de competencia</div></div></div>
+        <div class="kpi-grid">
+          <div class="kpi-card kpi-red"><div class="kpi-ico">⚔️</div><div class="kpi-val" id="k-cTotal">—</div><div class="kpi-lbl">Registros competencia</div></div>
+          <div class="kpi-card kpi-amber"><div class="kpi-ico">🏦</div><div class="kpi-val" id="k-cEnt">—</div><div class="kpi-lbl">Entidades detectadas</div></div>
+          <div class="kpi-card kpi-blue"><div class="kpi-ico">📍</div><div class="kpi-val" id="k-cCiud">—</div><div class="kpi-lbl">Ciudades con comp.</div></div>
         </div>
-        <div class="kpi-grid" id="compKpis">
-          <div class="kpi-card red"><div class="kpi-icon">⚔️</div><div class="kpi-value" id="kpi-comp-total">—</div><div class="kpi-label">Registros competencia</div></div>
-          <div class="kpi-card amber"><div class="kpi-icon">🏦</div><div class="kpi-value" id="kpi-comp-entidades">—</div><div class="kpi-label">Entidades detectadas</div></div>
-          <div class="kpi-card blue"><div class="kpi-icon">📍</div><div class="kpi-value" id="kpi-comp-ciudades">—</div><div class="kpi-label">Ciudades con comp.</div></div>
-        </div>
-        <div class="comp-grid">
+        <div class="cgrid2">
+          <div class="chart-card"><div class="ch-head"><div class="ch-title">Presencia por entidad</div></div><div id="entBars"></div></div>
           <div class="chart-card">
-            <div class="chart-header"><div class="chart-title">Presencia por entidad</div></div>
-            <div id="entityBars"></div>
-          </div>
-          <div class="chart-card">
-            <div class="chart-header"><div class="chart-title">Tipos de promo competencia</div><span class="chart-badge">TORTA</span></div>
-            <div class="chart-wrap" style="height:260px"><canvas id="chartCompPromo" role="img" aria-label="Tipos de promoción de la competencia"></canvas></div>
+            <div class="ch-head"><div class="ch-title">Tipos de promo competencia</div><span class="ch-badge">TORTA</span></div>
+            <div class="ch-wrap" style="height:260px"><canvas id="cCompPromo"></canvas></div>
           </div>
           <div class="chart-card full">
-            <div class="chart-header"><div class="chart-title">Presencia competencia por ciudad</div><span class="chart-badge">BARRAS</span></div>
-            <div class="chart-wrap" style="height:220px"><canvas id="chartCompCiudad" role="img" aria-label="Presencia de competencia por ciudad"></canvas></div>
+            <div class="ch-head"><div class="ch-title">Presencia por ciudad</div><span class="ch-badge">BARRAS</span></div>
+            <div class="ch-wrap" style="height:220px"><canvas id="cCompCiud"></canvas></div>
           </div>
         </div>
-        <div class="table-section">
-          <div class="table-toolbar">
-            <div class="table-title">Registros de competencia</div>
-            <div class="table-count" id="compTableCount">—</div>
-          </div>
-          <div class="table-scroll">
-            <table><thead><tr id="compTableHead"></tr></thead><tbody id="compTableBody"></tbody></table>
-          </div>
+        <div class="tbl-wrap">
+          <div class="tbl-bar"><div class="tbl-title">Registros de competencia</div><div class="tbl-count" id="cmpCount">—</div></div>
+          <div class="tbl-scroll"><table><thead><tr id="cmpHead"></tr></thead><tbody id="cmpBody"></tbody></table></div>
         </div>
       </section>
 
-      <!-- ===== SECCIÓN TIENDAS ===== -->
+      <!-- TIENDAS -->
       <section class="section" id="sec-tiendas">
-        <div class="section-header">
-          <div class="section-title-group">
-            <div class="section-label">Hoja 3 · RE_BF_TIENDAS</div>
-            <div class="section-title">Dataset de tiendas</div>
-          </div>
-        </div>
-        <div class="kpi-grid" id="tiendasKpis"></div>
-        <div class="table-section" style="margin-bottom:24px">
-          <div class="table-toolbar"><div class="table-title">Tiendas relevadas</div><div class="table-count" id="tiendasCount">—</div></div>
-          <div class="table-scroll"><table><thead><tr id="tiendasHead"></tr></thead><tbody id="tiendasBody"></tbody></table></div>
+        <div class="sec-hd"><div><div class="sec-lbl">Hoja 3 · RE_BF_TIENDAS</div><div class="sec-title">Dataset de tiendas</div></div></div>
+        <div class="kpi-grid" id="tndKpis"></div>
+        <div class="tbl-wrap" style="margin-bottom:24px">
+          <div class="tbl-bar"><div class="tbl-title">Tiendas relevadas</div><div class="tbl-count" id="tndCount">—</div></div>
+          <div class="tbl-scroll"><table><thead><tr id="tndHead"></tr></thead><tbody id="tndBody"></tbody></table></div>
         </div>
         <div class="chart-card">
-          <div class="chart-header"><div class="chart-title">Galería de fotos — Tiendas</div></div>
-          <div id="tiendasGallery" class="gallery-grid"></div>
+          <div class="ch-head"><div class="ch-title">Galería de fotos — Tiendas</div></div>
+          <div id="tndGal" class="gal"></div>
         </div>
       </section>
 
-    </div><!-- /page-body -->
-  </div><!-- /main-content -->
-</div><!-- /app-shell -->
+    </div>
+  </div>
+</div>
 
-<!-- PHOTO MODAL -->
-<div id="photoModal" role="dialog" aria-modal="true" aria-label="Vista de foto" onclick="closeModal(event)">
-  <div class="modal-inner">
-    <div class="modal-header">
-      <div class="modal-header-title" id="modalTitle">Foto</div>
-      <button class="modal-close" onclick="closePhotoModal()">✕</button>
+<!-- MODAL -->
+<div id="photoModal" onclick="closeModalBg(event)">
+  <div class="modal-in">
+    <div class="modal-hd">
+      <div class="modal-hd-t" id="mTitle">Foto</div>
+      <button class="modal-x" onclick="closeModal()">✕</button>
     </div>
-    <div class="modal-img-wrap">
-      <img id="modalImg" src="" alt="Foto del relevamiento">
-    </div>
-    <div class="modal-footer" id="modalFooter"></div>
+    <div class="modal-img"><img id="mImg" src="" alt="Foto"></div>
+    <div class="modal-ft" id="mFoot"></div>
   </div>
 </div>
 
 <script>
-// ===== CONFIG =====
+// ======== CONFIG ========
 const SHEET_ID = "1YrNdJ_Hf9AyrKm_MpO3FgyqLWs4x3iNRuQv9AfNpnok";
-const BASE_URL = `https://opensheet.elk.sh/${SHEET_ID}`;
+const API = "https://opensheet.elk.sh/" + SHEET_ID + "/";
+
 const SHEETS = {
-  gastro: "RE_BF_GASTRO_INT",
-  compe: "RE_COMPE_GASTRO_INT",
+  gastro:  "RE_BF_GASTRO_INT",
+  compe:   "RE_COMPE_GASTRO_INT",
   tiendas: "RE_BF_TIENDAS"
 };
 
-// Columns to OMIT (0-based index after header mapping):
-// B=1 (HORA), C=2 (FISCALIZADOR)
-const OMIT_COLS_GASTRO = new Set(["HORA","FISCALIZADOR"]);
-const OMIT_COLS_COMPE = new Set(["HORA","FISCALIZADOR"]);
-// Photo columns for gastro (col indices X,Y,Z,AA,AB = 23,24,25,26,27 0-based)
-const PHOTO_KEYS_GASTRO = ["FOTO_MATERIAL_1","FOTO_MATERIAL_2","FOTO_MATERIAL_3","FOTO_MATERIAL_4","FOTO_ANTERIOR_1"];
-const PHOTO_KEYS_COMPE = ["FOTO_COMP_1","FOTO_COMP_2","FOTO_COMP_3"];
+const OMIT_G   = new Set(["HORA","FISCALIZADOR"]);
+const OMIT_C   = new Set(["HORA","FISCALIZADOR"]);
+const PHOTO_G  = ["FOTO_MATERIAL_1","FOTO_MATERIAL_2","FOTO_MATERIAL_3","FOTO_MATERIAL_4","FOTO_ANTERIOR_1"];
+const PHOTO_C  = ["FOTO_COMP_1","FOTO_COMP_2","FOTO_COMP_3"];
+const PAL      = ["#003F8A","#1565C0","#0096FF","#60B4FF","#0D8A4E","#C47A15","#C0392B","#7C3AED","#0891B2","#DB2777"];
+const PG_SIZE  = 15;
 
-// ===== STATE =====
-let rawGastro = [], rawCompe = [], rawTiendas = [];
-let filteredGastro = [];
+// ======== STATE ========
+let rawG = [], rawC = [], rawT = [];
+let filtered = [];
 let charts = {};
-let tablePage = 1;
-const TABLE_PAGE_SIZE = 15;
-let tableSortCol = "";
-let tableSortDir = 1;
-let tableSearchTerm = "";
+let pg = 1, sortCol = "", sortDir = 1, searchTerm = "";
 
-// ===== UTILS =====
-const norm = v => (v === null || v === undefined) ? "" : String(v).trim().toUpperCase();
-const isYes = v => norm(v) === "SI" || norm(v) === "SÍ" || norm(v) === "YES" || norm(v) === "1" || norm(v) === "TRUE";
-const pct = (n, d) => d > 0 ? Math.round((n / d) * 100) + "%" : "0%";
-const uniq = arr => [...new Set(arr.filter(Boolean))].sort();
+// ======== UTILS ========
+const N   = v => (v == null ? "" : String(v).trim().toUpperCase());
+const yes = v => { const n = N(v); return n==="SI"||n==="SÍ"||n==="YES"||n==="1"||n==="TRUE"; };
+const pct = (n,d) => d > 0 ? Math.round(n/d*100)+"%" : "0%";
+const uniq = a => [...new Set(a.filter(Boolean))].sort();
 
-function loaderProgress(pct, text) {
-  document.getElementById("loaderBar").style.width = pct + "%";
-  if (text) document.getElementById("loaderText").textContent = text;
+function ldProg(p, t) {
+  document.getElementById("ldBar").style.width = p + "%";
+  if (t) document.getElementById("ldTxt").textContent = t;
 }
-
 function hideLoader() {
   const l = document.getElementById("loader");
   l.classList.add("hidden");
   setTimeout(() => l.style.display = "none", 600);
 }
-
-function showSection(name) {
-  document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
-  document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
-  document.getElementById("sec-" + name).classList.add("active");
-  document.querySelectorAll(".nav-item").forEach(n => {
-    if (n.getAttribute("onclick") && n.getAttribute("onclick").includes(name)) n.classList.add("active");
-  });
-  closeSidebar();
-}
-
-function toggleSidebar() {
-  document.getElementById("sidebar").classList.toggle("open");
-  document.getElementById("sidebarOverlay").classList.toggle("open");
-}
-function closeSidebar() {
-  document.getElementById("sidebar").classList.remove("open");
-  document.getElementById("sidebarOverlay").classList.remove("open");
-}
-
-// ===== FETCH =====
-async function fetchSheet(name) {
-  const url = `${BASE_URL}/${encodeURIComponent(name)}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`HTTP ${res.status} al cargar ${name}`);
-  return res.json();
-}
-
-async function loadAllData() {
-  loaderProgress(0, "Iniciando carga…");
-  document.getElementById("loader").style.display = "flex";
-  document.getElementById("loader").classList.remove("hidden");
-
-  try {
-    loaderProgress(15, "Cargando hoja RE_BF_GASTRO_INT…");
-    rawGastro = await fetchSheet(SHEETS.gastro);
-    loaderProgress(45, "Cargando hoja RE_COMPE_GASTRO_INT…");
-    rawCompe = await fetchSheet(SHEETS.compe);
-    loaderProgress(70, "Cargando hoja RE_BF_TIENDAS…");
-    rawTiendas = await fetchSheet(SHEETS.tiendas);
-    loaderProgress(90, "Procesando datos…");
-
-    filteredGastro = [...rawGastro];
-    document.getElementById("lastUpdate").textContent = new Date().toLocaleString("es-PY");
-    populateFilters();
-    renderAll();
-    loaderProgress(100, "¡Listo!");
-    setTimeout(hideLoader, 600);
-  } catch (err) {
-    document.getElementById("loaderText").textContent = "❌ Error: " + err.message + " — Verificá que el Google Sheet esté publicado.";
-    document.getElementById("loaderBar").style.width = "100%";
-    document.getElementById("loaderBar").style.background = "#C0392B";
-  }
-}
-
-// ===== FILTERS =====
-function populateFilters() {
-  const ciudades = uniq(rawGastro.map(r => r.CIUDAD || r.Ciudad || getByPartialKey(r, "CIUDAD")));
-  const tipos = uniq(rawGastro.map(r => getByPartialKey(r, "TIPO")));
-  const beneficios = uniq(rawGastro.map(r => getByPartialKey(r, "BENEFICIO")));
-  fillSelect("f-ciudad", ciudades);
-  fillSelect("f-tipo", tipos);
-  fillSelect("f-beneficio", beneficios);
-}
-
-function getByPartialKey(obj, part) {
-  const key = Object.keys(obj).find(k => k.toUpperCase().includes(part.toUpperCase()));
-  return key ? obj[key] : "";
-}
-
-function fillSelect(id, options) {
-  const sel = document.getElementById(id);
-  const current = sel.value;
-  sel.innerHTML = '<option value="">Todos</option>';
-  options.forEach(v => { if (v) sel.innerHTML += `<option value="${v}">${v}</option>`; });
-  sel.value = current;
-}
-
-function applyFilters() {
-  const ciudad = document.getElementById("f-ciudad").value;
-  const tipo = document.getElementById("f-tipo").value;
-  const estado = document.getElementById("f-estado").value;
-  const beneficio = document.getElementById("f-beneficio").value;
-  const desde = document.getElementById("f-desde").value;
-  const hasta = document.getElementById("f-hasta").value;
-
-  filteredGastro = rawGastro.filter(r => {
-    if (ciudad && norm(r.CIUDAD || getByPartialKey(r,"CIUDAD")) !== norm(ciudad)) return false;
-    if (tipo && norm(getByPartialKey(r,"TIPO")) !== norm(tipo)) return false;
-    if (estado) {
-      const matKey = Object.keys(r).find(k => k.toUpperCase().includes("HAY_MATERIAL") || k.toUpperCase().includes("MATERIAL_DESIGNADO"));
-      if (matKey && norm(r[matKey]) !== norm(estado)) return false;
-    }
-    if (beneficio && norm(getByPartialKey(r,"BENEFICIO")) !== norm(beneficio)) return false;
-    if (desde || hasta) {
-      const fechaKey = Object.keys(r).find(k => k.toUpperCase().includes("FECHA"));
-      if (fechaKey && r[fechaKey]) {
-        const d = new Date(r[fechaKey]);
-        if (desde && d < new Date(desde)) return false;
-        if (hasta && d > new Date(hasta + "T23:59:59")) return false;
-      }
-    }
-    return true;
-  });
-
-  tablePage = 1;
-  renderAll();
-}
-
-function resetFilters() {
-  ["f-ciudad","f-tipo","f-estado","f-beneficio"].forEach(id => document.getElementById(id).value = "");
-  ["f-desde","f-hasta"].forEach(id => document.getElementById(id).value = "");
-  filteredGastro = [...rawGastro];
-  tablePage = 1;
-  renderAll();
-}
-
-// ===== RENDER ALL =====
-function renderAll() {
-  renderKPIs();
-  renderCharts();
-  renderTable();
-  renderFotos();
-  renderCompetencia();
-  renderTiendas();
-}
-
-// ===== KPIs =====
-function renderKPIs() {
-  const data = filteredGastro;
-  const total = data.length;
-
-  const matKey = findKey(data, ["HAY_MATERIAL_DESIGNADO","MATERIAL_DESIGNADO","HAY_MATERIAL"]);
-  const corrKey = findKey(data, ["MATERIAL_CORRESPONDE_TIPO","CORRESPONDE_TIPO","MAT_CORRECTO"]);
-  const exhibKey = findKey(data, ["BENEFICIO_EXHIBIDO","EXHIBIDO"]);
-  const ofertaKey = findKey(data, ["OFERTA_EXHIBIDA_CORRECTA","OFERTA_CORRECTA","OFERTA_EXHIBIDA"]);
-  const conoceKey = findKey(data, ["ENCARGADO_CONOCE","CONOCE_PROMO","CONOCE"]);
-
-  const conMat = data.filter(r => isYes(r[matKey])).length;
-  const correcto = data.filter(r => isYes(r[corrKey])).length;
-  const exhibido = data.filter(r => isYes(r[exhibKey])).length;
-  const oferta = data.filter(r => isYes(r[ofertaKey])).length;
-  const conoce = data.filter(r => isYes(r[conoceKey])).length;
-
-  setText("kpi-total", total);
-  setText("kpi-conmat", pct(conMat, total));
-  setText("kpi-conmat-sub", `${conMat} de ${total} locales`);
-  setText("kpi-correcto", pct(correcto, conMat || total));
-  setText("kpi-exhibido", pct(exhibido, total));
-  setText("kpi-oferta", pct(oferta, total));
-  setText("kpi-conoce", pct(conoce, total));
-}
+function set(id, v) { const e = document.getElementById(id); if (e) e.textContent = v; }
 
 function findKey(data, candidates) {
   if (!data.length) return "";
   const keys = Object.keys(data[0]);
   for (const c of candidates) {
-    const found = keys.find(k => k.toUpperCase().replace(/\s/g,"_").includes(c.toUpperCase()));
-    if (found) return found;
+    const f = keys.find(k => k.toUpperCase().replace(/\s+/g,"_").includes(c));
+    if (f) return f;
   }
   return "";
 }
+function byPart(obj, part) {
+  const k = Object.keys(obj).find(k => k.toUpperCase().includes(part));
+  return k ? obj[k] : "";
+}
+function countBy(data, key) {
+  const m = {};
+  data.forEach(r => { const v = (key && r[key] ? String(r[key]).trim() : "Sin dato"); if(v) m[v]=(m[v]||0)+1; });
+  return m;
+}
+function killChart(k) { if (charts[k]) { charts[k].destroy(); delete charts[k]; } }
 
-function setText(id, val) {
-  const el = document.getElementById(id);
-  if (el) el.textContent = val;
+// ======== NAVIGATION ========
+function showSec(name) {
+  document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+  document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+  document.getElementById("sec-"+name).classList.add("active");
+  document.querySelectorAll(".nav-item").forEach(n => {
+    if ((n.getAttribute("onclick")||"").includes("'"+name+"'")) n.classList.add("active");
+  });
+  closeSb();
+}
+function toggleSb() {
+  document.getElementById("sidebar").classList.toggle("open");
+  document.getElementById("sbOverlay").classList.toggle("open");
+}
+function closeSb() {
+  document.getElementById("sidebar").classList.remove("open");
+  document.getElementById("sbOverlay").classList.remove("open");
+}
+function switchView(v) {
+  document.getElementById("vsw-gastro").classList.toggle("active", v==="gastro");
+  document.getElementById("vsw-tiendas").classList.toggle("active", v==="tiendas");
+  showSec(v === "gastro" ? "resumen" : "tiendas");
 }
 
-// ===== CHARTS =====
-function destroyChart(key) {
-  if (charts[key]) { charts[key].destroy(); delete charts[key]; }
+// ======== FETCH ========
+async function fetchSheet(name) {
+  const url = API + encodeURIComponent(name);
+  const r = await fetch(url);
+  if (!r.ok) throw new Error("HTTP " + r.status + " — " + name);
+  const json = await r.json();
+  if (!Array.isArray(json)) throw new Error("Respuesta inesperada de " + name);
+  return json;
 }
 
-const PALETTE = ["#003F8A","#1565C0","#0096FF","#60B4FF","#0D8A4E","#C47A15","#C0392B","#7C3AED","#0891B2","#DB2777"];
+async function loadAll() {
+  ldProg(0, "Iniciando carga…");
+  document.getElementById("loader").style.display = "flex";
+  document.getElementById("loader").classList.remove("hidden");
+  try {
+    ldProg(15, "Cargando RE_BF_GASTRO_INT…");
+    rawG = await fetchSheet(SHEETS.gastro);
+    ldProg(50, "Cargando RE_COMPE_GASTRO_INT…");
+    rawC = await fetchSheet(SHEETS.compe);
+    ldProg(75, "Cargando RE_BF_TIENDAS…");
+    rawT = await fetchSheet(SHEETS.tiendas);
+    ldProg(90, "Procesando datos…");
+    filtered = [...rawG];
+    set("lastUpd", new Date().toLocaleString("es-PY"));
+    populateFilters();
+    renderAll();
+    ldProg(100, "¡Listo!");
+    setTimeout(hideLoader, 600);
+  } catch(err) {
+    document.getElementById("ldTxt").textContent = "❌ " + err.message + " — Verificá que el Sheet esté publicado y compartido.";
+    document.getElementById("ldBar").style.background = "#C0392B";
+    document.getElementById("ldBar").style.width = "100%";
+    console.error(err);
+  }
+}
 
+// ======== FILTERS ========
+function populateFilters() {
+  fillSel("f-ciudad", uniq(rawG.map(r => byPart(r,"CIUDAD"))));
+  fillSel("f-tipo",   uniq(rawG.map(r => byPart(r,"TIPO"))));
+  fillSel("f-benef",  uniq(rawG.map(r => byPart(r,"BENEFICIO"))));
+}
+function fillSel(id, opts) {
+  const s = document.getElementById(id);
+  const cur = s.value;
+  s.innerHTML = '<option value="">Todos</option>';
+  opts.forEach(v => { if(v){ const o = document.createElement("option"); o.value=v; o.textContent=v; s.appendChild(o); } });
+  s.value = cur;
+}
+function applyFilters() {
+  const ciudad = document.getElementById("f-ciudad").value;
+  const tipo   = document.getElementById("f-tipo").value;
+  const estado = document.getElementById("f-estado").value;
+  const benef  = document.getElementById("f-benef").value;
+  const desde  = document.getElementById("f-desde").value;
+  const hasta  = document.getElementById("f-hasta").value;
+
+  filtered = rawG.filter(r => {
+    if (ciudad && N(byPart(r,"CIUDAD")) !== N(ciudad)) return false;
+    if (tipo   && N(byPart(r,"TIPO"))   !== N(tipo))   return false;
+    if (benef  && N(byPart(r,"BENEFICIO")) !== N(benef)) return false;
+    if (estado) {
+      const mk = Object.keys(r).find(k => k.toUpperCase().includes("HAY_MATERIAL") || k.toUpperCase().includes("MATERIAL_DESIGNADO"));
+      if (mk && N(r[mk]) !== N(estado)) return false;
+    }
+    if (desde || hasta) {
+      const fk = Object.keys(r).find(k => k.toUpperCase().includes("FECHA"));
+      if (fk && r[fk]) {
+        const d = new Date(r[fk]);
+        if (desde && d < new Date(desde)) return false;
+        if (hasta && d > new Date(hasta+"T23:59:59")) return false;
+      }
+    }
+    return true;
+  });
+  pg = 1;
+  renderAll();
+}
+function resetFilters() {
+  ["f-ciudad","f-tipo","f-estado","f-benef","f-desde","f-hasta"].forEach(id => {
+    const e = document.getElementById(id);
+    if (e) e.value = "";
+  });
+  filtered = [...rawG];
+  pg = 1;
+  renderAll();
+}
+
+// ======== RENDER ALL ========
+function renderAll() {
+  renderKPIs();
+  renderCharts();
+  renderTable();
+  renderFotos();
+  renderComp();
+  renderTiendas();
+}
+
+// ======== KPIs ========
+function renderKPIs() {
+  const d = filtered, n = d.length;
+  const mk  = findKey(d, ["HAY_MATERIAL_DESIGNADO","MATERIAL_DESIGNADO","HAY_MATERIAL"]);
+  const ck  = findKey(d, ["MATERIAL_CORRESPONDE_TIPO","CORRESPONDE_TIPO","MAT_CORRECTO"]);
+  const ek  = findKey(d, ["BENEFICIO_EXHIBIDO","EXHIBIDO"]);
+  const ok  = findKey(d, ["OFERTA_EXHIBIDA_CORRECTA","OFERTA_CORRECTA","OFERTA_EXHIBIDA"]);
+  const cnk = findKey(d, ["ENCARGADO_CONOCE","CONOCE_PROMO","CONOCE"]);
+
+  const cm = d.filter(r => yes(r[mk])).length;
+  set("k-total", n);
+  set("k-mat",   pct(cm, n));
+  set("k-mat-sub", cm+" de "+n+" locales");
+  set("k-corr",  pct(d.filter(r=>yes(r[ck])).length, cm||n));
+  set("k-exh",   pct(d.filter(r=>yes(r[ek])).length, n));
+  set("k-ofe",   pct(d.filter(r=>yes(r[ok])).length, n));
+  set("k-con",   pct(d.filter(r=>yes(r[cnk])).length, n));
+}
+
+// ======== CHARTS ========
 function renderCharts() {
-  const data = filteredGastro;
+  const d = filtered;
 
-  // 1. Chart: Ciudades
-  destroyChart("ciudades");
-  const ciudadCount = countByKey(data, "CIUDAD");
-  charts.ciudades = new Chart(document.getElementById("chartCiudades"), {
-    type: "bar",
-    data: {
-      labels: Object.keys(ciudadCount),
-      datasets: [{ label: "Relevamientos", data: Object.values(ciudadCount), backgroundColor: "#003F8A", borderRadius: 6, barPercentage: 0.7 }]
-    },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { font: { size: 11 }, maxRotation: 40 } }, y: { grid: { color: "#F0F5FF" }, ticks: { font: { size: 11 } } } } }
+  killChart("ciudad");
+  const cc = countBy(d, "CIUDAD");
+  charts.ciudad = new Chart(document.getElementById("cCiudad"), {
+    type:"bar",
+    data:{ labels:Object.keys(cc), datasets:[{ label:"Relevamientos", data:Object.values(cc), backgroundColor:"#003F8A", borderRadius:6, barPercentage:.7 }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{grid:{display:false},ticks:{font:{size:11},maxRotation:40}}, y:{grid:{color:"#F0F5FF"},ticks:{font:{size:11}}} } }
   });
 
-  // 2. Donut: Estado del material
-  destroyChart("estado");
-  const matKey = findKey(data, ["HAY_MATERIAL_DESIGNADO","MATERIAL_DESIGNADO","HAY_MATERIAL"]);
-  const conMat = data.filter(r => isYes(r[matKey])).length;
-  const sinMat = data.length - conMat;
-  charts.estado = new Chart(document.getElementById("chartEstado"), {
-    type: "doughnut",
-    data: { labels: ["Con material", "Sin material"], datasets: [{ data: [conMat, sinMat], backgroundColor: ["#0D8A4E","#C0392B"], borderWidth: 3, borderColor: "#fff" }] },
-    options: { responsive: true, maintainAspectRatio: false, cutout: "62%", plugins: { legend: { position: "bottom", labels: { font: { size: 12 }, padding: 16 } } } }
+  killChart("estado");
+  const mk = findKey(d, ["HAY_MATERIAL_DESIGNADO","MATERIAL_DESIGNADO","HAY_MATERIAL"]);
+  const cm = d.filter(r=>yes(r[mk])).length;
+  charts.estado = new Chart(document.getElementById("cEstado"), {
+    type:"doughnut",
+    data:{ labels:["Con material","Sin material"], datasets:[{ data:[cm, d.length-cm], backgroundColor:["#0D8A4E","#C0392B"], borderWidth:3, borderColor:"#fff" }] },
+    options:{ responsive:true, maintainAspectRatio:false, cutout:"62%", plugins:{legend:{position:"bottom",labels:{font:{size:12},padding:16}}} }
   });
 
-  // 3. Chart: Tipo de material asignado vs encontrado
-  destroyChart("tipoMat");
-  const asigKey = findKey(data, ["TIPO_MATERIAL_ASIGNADO","MAT_ASIGNADO","TIPO_ASIGNADO"]);
-  const encontKey = findKey(data, ["TIPO_MATERIAL_ENCONTRADO","MAT_ENCONTRADO","TIPO_ENCONTRADO"]);
-  const asigCount = countByKey(data, asigKey);
-  const encontCount = countByKey(data, encontKey);
-  const allTypes = uniq([...Object.keys(asigCount), ...Object.keys(encontCount)]);
-  charts.tipoMat = new Chart(document.getElementById("chartTipoMat"), {
-    type: "bar",
-    data: {
-      labels: allTypes,
-      datasets: [
-        { label: "Asignado", data: allTypes.map(t => asigCount[t] || 0), backgroundColor: "#003F8A", borderRadius: 4, barPercentage: 0.45 },
-        { label: "Encontrado", data: allTypes.map(t => encontCount[t] || 0), backgroundColor: "#60B4FF", borderRadius: 4, barPercentage: 0.45 }
-      ]
-    },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "bottom", labels: { font: { size: 11 }, padding: 10 } } }, scales: { x: { grid: { display: false }, ticks: { font: { size: 10 } } }, y: { grid: { color: "#F0F5FF" }, ticks: { font: { size: 10 } } } } }
+  killChart("tipo");
+  const ak = findKey(d, ["TIPO_MATERIAL_ASIGNADO","MAT_ASIGNADO","TIPO_ASIGNADO"]);
+  const fk = findKey(d, ["TIPO_MATERIAL_ENCONTRADO","MAT_ENCONTRADO","TIPO_ENCONTRADO"]);
+  const ac = countBy(d,ak), fc = countBy(d,fk);
+  const at = uniq([...Object.keys(ac),...Object.keys(fc)]);
+  charts.tipo = new Chart(document.getElementById("cTipo"), {
+    type:"bar",
+    data:{ labels:at, datasets:[
+      { label:"Asignado",   data:at.map(t=>ac[t]||0), backgroundColor:"#003F8A", borderRadius:4, barPercentage:.45 },
+      { label:"Encontrado", data:at.map(t=>fc[t]||0), backgroundColor:"#60B4FF", borderRadius:4, barPercentage:.45 }
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{position:"bottom",labels:{font:{size:11},padding:10}}}, scales:{ x:{grid:{display:false},ticks:{font:{size:10}}}, y:{grid:{color:"#F0F5FF"},ticks:{font:{size:10}}} } }
   });
 
-  // 4. Donut: Oferta correcta
-  destroyChart("oferta");
-  const ofertaKey = findKey(data, ["OFERTA_EXHIBIDA_CORRECTA","OFERTA_CORRECTA","OFERTA_EXHIBIDA"]);
-  const ofOk = data.filter(r => isYes(r[ofertaKey])).length;
-  const ofNo = data.length - ofOk;
-  charts.oferta = new Chart(document.getElementById("chartOferta"), {
-    type: "doughnut",
-    data: { labels: ["Correcta", "Incorrecta/vacía"], datasets: [{ data: [ofOk, ofNo], backgroundColor: ["#0096FF","#C0392B"], borderWidth: 3, borderColor: "#fff" }] },
-    options: { responsive: true, maintainAspectRatio: false, cutout: "62%", plugins: { legend: { position: "bottom", labels: { font: { size: 11 }, padding: 12 } } } }
+  killChart("oferta");
+  const ofk = findKey(d, ["OFERTA_EXHIBIDA_CORRECTA","OFERTA_CORRECTA","OFERTA_EXHIBIDA"]);
+  const ofOk = d.filter(r=>yes(r[ofk])).length;
+  charts.oferta = new Chart(document.getElementById("cOferta"), {
+    type:"doughnut",
+    data:{ labels:["Correcta","Incorrecta"], datasets:[{ data:[ofOk, d.length-ofOk], backgroundColor:["#0096FF","#C0392B"], borderWidth:3, borderColor:"#fff" }] },
+    options:{ responsive:true, maintainAspectRatio:false, cutout:"62%", plugins:{legend:{position:"bottom",labels:{font:{size:11},padding:12}}} }
   });
 
-  // 5. Donut: Conoce promo
-  destroyChart("conoce");
-  const conoceKey = findKey(data, ["ENCARGADO_CONOCE","CONOCE_PROMO","CONOCE"]);
-  const cOk = data.filter(r => isYes(r[conoceKey])).length;
-  const cNo = data.length - cOk;
-  charts.conoce = new Chart(document.getElementById("chartConoce"), {
-    type: "doughnut",
-    data: { labels: ["Conoce", "No conoce"], datasets: [{ data: [cOk, cNo], backgroundColor: ["#0D8A4E","#C47A15"], borderWidth: 3, borderColor: "#fff" }] },
-    options: { responsive: true, maintainAspectRatio: false, cutout: "62%", plugins: { legend: { position: "bottom", labels: { font: { size: 11 }, padding: 12 } } } }
+  killChart("conoce");
+  const cnk = findKey(d, ["ENCARGADO_CONOCE","CONOCE_PROMO","CONOCE"]);
+  const cnOk = d.filter(r=>yes(r[cnk])).length;
+  charts.conoce = new Chart(document.getElementById("cConoce"), {
+    type:"doughnut",
+    data:{ labels:["Conoce","No conoce"], datasets:[{ data:[cnOk, d.length-cnOk], backgroundColor:["#0D8A4E","#C47A15"], borderWidth:3, borderColor:"#fff" }] },
+    options:{ responsive:true, maintainAspectRatio:false, cutout:"62%", plugins:{legend:{position:"bottom",labels:{font:{size:11},padding:12}}} }
   });
 }
 
-function countByKey(data, key) {
-  const counts = {};
-  data.forEach(r => {
-    const v = key ? (r[key] || "Sin datos").trim() : "Sin datos";
-    if (v) counts[v] = (counts[v] || 0) + 1;
-  });
-  return counts;
-}
-
-// ===== TABLE =====
-function getTableColumns(data) {
+// ======== TABLE ========
+function tblCols(data) {
   if (!data.length) return [];
-  return Object.keys(data[0]).filter(k => !OMIT_COLS_GASTRO.has(k.toUpperCase()) && !PHOTO_KEYS_GASTRO.includes(k));
+  return Object.keys(data[0]).filter(k => !OMIT_G.has(k.toUpperCase()) && !PHOTO_G.includes(k));
+}
+function isPillCol(c) {
+  const u = c.toUpperCase();
+  return u.includes("HAY_")||u.includes("CORRESPONDE")||u.includes("EXHIBIDO")||u.includes("CORRECTA")||u.includes("CONOCE")||u.includes("DESIGNADO");
+}
+function pill(v) {
+  const n = N(v);
+  if (n==="SI"||n==="SÍ") return '<span class="pill p-g">✓ SI</span>';
+  if (n==="NO")           return '<span class="pill p-r">✗ NO</span>';
+  if (!n)                 return '<span class="pill p-x">—</span>';
+  return '<span class="pill p-a">'+v+'</span>';
+}
+function thumb(url, lbl) {
+  if (!url || !url.trim()) return '<div class="no-photo">📷</div>';
+  const u = url.replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+  const l = (lbl||"").replace(/'/g,"&#39;");
+  return '<img class="thumb" src="'+u+'" alt="'+l+'" loading="lazy" onclick="openPhoto(\''+u+'\',\''+l+'\')" onerror="this.outerHTML=\'<div class=&quot;no-photo&quot;>🚫</div>\'">';
 }
 
 function renderTable() {
-  const data = filteredGastro;
-  const term = tableSearchTerm.toLowerCase();
-  const searched = term ? data.filter(r => JSON.stringify(Object.values(r)).toLowerCase().includes(term)) : data;
-  const cols = getTableColumns(searched.length ? searched : data);
-  const photoKeys = PHOTO_KEYS_GASTRO.filter(k => data.length && data[0].hasOwnProperty(k));
+  const term = searchTerm.toLowerCase();
+  const src  = term ? filtered.filter(r => JSON.stringify(Object.values(r)).toLowerCase().includes(term)) : filtered;
+  const cols  = tblCols(src.length ? src : rawG);
+  const pKeys = PHOTO_G.filter(k => rawG.length && Object.prototype.hasOwnProperty.call(rawG[0], k));
 
-  // Build header
-  const headTr = document.getElementById("tableHead");
-  headTr.innerHTML = [...cols, photoKeys.length ? "Fotos" : ""].filter(Boolean).map(c =>
-    `<th onclick="sortTable('${c}')" class="${tableSortCol===c?(tableSortDir===1?'sort-asc':'sort-desc'):''}">${c.replace(/_/g," ")}</th>`
-  ).join("");
+  // Header
+  document.getElementById("tblHead").innerHTML =
+    [...cols, pKeys.length ? "Fotos" : ""].filter(Boolean).map(c =>
+      '<th onclick="sortTbl(\''+c+'\')" class="'+(sortCol===c?(sortDir===1?"sa":"sd"):"")+'">'
+      + c.replace(/_/g," ") + '</th>'
+    ).join("");
 
   // Sort
-  let sorted = [...searched];
-  if (tableSortCol) {
-    sorted.sort((a, b) => {
-      const va = norm(a[tableSortCol]), vb = norm(b[tableSortCol]);
-      return va < vb ? -tableSortDir : va > vb ? tableSortDir : 0;
+  let rows = [...src];
+  if (sortCol) {
+    rows.sort((a,b) => {
+      const va=N(a[sortCol]), vb=N(b[sortCol]);
+      return va<vb ? -sortDir : va>vb ? sortDir : 0;
     });
   }
 
-  const total = sorted.length;
-  const start = (tablePage - 1) * TABLE_PAGE_SIZE;
-  const page = sorted.slice(start, start + TABLE_PAGE_SIZE);
+  const total = rows.length;
+  const page  = rows.slice((pg-1)*PG_SIZE, pg*PG_SIZE);
+  set("tblCount", total+" registros");
 
-  document.getElementById("tableCount").textContent = total + " registros";
-
-  const body = document.getElementById("tableBody");
-  if (!page.length) { body.innerHTML = `<tr><td colspan="${cols.length + 1}" class="empty-state">Sin resultados</td></tr>`; return; }
+  const body = document.getElementById("tblBody");
+  if (!page.length) { body.innerHTML='<tr><td colspan="'+(cols.length+1)+'" class="empty">Sin resultados</td></tr>'; renderPgn(total); return; }
 
   body.innerHTML = page.map(r => {
     const cells = cols.map(c => {
-      const v = r[c] !== undefined ? r[c] : "";
-      if (c.toUpperCase().includes("FECHA")) return `<td>${v}</td>`;
-      const yn = isYesPillNeeded(c);
-      if (yn) return `<td>${makePill(v)}</td>`;
-      return `<td class="${c==='LOCAL'||c==='NOMBRE_LOCAL'?'name-cell':'obs-cell'}" title="${String(v).replace(/"/g,'&quot;')}">${v || "—"}</td>`;
+      const v = r[c] != null ? r[c] : "";
+      if (c.toUpperCase().includes("FECHA")) return "<td>"+v+"</td>";
+      if (isPillCol(c)) return "<td>"+pill(v)+"</td>";
+      const isName = c.toUpperCase().includes("LOCAL")||c.toUpperCase().includes("NOMBRE");
+      return '<td class="'+(isName?"nm":"obs")+'" title="'+String(v).replace(/"/g,"&quot;")+'">'+( v||"—")+"</td>";
     }).join("");
-    const fotos = photoKeys.length ? `<td><div class="photo-strip">${photoKeys.map(k => makeThumb(r[k], r[cols[0]] || "Local")).join("")}</div></td>` : "";
-    return `<tr>${cells}${fotos}</tr>`;
+    const fotos = pKeys.length
+      ? "<td><div class='photo-strip'>"+pKeys.map(k=>thumb(r[k], r[cols[0]]||"")).join("")+"</div></td>"
+      : "";
+    return "<tr>"+cells+fotos+"</tr>";
   }).join("");
 
-  renderPagination(total);
+  renderPgn(total);
 }
 
-function isYesPillNeeded(col) {
-  const c = col.toUpperCase();
-  return c.includes("HAY_") || c.includes("CORRESPONDE") || c.includes("EXHIBIDO") || c.includes("CORRECTA") || c.includes("CONOCE") || c.includes("DESIGNADO");
-}
-
-function makePill(v) {
-  const n = norm(v);
-  if (n === "SI" || n === "SÍ") return `<span class="pill pill-green">✓ SI</span>`;
-  if (n === "NO") return `<span class="pill pill-red">✗ NO</span>`;
-  if (!n) return `<span class="pill pill-gray">—</span>`;
-  return `<span class="pill pill-amber">${v}</span>`;
-}
-
-function makeThumb(url, label) {
-  if (!url || url.trim() === "") return `<div class="thumb-placeholder" title="Sin foto">📷</div>`;
-  const escaped = url.replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-  const labelEsc = (label || "").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-  return `<img class="thumb" src="${escaped}" alt="Foto de ${labelEsc}" onclick="openPhoto('${escaped}','${labelEsc}')" loading="lazy" onerror="this.outerHTML='<div class=\\'thumb-placeholder\\' title=\\'Imagen no disponible\\'>🚫</div>'">`;
-}
-
-function applyTableSearch() {
-  tableSearchTerm = document.getElementById("tableSearch").value;
-  tablePage = 1;
-  renderTable();
-}
-
-function sortTable(col) {
-  if (tableSortCol === col) tableSortDir *= -1; else { tableSortCol = col; tableSortDir = 1; }
-  renderTable();
-}
-
-function renderPagination(total) {
-  const totalPages = Math.ceil(total / TABLE_PAGE_SIZE);
-  const pg = document.getElementById("tablePagination");
-  if (totalPages <= 1) { pg.innerHTML = ""; return; }
-  let html = `<button class="page-btn ${tablePage===1?'disabled':''}" onclick="goTablePage(${tablePage-1})">‹</button>`;
-  for (let i = 1; i <= totalPages; i++) {
-    if (i === 1 || i === totalPages || Math.abs(i - tablePage) <= 1) {
-      html += `<button class="page-btn ${i===tablePage?'active':''}" onclick="goTablePage(${i})">${i}</button>`;
-    } else if (Math.abs(i - tablePage) === 2) html += `<span style="padding:0 2px;color:var(--text3)">…</span>`;
+function onSearch() { searchTerm = document.getElementById("tblSearch").value; pg=1; renderTable(); }
+function sortTbl(col) { sortCol===col ? sortDir*=-1 : (sortCol=col, sortDir=1); renderTable(); }
+function renderPgn(total) {
+  const tp = Math.ceil(total/PG_SIZE);
+  const el = document.getElementById("tblPgn");
+  if (tp<=1) { el.innerHTML=""; return; }
+  let h = '<button class="pg-btn '+(pg===1?"dis":"")+'" onclick="goPg('+(pg-1)+')">‹</button>';
+  for (let i=1;i<=tp;i++) {
+    if (i===1||i===tp||Math.abs(i-pg)<=1) h+='<button class="pg-btn '+(i===pg?"act":"")+'" onclick="goPg('+i+')">'+i+'</button>';
+    else if (Math.abs(i-pg)===2) h+='<span style="padding:0 4px;color:var(--tx3)">…</span>';
   }
-  html += `<button class="page-btn ${tablePage===totalPages?'disabled':''}" onclick="goTablePage(${tablePage+1})">›</button>`;
-  pg.innerHTML = html;
+  h+='<button class="pg-btn '+(pg===tp?"dis":"")+'" onclick="goPg('+(pg+1)+')">›</button>';
+  el.innerHTML=h;
+}
+function goPg(p) {
+  const tp=Math.ceil(filtered.length/PG_SIZE);
+  if(p<1||p>tp)return; pg=p; renderTable();
+  document.querySelector(".tbl-wrap").scrollIntoView({behavior:"smooth",block:"nearest"});
 }
 
-function goTablePage(p) {
-  const total = filteredGastro.length;
-  const totalPages = Math.ceil(total / TABLE_PAGE_SIZE);
-  if (p < 1 || p > totalPages) return;
-  tablePage = p;
-  renderTable();
-  document.querySelector(".table-section").scrollIntoView({ behavior: "smooth", block: "nearest" });
-}
-
-// ===== FOTOS =====
+// ======== FOTOS ========
 function renderFotos() {
-  const data = filteredGastro;
-  const grid = document.getElementById("fotosGrid");
-  const photos = [];
-  data.forEach(r => {
-    const label = r[Object.keys(r).find(k => k.toUpperCase().includes("LOCAL") || k.toUpperCase().includes("NOMBRE")) || ""] || "Local";
-    PHOTO_KEYS_GASTRO.forEach(k => {
-      if (r[k] && r[k].trim()) photos.push({ url: r[k], label, key: k });
-    });
+  const photos=[];
+  filtered.forEach(r=>{
+    const lbl = r[Object.keys(r).find(k=>k.toUpperCase().includes("LOCAL")||k.toUpperCase().includes("NOMBRE"))||""]||"Local";
+    PHOTO_G.forEach(k=>{ if(r[k]&&r[k].trim()) photos.push({url:r[k],lbl,key:k}); });
   });
-  if (!photos.length) { grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">No hay fotos disponibles.</div>`; return; }
-  grid.innerHTML = photos.slice(0, 200).map(p => {
-    const escaped = p.url.replace(/"/g,"&quot;").replace(/'/g,"&#39;");
-    const lbl = p.label.replace(/'/g,"&#39;");
-    return `<div class="gallery-item"><img src="${escaped}" alt="${lbl} — ${p.key}" onclick="openPhoto('${escaped}','${lbl} · ${p.key.replace(/_/g,' ')}')" loading="lazy" onerror="this.parentElement.innerHTML='<div style=\\'color:var(--text3);font-size:22px;text-align:center\\'>📷</div>'"></div>`;
+  const g=document.getElementById("fotosGrid");
+  if(!photos.length){g.innerHTML='<div class="empty" style="grid-column:1/-1">No hay fotos disponibles.</div>';return;}
+  g.innerHTML=photos.slice(0,200).map(p=>{
+    const u=p.url.replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+    const l=p.lbl.replace(/'/g,"&#39;");
+    return '<div class="gal-item"><img src="'+u+'" alt="'+l+'" loading="lazy" onclick="openPhoto(\''+u+'\',\''+l+' · '+p.key.replace(/_/g," ")+'\')" onerror="this.parentElement.innerHTML=\'<div style=&quot;color:var(--tx3);font-size:22px;text-align:center&quot;>📷</div>\'"></div>';
   }).join("");
 }
 
-// ===== COMPETENCIA =====
-function renderCompetencia() {
-  const data = rawCompe;
-  setText("kpi-comp-total", data.length);
-  const entKey = findKey(data, ["ENTIDAD","BANCO","COMPETENCIA"]);
-  const ciudadKey = findKey(data, ["CIUDAD"]);
-  const promoKey = findKey(data, ["TIPO_PROMO","PROMO","TIPO_PROMOCION"]);
-  const entities = uniq(data.map(r => r[entKey]).filter(Boolean));
-  const compCiudades = uniq(data.map(r => r[ciudadKey]).filter(Boolean));
-  setText("kpi-comp-entidades", entities.length);
-  setText("kpi-comp-ciudades", compCiudades.length);
+// ======== COMPETENCIA ========
+function renderComp() {
+  const d=rawC;
+  set("k-cTotal", d.length);
+  const ek=findKey(d,["ENTIDAD","BANCO","COMPETENCIA"]);
+  const ck=findKey(d,["CIUDAD"]);
+  const pk=findKey(d,["TIPO_PROMO","PROMO","TIPO_PROMOCION"]);
+  set("k-cEnt",  uniq(d.map(r=>r[ek]).filter(Boolean)).length);
+  set("k-cCiud", uniq(d.map(r=>r[ck]).filter(Boolean)).length);
 
-  // Entity bars
-  const entCount = countByKey(data, entKey);
-  const sorted = Object.entries(entCount).sort((a,b) => b[1]-a[1]).slice(0,12);
-  const maxVal = sorted.length ? sorted[0][1] : 1;
-  document.getElementById("entityBars").innerHTML = sorted.map(([name, count], i) =>
-    `<div class="entity-bar"><span class="entity-name">${name}</span><div class="entity-track"><div class="entity-fill" style="width:${Math.round((count/maxVal)*100)}%;background:${PALETTE[i%PALETTE.length]}"></div></div><span class="entity-count">${count}</span></div>`
-  ).join("") || "<div style='color:var(--text3);padding:8px'>Sin datos de entidades</div>";
+  const ec=Object.entries(countBy(d,ek)).sort((a,b)=>b[1]-a[1]).slice(0,12);
+  const mx=ec.length?ec[0][1]:1;
+  document.getElementById("entBars").innerHTML=ec.map(([nm,n],i)=>
+    '<div class="ent-bar"><span class="ent-nm">'+nm+'</span><div class="ent-trk"><div class="ent-fill" style="width:'+Math.round(n/mx*100)+'%;background:'+PAL[i%PAL.length]+'"></div></div><span class="ent-n">'+n+'</span></div>'
+  ).join("")||'<div style="color:var(--tx3);padding:8px">Sin datos</div>';
 
-  // Promo donut
-  destroyChart("compPromo");
-  const promoCount = countByKey(data, promoKey);
-  const promoLabels = Object.keys(promoCount);
-  const promoVals = Object.values(promoCount);
-  charts.compPromo = new Chart(document.getElementById("chartCompPromo"), {
-    type: "doughnut",
-    data: { labels: promoLabels, datasets: [{ data: promoVals, backgroundColor: PALETTE, borderWidth: 3, borderColor: "#fff" }] },
-    options: { responsive: true, maintainAspectRatio: false, cutout: "55%", plugins: { legend: { position: "right", labels: { font: { size: 11 }, padding: 10, boxWidth: 12 } } } }
+  killChart("cmpPromo");
+  const pc=countBy(d,pk);
+  charts.cmpPromo=new Chart(document.getElementById("cCompPromo"),{
+    type:"doughnut",
+    data:{labels:Object.keys(pc),datasets:[{data:Object.values(pc),backgroundColor:PAL,borderWidth:3,borderColor:"#fff"}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:"55%",plugins:{legend:{position:"right",labels:{font:{size:11},padding:10,boxWidth:12}}}}
   });
 
-  // Ciudad bar
-  destroyChart("compCiudad");
-  const ciudadCount = countByKey(data, ciudadKey);
-  charts.compCiudad = new Chart(document.getElementById("chartCompCiudad"), {
-    type: "bar",
-    data: { labels: Object.keys(ciudadCount), datasets: [{ label: "Registros competencia", data: Object.values(ciudadCount), backgroundColor: "#C0392B", borderRadius: 6, barPercentage: 0.6 }] },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { font: { size: 11 } } }, y: { grid: { color: "#FFF0F0" }, ticks: { font: { size: 11 } } } } }
+  killChart("cmpCiud");
+  const mc=countBy(d,ck);
+  charts.cmpCiud=new Chart(document.getElementById("cCompCiud"),{
+    type:"bar",
+    data:{labels:Object.keys(mc),datasets:[{label:"Registros",data:Object.values(mc),backgroundColor:"#C0392B",borderRadius:6,barPercentage:.6}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:11}}},y:{grid:{color:"#FFF0F0"},ticks:{font:{size:11}}}}}
   });
 
-  // Table competencia
-  renderGenericTable(data, OMIT_COLS_COMPE, PHOTO_KEYS_COMPE, "compTableHead", "compTableBody", "compTableCount");
+  renderGenTable(d, OMIT_C, PHOTO_C, "cmpHead","cmpBody","cmpCount");
 }
 
-// ===== TIENDAS =====
+// ======== TIENDAS ========
 function renderTiendas() {
-  const data = rawTiendas;
-  const total = data.length;
-  document.getElementById("tiendasCount").textContent = total + " registros";
+  const d=rawT;
+  set("tndCount", d.length+" registros");
+  const ck=findKey(d,["CIUDAD"]);
+  const nCiud=uniq(d.map(r=>r[ck]).filter(Boolean)).length;
+  document.getElementById("tndKpis").innerHTML=
+    '<div class="kpi-card kpi-blue"><div class="kpi-ico">🏪</div><div class="kpi-val">'+d.length+'</div><div class="kpi-lbl">Tiendas relevadas</div></div>'+
+    '<div class="kpi-card kpi-green"><div class="kpi-ico">📍</div><div class="kpi-val">'+nCiud+'</div><div class="kpi-lbl">Ciudades cubiertas</div></div>';
 
-  // KPIs
-  const ciudadKey = findKey(data, ["CIUDAD"]);
-  const ciudadesCount = uniq(data.map(r => r[ciudadKey]).filter(Boolean)).length;
-  document.getElementById("tiendasKpis").innerHTML = `
-    <div class="kpi-card blue"><div class="kpi-icon">🏪</div><div class="kpi-value">${total}</div><div class="kpi-label">Tiendas relevadas</div></div>
-    <div class="kpi-card green"><div class="kpi-icon">📍</div><div class="kpi-value">${ciudadesCount}</div><div class="kpi-label">Ciudades cubiertas</div></div>
-  `;
+  renderGenTable(d, new Set(), [], "tndHead","tndBody","tndCount");
 
-  // Table
-  renderGenericTable(data, new Set(), [], "tiendasHead", "tiendasBody", "tiendasCount");
-
-  // Gallery
-  const gallery = document.getElementById("tiendasGallery");
-  const photos = [];
-  if (data.length) {
-    const photoKeys = Object.keys(data[0]).filter(k => k.toUpperCase().includes("FOTO") || k.toUpperCase().includes("PHOTO") || k.toUpperCase().includes("IMG"));
-    data.forEach(r => {
-      const label = r[Object.keys(r).find(k => k.toUpperCase().includes("NOMBRE") || k.toUpperCase().includes("LOCAL") || k.toUpperCase().includes("TIENDA")) || ""] || "Tienda";
-      photoKeys.forEach(k => { if (r[k] && r[k].trim()) photos.push({ url: r[k], label }); });
+  const photos=[];
+  if(d.length){
+    const pks=Object.keys(d[0]).filter(k=>k.toUpperCase().includes("FOTO")||k.toUpperCase().includes("PHOTO")||k.toUpperCase().includes("IMG"));
+    d.forEach(r=>{
+      const lbl=r[Object.keys(r).find(k=>k.toUpperCase().includes("NOMBRE")||k.toUpperCase().includes("LOCAL")||k.toUpperCase().includes("TIENDA"))||""]||"Tienda";
+      pks.forEach(k=>{ if(r[k]&&r[k].trim()) photos.push({url:r[k],lbl}); });
     });
   }
-  if (!photos.length) { gallery.innerHTML = "<div style='color:var(--text3);font-size:13px'>No hay fotos en esta hoja.</div>"; return; }
-  gallery.innerHTML = photos.slice(0, 100).map(p => {
-    const e = p.url.replace(/"/g,"&quot;").replace(/'/g,"&#39;");
-    const l = p.label.replace(/'/g,"&#39;");
-    return `<div class="gallery-item"><img src="${e}" alt="${l}" onclick="openPhoto('${e}','${l}')" loading="lazy" onerror="this.parentElement.innerHTML='<div style=\\'color:var(--text3);font-size:22px;text-align:center\\'>📷</div>'"></div>`;
+  const g=document.getElementById("tndGal");
+  if(!photos.length){g.innerHTML='<div style="color:var(--tx3);font-size:13px">No hay fotos en esta hoja.</div>';return;}
+  g.innerHTML=photos.slice(0,100).map(p=>{
+    const u=p.url.replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+    const l=p.lbl.replace(/'/g,"&#39;");
+    return '<div class="gal-item"><img src="'+u+'" alt="'+l+'" loading="lazy" onclick="openPhoto(\''+u+'\',\''+l+'\')" onerror="this.parentElement.innerHTML=\'<div style=&quot;color:var(--tx3);font-size:22px;text-align:center&quot;>📷</div>\'"></div>';
   }).join("");
 }
 
-function renderGenericTable(data, omitCols, photoKeys, headId, bodyId, countId) {
-  if (!data.length) {
-    document.getElementById(headId).innerHTML = "<th>Sin datos</th>";
-    document.getElementById(bodyId).innerHTML = `<tr><td class="empty-state">No se encontraron registros</td></tr>`;
+function renderGenTable(data, omit, pKeys, headId, bodyId, countId) {
+  if(!data.length){
+    document.getElementById(headId).innerHTML="<th>Sin datos</th>";
+    document.getElementById(bodyId).innerHTML='<tr><td class="empty">No se encontraron registros</td></tr>';
     return;
   }
-  const cols = Object.keys(data[0]).filter(k => !omitCols.has(k.toUpperCase()) && !photoKeys.includes(k));
-  const existingPhotos = photoKeys.filter(k => data[0].hasOwnProperty(k));
-  document.getElementById(headId).innerHTML = [...cols, existingPhotos.length ? "Fotos" : ""].filter(Boolean).map(c =>
-    `<th>${c.replace(/_/g," ")}</th>`
-  ).join("");
-  document.getElementById(bodyId).innerHTML = data.slice(0, 100).map(r => {
-    const cells = cols.map(c => {
-      const v = r[c] !== undefined ? r[c] : "";
-      if (isYesPillNeeded(c)) return `<td>${makePill(v)}</td>`;
-      return `<td class="obs-cell" title="${String(v).replace(/"/g,'&quot;')}">${v || "—"}</td>`;
+  const cols=Object.keys(data[0]).filter(k=>!omit.has(k.toUpperCase())&&!pKeys.includes(k));
+  const ep=pKeys.filter(k=>Object.prototype.hasOwnProperty.call(data[0],k));
+  document.getElementById(headId).innerHTML=[...cols,ep.length?"Fotos":""].filter(Boolean).map(c=>"<th>"+c.replace(/_/g," ")+"</th>").join("");
+  document.getElementById(bodyId).innerHTML=data.slice(0,100).map(r=>{
+    const cells=cols.map(c=>{
+      const v=r[c]!=null?r[c]:"";
+      if(isPillCol(c))return "<td>"+pill(v)+"</td>";
+      return '<td class="obs" title="'+String(v).replace(/"/g,"&quot;")+'">'+( v||"—")+"</td>";
     }).join("");
-    const fotos = existingPhotos.length ? `<td><div class="photo-strip">${existingPhotos.map(k => makeThumb(r[k], r[cols[0]] || "")).join("")}</div></td>` : "";
-    return `<tr>${cells}${fotos}</tr>`;
+    const fotos=ep.length?"<td><div class='photo-strip'>"+ep.map(k=>thumb(r[k],r[cols[0]]||"")).join("")+"</div></td>":"";
+    return "<tr>"+cells+fotos+"</tr>";
   }).join("");
-  if (document.getElementById(countId)) document.getElementById(countId).textContent = data.length + " registros";
+  if(document.getElementById(countId)) set(countId, data.length+" registros");
 }
 
-// ===== EXPORT =====
+// ======== EXPORT ========
 function exportExcel() {
-  if (!filteredGastro.length) return alert("No hay datos para exportar.");
-  const cols = getTableColumns(filteredGastro);
-  const rows = [cols.map(c => c.replace(/_/g," "))];
-  filteredGastro.forEach(r => rows.push(cols.map(c => r[c] || "")));
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.aoa_to_sheet(rows);
-  XLSX.utils.book_append_sheet(wb, ws, "Relevamiento");
-  XLSX.writeFile(wb, "relevamiento_bf_gastro.xlsx");
+  if(!filtered.length){alert("No hay datos.");return;}
+  const cols=tblCols(filtered);
+  const rows=[cols.map(c=>c.replace(/_/g," "))];
+  filtered.forEach(r=>rows.push(cols.map(c=>r[c]||"")));
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), "Relevamiento");
+  XLSX.writeFile(wb,"relevamiento_bf_gastro.xlsx");
 }
 
-// ===== PHOTO MODAL =====
-function openPhoto(url, label) {
-  document.getElementById("modalImg").src = url;
-  document.getElementById("modalTitle").textContent = label || "Foto";
-  document.getElementById("modalFooter").textContent = url;
+// ======== MODAL ========
+function openPhoto(url,lbl){
+  document.getElementById("mImg").src=url;
+  document.getElementById("mTitle").textContent=lbl||"Foto";
+  document.getElementById("mFoot").textContent=url;
   document.getElementById("photoModal").classList.add("open");
-  document.body.style.overflow = "hidden";
+  document.body.style.overflow="hidden";
 }
-
-function closePhotoModal() {
+function closeModal(){
   document.getElementById("photoModal").classList.remove("open");
-  document.body.style.overflow = "";
+  document.body.style.overflow="";
 }
+function closeModalBg(e){ if(e.target===document.getElementById("photoModal")) closeModal(); }
+document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeModal(); });
 
-function closeModal(e) {
-  if (e.target === document.getElementById("photoModal")) closePhotoModal();
-}
-
-document.addEventListener("keydown", e => { if (e.key === "Escape") closePhotoModal(); });
-
-
-// ===== VIEW SWITCHER =====
-function switchView(view) {
-  document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('vbtn-' + view).classList.add('active');
-  if (view === 'gastro') {
-    // Show gastro sections in sidebar, hide tiendas section
-    document.querySelectorAll('.nav-item').forEach(n => n.style.display = '');
-    document.querySelector('[onclick="showSection('tiendas')"]') && 
-      document.querySelector('[onclick="showSection('tiendas')"]').setAttribute('data-hidden','');
-    showSection('resumen');
-  } else {
-    showSection('tiendas');
-  }
-}
-
-// ===== BOOT =====
-loadAllData();
+// ======== BOOT ========
+loadAll();
 </script>
 </body>
 </html>
