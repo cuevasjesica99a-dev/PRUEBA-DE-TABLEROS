@@ -663,12 +663,36 @@ function closeSb(){
 // ══════════════════════════════════════════════════════════
 // FETCH
 // ══════════════════════════════════════════════════════════
+// Detecta si opensheet devolvió las etiquetas de sección como claves (fila 0 del Excel).
+// En ese caso, la primera fila de *datos* contiene los headers reales → remapear.
+function normalizeSheet(rows){
+  if(!rows.length) return rows;
+  const firstVals=Object.values(rows[0]).map(v=>v==null?"":String(v).trim());
+  // Si los valores del primer objeto incluyen "FECHA" y "LOCAL" → es la fila de headers reales
+  if(firstVals.includes("FECHA") && firstVals.includes("LOCAL")){
+    // Construir mapa de claves antiguas → nuevas (usar valor de firstVals como nombre)
+    const oldKeys=Object.keys(rows[0]);
+    const newKeys=firstVals.map((v,i)=>{
+      // Para celdas vacías o duplicadas usar la clave antigua como fallback
+      return v || oldKeys[i] || ("COL_"+i);
+    });
+    // Remap rows 1..n con las nuevas claves
+    return rows.slice(1).map(row=>{
+      const obj={};
+      const vals=Object.values(row);
+      newKeys.forEach((k,i)=>{ obj[k]=vals[i]!=null?vals[i]:null; });
+      return obj;
+    }).filter(row=>Object.values(row).some(v=>v!=null&&String(v).trim()!==""));
+  }
+  return rows;
+}
+
 async function fetchSheet(name){
   const r=await fetch(API+encodeURIComponent(name));
   if(!r.ok) throw new Error("HTTP "+r.status+" al cargar "+name);
   const j=await r.json();
   if(!Array.isArray(j)) throw new Error("Respuesta inesperada: "+name);
-  return j;
+  return normalizeSheet(j);
 }
 
 async function loadAll(){
@@ -1017,17 +1041,21 @@ function renderTiendasCharts(){
 
 function tiendasTableCols(data){
   if(!data.length)return[];
-  return Object.keys(data[0]).filter(k=>!OMIT_T.has(k)&&!PHOTO_T.includes(k));
+  // Excluir columnas de fotos (cualquier clave que empiece con "FOTO" o esté en PHOTO_T)
+  return Object.keys(data[0]).filter(k=>{
+    const u=k.toUpperCase();
+    return !OMIT_T.has(k) && !PHOTO_T.includes(k) && !u.startsWith("FOTO");
+  });
 }
 
 function renderTiendasTable(){
   const q=state.t.q.toLowerCase();
   const src=q ? filtT.filter(r=>JSON.stringify(Object.values(r)).toLowerCase().includes(q)) : filtT;
   const cols=tiendasTableCols(src.length?src:allT);
-  const ph=PHOTO_T.filter(k=>allT.length&&Object.prototype.hasOwnProperty.call(allT[0],k));
+  // ph no se usa en la tabla (fotos omitidas por pedido)
 
   document.getElementById("t-tHead").innerHTML=
-    [...cols,ph.length?"Fotos":""].filter(Boolean).map(c=>
+    cols.map(c=>
       `<th onclick="sortTbl('t','${c}')" class="${state.t.sort===c?(state.t.dir===1?'sa':'sd'):''}">${c}</th>`
     ).join("");
 
@@ -1047,8 +1075,7 @@ function renderTiendasTable(){
       const isName=c===TK.LOCAL;
       return`<td class="${isName?'nm':'obs'}" title="${v.replace(/"/g,"&quot;")}">${v||"—"}</td>`;
     }).join("");
-    const fotos=ph.length?`<td><div class="photo-strip">${ph.map(k=>mkThumbCell(r[k],N(r[TK.LOCAL]))).join("")}</div></td>`:"";
-    return`<tr>${cells}${fotos}</tr>`;
+    return`<tr>${cells}</tr>`;
   }).join("");
   renderPgn("t",tot);
 }
