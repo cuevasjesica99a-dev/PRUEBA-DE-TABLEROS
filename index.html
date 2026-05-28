@@ -86,6 +86,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);font-
 /* Charts */
 .cgrid{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:24px}
 .cgrid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:24px}
+.cgrid4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
 .cgrid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
 .chart-card{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--rl);padding:22px;box-shadow:var(--sh1)}
 .chart-card.full{grid-column:1/-1}
@@ -186,7 +187,7 @@ td.obs{color:var(--tx2);font-size:12px;max-width:200px;white-space:nowrap;overfl
   .sidebar.open{transform:translateX(0)}
   .main{margin-left:0}
   .hamburger{display:flex}
-  .cgrid,.cgrid3,.cgrid2{grid-template-columns:1fr}
+  .cgrid,.cgrid3,.cgrid4,.cgrid2{grid-template-columns:1fr}
   .kpi-grid{grid-template-columns:repeat(2,1fr)}
 }
 @media(max-width:540px){
@@ -265,27 +266,16 @@ td.obs{color:var(--tx2);font-size:12px;max-width:200px;white-space:nowrap;overfl
           <div><div class="sec-lbl">Vista general</div><div class="sec-title">Resumen del relevamiento</div></div>
         </div>
         <div class="kpi-grid">
-          <div class="kpi-card kpi-blue"><div class="kpi-ico">📍</div><div class="kpi-val" id="k-total">—</div><div class="kpi-lbl">Total relevados</div><div class="kpi-sub">locales visitados</div></div>
-          <div class="kpi-card kpi-green"><div class="kpi-ico">✅</div><div class="kpi-val" id="k-mat">—</div><div class="kpi-lbl">Con material BF</div><div class="kpi-sub" id="k-mat-sub">—</div></div>
-          <div class="kpi-card kpi-accent"><div class="kpi-ico">🎯</div><div class="kpi-val" id="k-corr">—</div><div class="kpi-lbl">Material correcto</div><div class="kpi-sub">tipo corresponde</div></div>
-          <div class="kpi-card kpi-amber"><div class="kpi-ico">👁️</div><div class="kpi-val" id="k-exh">—</div><div class="kpi-lbl">Beneficio exhibido</div><div class="kpi-sub">visible al cliente</div></div>
-          <div class="kpi-card kpi-green"><div class="kpi-ico">💯</div><div class="kpi-val" id="k-ofe">—</div><div class="kpi-lbl">Oferta correcta</div><div class="kpi-sub">oferta exhibida OK</div></div>
-          <div class="kpi-card kpi-blue"><div class="kpi-ico">🧠</div><div class="kpi-val" id="k-con">—</div><div class="kpi-lbl">Conocen promo</div><div class="kpi-sub">encargados informados</div></div>
+          <div class="kpi-card kpi-blue"><div class="kpi-ico">📍</div><div class="kpi-val" id="k-total">—</div><div class="kpi-lbl">Total locales relevados</div><div class="kpi-sub" id="k-total-sub">locales únicos</div></div>
+          <div class="kpi-card kpi-green"><div class="kpi-ico">✅</div><div class="kpi-val" id="k-mat">—</div><div class="kpi-lbl">Con material BF</div><div class="kpi-sub" id="k-mat-sub">HAY_MATERIAL_DESIGNADO = SI</div></div>
+          <div class="kpi-card kpi-red"><div class="kpi-ico">⚔️</div><div class="kpi-val" id="k-comp">—</div><div class="kpi-lbl">Con material competencia</div><div class="kpi-sub" id="k-comp-sub">HAY_MATERIAL_COMPETENCIA = SI</div></div>
+          <div class="kpi-card kpi-amber"><div class="kpi-ico">🧠</div><div class="kpi-val" id="k-con">—</div><div class="kpi-lbl">Conocen la promo</div><div class="kpi-sub" id="k-con-sub">ENCARGADO_CONOCE_PROMO = SI</div></div>
         </div>
 
         <div class="flt-panel">
           <div class="flt-title">🔍 Filtros — KPIs y gráficos se actualizan en tiempo real</div>
-          <div class="flt-grid">
-            <div class="flt-grp"><label class="flt-lbl">Ciudad</label><select class="flt-ctrl" id="f-ciudad" onchange="applyFilters()"><option value="">Todas</option></select></div>
-            <div class="flt-grp"><label class="flt-lbl">Tipo de local</label><select class="flt-ctrl" id="f-tipo" onchange="applyFilters()"><option value="">Todos</option></select></div>
-            <div class="flt-grp"><label class="flt-lbl">Estado material</label>
-              <select class="flt-ctrl" id="f-estado" onchange="applyFilters()">
-                <option value="">Todos</option><option value="SI">Con material (SI)</option><option value="NO">Sin material (NO)</option>
-              </select>
-            </div>
-            <div class="flt-grp"><label class="flt-lbl">Beneficio</label><select class="flt-ctrl" id="f-benef" onchange="applyFilters()"><option value="">Todos</option></select></div>
-            <div class="flt-grp"><label class="flt-lbl">Fecha desde</label><input type="date" class="flt-ctrl" id="f-desde" onchange="applyFilters()"></div>
-            <div class="flt-grp"><label class="flt-lbl">Fecha hasta</label><input type="date" class="flt-ctrl" id="f-hasta" onchange="applyFilters()"></div>
+          <div class="flt-grid" style="grid-template-columns:300px auto;max-width:600px">
+            <div class="flt-grp"><label class="flt-lbl">Ciudad</label><select class="flt-ctrl" id="f-ciudad" onchange="applyFilters()"><option value="">Todas las ciudades</option></select></div>
             <div style="display:flex;align-items:flex-end"><button class="btn btn-out" onclick="resetFilters()">↺ Limpiar</button></div>
           </div>
         </div>
@@ -301,18 +291,22 @@ td.obs{color:var(--tx2);font-size:12px;max-width:200px;white-space:nowrap;overfl
           </div>
         </div>
 
-        <div class="cgrid3">
+        <div class="cgrid4">
           <div class="chart-card">
-            <div class="ch-head"><div class="ch-title">Tipo material: asignado vs encontrado</div><span class="ch-badge">BARRAS</span></div>
-            <div class="ch-wrap" style="height:220px"><canvas id="cTipo"></canvas></div>
+            <div class="ch-head"><div class="ch-title">Material BF: presencia</div><span class="ch-badge">DONA</span></div>
+            <div class="ch-wrap" style="height:220px"><canvas id="cMatBF"></canvas></div>
           </div>
           <div class="chart-card">
-            <div class="ch-head"><div class="ch-title">Cumplimiento oferta</div><span class="ch-badge">DONA</span></div>
-            <div class="ch-wrap" style="height:220px"><canvas id="cOferta"></canvas></div>
+            <div class="ch-head"><div class="ch-title">Material corresponde al tipo</div><span class="ch-badge">DONA</span></div>
+            <div class="ch-wrap" style="height:220px"><canvas id="cCorresp"></canvas></div>
           </div>
           <div class="chart-card">
-            <div class="ch-head"><div class="ch-title">Conocimiento de promo</div><span class="ch-badge">DONA</span></div>
+            <div class="ch-head"><div class="ch-title">Conocimiento de la promo</div><span class="ch-badge">DONA</span></div>
             <div class="ch-wrap" style="height:220px"><canvas id="cConoce"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="ch-head"><div class="ch-title">Presencia competencia</div><span class="ch-badge">DONA</span></div>
+            <div class="ch-wrap" style="height:220px"><canvas id="cCompPres"></canvas></div>
           </div>
         </div>
       </section>
@@ -399,178 +393,183 @@ td.obs{color:var(--tx2);font-size:12px;max-width:200px;white-space:nowrap;overfl
 <script>
 // ======== CONFIG ========
 const SHEET_ID = "1YrNdJ_Hf9AyrKm_MpO3FgyqLWs4x3iNRuQv9AfNpnok";
-const API = "https://opensheet.elk.sh/" + SHEET_ID + "/";
+const API      = "https://opensheet.elk.sh/" + SHEET_ID + "/";
+const SHEETS   = { gastro:"RE_BF_GASTRO_INT", compe:"RE_COMPE_GASTRO_INT", tiendas:"RE_BF_TIENDAS" };
 
-const SHEETS = {
-  gastro:  "RE_BF_GASTRO_INT",
-  compe:   "RE_COMPE_GASTRO_INT",
-  tiendas: "RE_BF_TIENDAS"
-};
-
-const OMIT_G   = new Set(["HORA","FISCALIZADOR"]);
-const OMIT_C   = new Set(["HORA","FISCALIZADOR"]);
-const PHOTO_G  = ["FOTO_MATERIAL_1","FOTO_MATERIAL_2","FOTO_MATERIAL_3","FOTO_MATERIAL_4","FOTO_ANTERIOR_1"];
-const PHOTO_C  = ["FOTO_COMP_1","FOTO_COMP_2","FOTO_COMP_3"];
-const PAL      = ["#003F8A","#1565C0","#0096FF","#60B4FF","#0D8A4E","#C47A15","#C0392B","#7C3AED","#0891B2","#DB2777"];
-const PG_SIZE  = 15;
+// Columnas a omitir y fotos — exactamente per spec
+const OMIT_G  = new Set(["HORA","FISCALIZADOR"]);
+const OMIT_C  = new Set(["HORA","FISCALIZADOR"]);
+const PHOTO_G = ["FOTO_MATERIAL_1","FOTO_MATERIAL_2","FOTO_MATERIAL_3","FOTO_AUSENCIA","FOTO_ANTERIOR_1"];
+const PHOTO_C = ["FOTO_COMP_1","FOTO_COMP_2","FOTO_COMP_3"];
+// Columnas a MOSTRAR en tablas (nombres exactos según spec)
+const COLS_G  = ["FECHA","LOCAL","CIUDAD","HAY_MATERIAL_DESIGNADO","MATERIALES_COLOCADOS",
+                 "MATERIAL_CORRESPONDE_TIPO","TIPO_MATERIAL_ANTERIOR","ENCARGADO_CONOCE_PROMO",
+                 "NOMBRE_ENCARGADO","OBSERVACIONES"];
+const COLS_C  = ["FECHA","LOCAL","CIUDAD","HAY_MATERIAL_COMPETENCIA","MARCAS_IDENTIFICADAS",
+                 "VISIBILIDAD_VS_BF","HAY_PROMO_COMPETENCIA","TIPO_PROMO_COMPETENCIA"];
+const PAL     = ["#003F8A","#1565C0","#0096FF","#60B4FF","#0D8A4E","#C47A15","#C0392B","#7C3AED","#0891B2","#DB2777"];
+const PG_SIZE = 15;
 
 // ======== STATE ========
 let rawG = [], rawC = [], rawT = [];
-let filtered = [];
+// dedupG / dedupC = primer registro por LOCAL (sin duplicados)
+let dedupG = [], dedupC = [];
+// filtered = dedupG filtrado por ciudad
+let filtered = [], filteredC = [];
 let charts = {};
 let pg = 1, sortCol = "", sortDir = 1, searchTerm = "";
 
 // ======== UTILS ========
+// Normalizar a mayúsculas, sin espacios extremos, null-safe
 const N   = v => (v == null ? "" : String(v).trim().toUpperCase());
-const yes = v => { const n = N(v); return n==="SI"||n==="SÍ"||n==="YES"||n==="1"||n==="TRUE"; };
-const pct = (n,d) => d > 0 ? Math.round(n/d*100)+"%" : "0%";
-const uniq = a => [...new Set(a.filter(Boolean))].sort();
+// SI robusto: acepta "SI", "SÍ", "Sí", "si", "YES","1","TRUE","VERDADERO"
+const yes = v => { const n=N(v); return n==="SI"||n==="SÍ"||n==="YES"||n==="1"||n==="TRUE"||n==="VERDADERO"; };
+const pct = (n,d) => d>0 ? Math.round(n/d*100)+"%" : "—";
+const uniq = a => [...new Set(a.map(v=>String(v||"").trim()).filter(Boolean))].sort();
 
-function ldProg(p, t) {
-  document.getElementById("ldBar").style.width = p + "%";
-  if (t) document.getElementById("ldTxt").textContent = t;
+// Deduplicar por clave (primer registro gana)
+function dedup(data, keyCol) {
+  const seen = new Set();
+  return data.filter(r => {
+    const k = N(r[keyCol]||"");
+    if (!k || seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
 }
-function hideLoader() {
-  const l = document.getElementById("loader");
-  l.classList.add("hidden");
-  setTimeout(() => l.style.display = "none", 600);
-}
-function set(id, v) { const e = document.getElementById(id); if (e) e.textContent = v; }
 
-function findKey(data, candidates) {
-  if (!data.length) return "";
+// Buscar columna por nombre exacto primero, luego parcial
+function getCol(row, name) {
+  if (row == null) return undefined;
+  if (Object.prototype.hasOwnProperty.call(row, name)) return row[name];
+  const k = Object.keys(row).find(k => k.toUpperCase() === name.toUpperCase());
+  if (k) return row[k];
+  const k2 = Object.keys(row).find(k => k.toUpperCase().includes(name.toUpperCase()));
+  return k2 ? row[k2] : undefined;
+}
+
+// Nombre real de una columna en los datos (para acceso por nombre exacto del sheet)
+function realKey(data, name) {
+  if (!data.length) return name;
   const keys = Object.keys(data[0]);
-  for (const c of candidates) {
-    const f = keys.find(k => k.toUpperCase().replace(/\s+/g,"_").includes(c));
-    if (f) return f;
-  }
-  return "";
+  return keys.find(k=>k.toUpperCase()===name.toUpperCase())
+      || keys.find(k=>k.toUpperCase().includes(name.toUpperCase()))
+      || name;
 }
-function byPart(obj, part) {
-  const k = Object.keys(obj).find(k => k.toUpperCase().includes(part));
-  return k ? obj[k] : "";
-}
-function countBy(data, key) {
-  const m = {};
-  data.forEach(r => { const v = (key && r[key] ? String(r[key]).trim() : "Sin dato"); if(v) m[v]=(m[v]||0)+1; });
+
+function countBy(data, keyName) {
+  const rk = realKey(data, keyName);
+  const m={};
+  data.forEach(r=>{ const v=(r[rk]||"Sin dato").trim(); if(v) m[v]=(m[v]||0)+1; });
   return m;
 }
-function killChart(k) { if (charts[k]) { charts[k].destroy(); delete charts[k]; } }
+
+function killChart(k){ if(charts[k]){charts[k].destroy();delete charts[k];} }
+function set(id,v){ const e=document.getElementById(id); if(e) e.textContent=v; }
+function ldProg(p,t){
+  document.getElementById("ldBar").style.width=p+"%";
+  if(t) document.getElementById("ldTxt").textContent=t;
+}
+function hideLoader(){
+  const l=document.getElementById("loader");
+  l.classList.add("hidden");
+  setTimeout(()=>l.style.display="none",600);
+}
 
 // ======== NAVIGATION ========
-function showSec(name) {
-  document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
-  document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+function showSec(name){
+  document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
+  document.querySelectorAll(".nav-item").forEach(n=>n.classList.remove("active"));
   document.getElementById("sec-"+name).classList.add("active");
-  document.querySelectorAll(".nav-item").forEach(n => {
-    if ((n.getAttribute("onclick")||"").includes("'"+name+"'")) n.classList.add("active");
+  document.querySelectorAll(".nav-item").forEach(n=>{
+    if((n.getAttribute("onclick")||"").includes("'"+name+"'")) n.classList.add("active");
   });
   closeSb();
 }
-function toggleSb() {
-  document.getElementById("sidebar").classList.toggle("open");
-  document.getElementById("sbOverlay").classList.toggle("open");
-}
-function closeSb() {
-  document.getElementById("sidebar").classList.remove("open");
-  document.getElementById("sbOverlay").classList.remove("open");
-}
-function switchView(v) {
-  document.getElementById("vsw-gastro").classList.toggle("active", v==="gastro");
-  document.getElementById("vsw-tiendas").classList.toggle("active", v==="tiendas");
-  showSec(v === "gastro" ? "resumen" : "tiendas");
+function toggleSb(){ document.getElementById("sidebar").classList.toggle("open"); document.getElementById("sbOverlay").classList.toggle("open"); }
+function closeSb(){ document.getElementById("sidebar").classList.remove("open"); document.getElementById("sbOverlay").classList.remove("open"); }
+function switchView(v){
+  document.getElementById("vsw-gastro").classList.toggle("active",v==="gastro");
+  document.getElementById("vsw-tiendas").classList.toggle("active",v==="tiendas");
+  showSec(v==="gastro"?"resumen":"tiendas");
 }
 
 // ======== FETCH ========
-async function fetchSheet(name) {
-  const url = API + encodeURIComponent(name);
-  const r = await fetch(url);
-  if (!r.ok) throw new Error("HTTP " + r.status + " — " + name);
-  const json = await r.json();
-  if (!Array.isArray(json)) throw new Error("Respuesta inesperada de " + name);
+async function fetchSheet(name){
+  const url=API+encodeURIComponent(name);
+  const r=await fetch(url);
+  if(!r.ok) throw new Error("HTTP "+r.status+" — "+name);
+  const json=await r.json();
+  if(!Array.isArray(json)) throw new Error("Respuesta inesperada de "+name);
   return json;
 }
 
-async function loadAll() {
-  ldProg(0, "Iniciando carga…");
-  document.getElementById("loader").style.display = "flex";
+async function loadAll(){
+  ldProg(0,"Iniciando carga…");
+  document.getElementById("loader").style.display="flex";
   document.getElementById("loader").classList.remove("hidden");
   try {
-    ldProg(15, "Cargando RE_BF_GASTRO_INT…");
-    rawG = await fetchSheet(SHEETS.gastro);
-    ldProg(50, "Cargando RE_COMPE_GASTRO_INT…");
-    rawC = await fetchSheet(SHEETS.compe);
-    ldProg(75, "Cargando RE_BF_TIENDAS…");
-    rawT = await fetchSheet(SHEETS.tiendas);
-    ldProg(90, "Procesando datos…");
-    filtered = [...rawG];
+    ldProg(15,"Cargando RE_BF_GASTRO_INT…");
+    rawG=await fetchSheet(SHEETS.gastro);
+    ldProg(50,"Cargando RE_COMPE_GASTRO_INT…");
+    rawC=await fetchSheet(SHEETS.compe);
+    ldProg(75,"Cargando RE_BF_TIENDAS…");
+    rawT=await fetchSheet(SHEETS.tiendas);
+    ldProg(90,"Procesando datos (deduplicando)…");
+
+    // ── DEDUPLICAR: primer registro por LOCAL ──────────────────────────────
+    const localKeyG = realKey(rawG,"LOCAL");
+    const localKeyC = realKey(rawC,"LOCAL");
+    dedupG = dedup(rawG, localKeyG);
+    dedupC = dedup(rawC, localKeyC);
+
+    filtered  = [...dedupG];
+    filteredC = [...dedupC];
+
     set("lastUpd", new Date().toLocaleString("es-PY"));
     populateFilters();
     renderAll();
-    ldProg(100, "¡Listo!");
-    setTimeout(hideLoader, 600);
-  } catch(err) {
-    document.getElementById("ldTxt").textContent = "❌ " + err.message + " — Verificá que el Sheet esté publicado y compartido.";
-    document.getElementById("ldBar").style.background = "#C0392B";
-    document.getElementById("ldBar").style.width = "100%";
+    ldProg(100,"¡Listo! "+dedupG.length+" locales únicos cargados.");
+    setTimeout(hideLoader,600);
+  } catch(err){
+    document.getElementById("ldTxt").textContent="❌ "+err.message+" — Verificá que el Sheet esté publicado y compartido públicamente.";
+    document.getElementById("ldBar").style.background="#C0392B";
+    document.getElementById("ldBar").style.width="100%";
     console.error(err);
   }
 }
 
-// ======== FILTERS ========
-function populateFilters() {
-  fillSel("f-ciudad", uniq(rawG.map(r => byPart(r,"CIUDAD"))));
-  fillSel("f-tipo",   uniq(rawG.map(r => byPart(r,"TIPO"))));
-  fillSel("f-benef",  uniq(rawG.map(r => byPart(r,"BENEFICIO"))));
+// ======== FILTERS (solo Ciudad) ========
+function populateFilters(){
+  const ckG = realKey(dedupG,"CIUDAD");
+  const ciudades = uniq(dedupG.map(r=>r[ckG]||""));
+  const sel = document.getElementById("f-ciudad");
+  if(!sel) return;
+  sel.innerHTML='<option value="">Todas las ciudades</option>';
+  ciudades.forEach(v=>{ const o=document.createElement("option"); o.value=v; o.textContent=v; sel.appendChild(o); });
 }
-function fillSel(id, opts) {
-  const s = document.getElementById(id);
-  const cur = s.value;
-  s.innerHTML = '<option value="">Todos</option>';
-  opts.forEach(v => { if(v){ const o = document.createElement("option"); o.value=v; o.textContent=v; s.appendChild(o); } });
-  s.value = cur;
-}
-function applyFilters() {
-  const ciudad = document.getElementById("f-ciudad").value;
-  const tipo   = document.getElementById("f-tipo").value;
-  const estado = document.getElementById("f-estado").value;
-  const benef  = document.getElementById("f-benef").value;
-  const desde  = document.getElementById("f-desde").value;
-  const hasta  = document.getElementById("f-hasta").value;
 
-  filtered = rawG.filter(r => {
-    if (ciudad && N(byPart(r,"CIUDAD")) !== N(ciudad)) return false;
-    if (tipo   && N(byPart(r,"TIPO"))   !== N(tipo))   return false;
-    if (benef  && N(byPart(r,"BENEFICIO")) !== N(benef)) return false;
-    if (estado) {
-      const mk = Object.keys(r).find(k => k.toUpperCase().includes("HAY_MATERIAL") || k.toUpperCase().includes("MATERIAL_DESIGNADO"));
-      if (mk && N(r[mk]) !== N(estado)) return false;
-    }
-    if (desde || hasta) {
-      const fk = Object.keys(r).find(k => k.toUpperCase().includes("FECHA"));
-      if (fk && r[fk]) {
-        const d = new Date(r[fk]);
-        if (desde && d < new Date(desde)) return false;
-        if (hasta && d > new Date(hasta+"T23:59:59")) return false;
-      }
-    }
-    return true;
-  });
-  pg = 1;
+function applyFilters(){
+  const ciudad = (document.getElementById("f-ciudad")||{}).value||"";
+  const ckG = realKey(dedupG,"CIUDAD");
+  const ckC = realKey(dedupC,"CIUDAD");
+  filtered  = ciudad ? dedupG.filter(r=>N(r[ckG])===N(ciudad)) : [...dedupG];
+  filteredC = ciudad ? dedupC.filter(r=>N(r[ckC])===N(ciudad)) : [...dedupC];
+  pg=1;
   renderAll();
 }
-function resetFilters() {
-  ["f-ciudad","f-tipo","f-estado","f-benef","f-desde","f-hasta"].forEach(id => {
-    const e = document.getElementById(id);
-    if (e) e.value = "";
-  });
-  filtered = [...rawG];
-  pg = 1;
+
+function resetFilters(){
+  const sel=document.getElementById("f-ciudad");
+  if(sel) sel.value="";
+  filtered=[...dedupG];
+  filteredC=[...dedupC];
+  pg=1;
   renderAll();
 }
 
 // ======== RENDER ALL ========
-function renderAll() {
+function renderAll(){
   renderKPIs();
   renderCharts();
   renderTable();
@@ -579,237 +578,295 @@ function renderAll() {
   renderTiendas();
 }
 
-// ======== KPIs ========
-function renderKPIs() {
-  const d = filtered, n = d.length;
-  const mk  = findKey(d, ["HAY_MATERIAL_DESIGNADO","MATERIAL_DESIGNADO","HAY_MATERIAL"]);
-  const ck  = findKey(d, ["MATERIAL_CORRESPONDE_TIPO","CORRESPONDE_TIPO","MAT_CORRECTO"]);
-  const ek  = findKey(d, ["BENEFICIO_EXHIBIDO","EXHIBIDO"]);
-  const ok  = findKey(d, ["OFERTA_EXHIBIDA_CORRECTA","OFERTA_CORRECTA","OFERTA_EXHIBIDA"]);
-  const cnk = findKey(d, ["ENCARGADO_CONOCE","CONOCE_PROMO","CONOCE"]);
+// ======== KPIs — LÓGICA CORREGIDA ========
+function renderKPIs(){
+  const dG = filtered;    // gastro dedup + filtrado
+  const dC = filteredC;   // compe dedup + filtrado
+  const nG = dG.length;
 
-  const cm = d.filter(r => yes(r[mk])).length;
-  set("k-total", n);
-  set("k-mat",   pct(cm, n));
-  set("k-mat-sub", cm+" de "+n+" locales");
-  set("k-corr",  pct(d.filter(r=>yes(r[ck])).length, cm||n));
-  set("k-exh",   pct(d.filter(r=>yes(r[ek])).length, n));
-  set("k-ofe",   pct(d.filter(r=>yes(r[ok])).length, n));
-  set("k-con",   pct(d.filter(r=>yes(r[cnk])).length, n));
+  // ── Columnas clave (busca por nombre exacto luego parcial) ──
+  const matKey  = realKey(dG, "HAY_MATERIAL_DESIGNADO");
+  const conoceK = realKey(dG, "ENCARGADO_CONOCE_PROMO");
+  const compKey = realKey(dC, "HAY_MATERIAL_COMPETENCIA");
+
+  // ── Conteos sobre locales únicos ──
+  const conMat  = dG.filter(r => yes(r[matKey])).length;
+  const conocen = dG.filter(r => yes(r[conoceK])).length;
+  const conComp = dC.filter(r => yes(r[compKey])).length;
+  const nC      = dC.length;  // locales únicos en hoja competencia
+
+  set("k-total",     nG);
+  set("k-total-sub", nG+" locales únicos");
+  set("k-mat",       pct(conMat, nG));
+  set("k-mat-sub",   conMat+" de "+nG+" locales");
+  set("k-comp",      pct(conComp, nC||nG));
+  set("k-comp-sub",  conComp+" de "+(nC||nG)+" locales");
+  set("k-con",       pct(conocen, nG));
+  set("k-con-sub",   conocen+" de "+nG+" encargados");
 }
 
-// ======== CHARTS ========
-function renderCharts() {
-  const d = filtered;
+// ======== CHARTS — LÓGICA CORREGIDA ========
+function donut(canvasId, labels, counts, colors){
+  killChart(canvasId);
+  charts[canvasId]=new Chart(document.getElementById(canvasId),{
+    type:"doughnut",
+    data:{labels,datasets:[{data:counts,backgroundColor:colors,borderWidth:3,borderColor:"#fff"}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:"62%",
+      plugins:{legend:{position:"bottom",labels:{font:{size:11},padding:14,boxWidth:12}}}}
+  });
+}
 
+function renderCharts(){
+  const dG = filtered;
+  const dC = filteredC;
+
+  // 1. Locales por ciudad (barras)
   killChart("ciudad");
-  const cc = countBy(d, "CIUDAD");
-  charts.ciudad = new Chart(document.getElementById("cCiudad"), {
+  const ckG  = realKey(dG,"CIUDAD");
+  const cc   = countBy(dG, ckG);
+  const ccSorted = Object.entries(cc).sort((a,b)=>b[1]-a[1]);
+  charts.ciudad=new Chart(document.getElementById("cCiudad"),{
     type:"bar",
-    data:{ labels:Object.keys(cc), datasets:[{ label:"Relevamientos", data:Object.values(cc), backgroundColor:"#003F8A", borderRadius:6, barPercentage:.7 }] },
-    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{grid:{display:false},ticks:{font:{size:11},maxRotation:40}}, y:{grid:{color:"#F0F5FF"},ticks:{font:{size:11}}} } }
+    data:{labels:ccSorted.map(e=>e[0]),datasets:[{label:"Locales únicos",data:ccSorted.map(e=>e[1]),backgroundColor:"#003F8A",borderRadius:6,barPercentage:.7}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>" "+ctx.parsed.y+" locales"}}},
+      scales:{x:{grid:{display:false},ticks:{font:{size:11},maxRotation:40}},y:{grid:{color:"#F0F5FF"},ticks:{font:{size:11},stepSize:1}}}}
   });
 
-  killChart("estado");
-  const mk = findKey(d, ["HAY_MATERIAL_DESIGNADO","MATERIAL_DESIGNADO","HAY_MATERIAL"]);
-  const cm = d.filter(r=>yes(r[mk])).length;
-  charts.estado = new Chart(document.getElementById("cEstado"), {
-    type:"doughnut",
-    data:{ labels:["Con material","Sin material"], datasets:[{ data:[cm, d.length-cm], backgroundColor:["#0D8A4E","#C0392B"], borderWidth:3, borderColor:"#fff" }] },
-    options:{ responsive:true, maintainAspectRatio:false, cutout:"62%", plugins:{legend:{position:"bottom",labels:{font:{size:12},padding:16}}} }
-  });
+  // 2. Material BF: presencia SI vs NO (dona)
+  const matKey = realKey(dG,"HAY_MATERIAL_DESIGNADO");
+  const mSi = dG.filter(r=>yes(r[matKey])).length;
+  donut("cMatBF",["Con material BF","Sin material BF"],[mSi,dG.length-mSi],["#0D8A4E","#C0392B"]);
 
-  killChart("tipo");
-  const ak = findKey(d, ["TIPO_MATERIAL_ASIGNADO","MAT_ASIGNADO","TIPO_ASIGNADO"]);
-  const fk = findKey(d, ["TIPO_MATERIAL_ENCONTRADO","MAT_ENCONTRADO","TIPO_ENCONTRADO"]);
-  const ac = countBy(d,ak), fc = countBy(d,fk);
-  const at = uniq([...Object.keys(ac),...Object.keys(fc)]);
-  charts.tipo = new Chart(document.getElementById("cTipo"), {
-    type:"bar",
-    data:{ labels:at, datasets:[
-      { label:"Asignado",   data:at.map(t=>ac[t]||0), backgroundColor:"#003F8A", borderRadius:4, barPercentage:.45 },
-      { label:"Encontrado", data:at.map(t=>fc[t]||0), backgroundColor:"#60B4FF", borderRadius:4, barPercentage:.45 }
-    ]},
-    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{position:"bottom",labels:{font:{size:11},padding:10}}}, scales:{ x:{grid:{display:false},ticks:{font:{size:10}}}, y:{grid:{color:"#F0F5FF"},ticks:{font:{size:10}}} } }
-  });
+  // 3. Material corresponde al tipo (dona) — MATERIAL_CORRESPONDE_TIPO sobre los que TIENEN material
+  const corrK  = realKey(dG,"MATERIAL_CORRESPONDE_TIPO");
+  const conMat = dG.filter(r=>yes(r[matKey])).length;
+  const corrSi = dG.filter(r=>yes(r[matKey])&&yes(r[corrK])).length;
+  const corrNo = conMat - corrSi;
+  donut("cCorresp",["Corresponde","No corresponde","Sin material"],[corrSi,corrNo,dG.length-conMat],["#0096FF","#C47A15","#E2E8F4"]);
 
-  killChart("oferta");
-  const ofk = findKey(d, ["OFERTA_EXHIBIDA_CORRECTA","OFERTA_CORRECTA","OFERTA_EXHIBIDA"]);
-  const ofOk = d.filter(r=>yes(r[ofk])).length;
-  charts.oferta = new Chart(document.getElementById("cOferta"), {
-    type:"doughnut",
-    data:{ labels:["Correcta","Incorrecta"], datasets:[{ data:[ofOk, d.length-ofOk], backgroundColor:["#0096FF","#C0392B"], borderWidth:3, borderColor:"#fff" }] },
-    options:{ responsive:true, maintainAspectRatio:false, cutout:"62%", plugins:{legend:{position:"bottom",labels:{font:{size:11},padding:12}}} }
-  });
+  // 4. Conocimiento promo (dona)
+  const conK  = realKey(dG,"ENCARGADO_CONOCE_PROMO");
+  const conSi = dG.filter(r=>yes(r[conK])).length;
+  donut("cConoce",["Conoce","No conoce"],[conSi,dG.length-conSi],["#0D8A4E","#C47A15"]);
 
-  killChart("conoce");
-  const cnk = findKey(d, ["ENCARGADO_CONOCE","CONOCE_PROMO","CONOCE"]);
-  const cnOk = d.filter(r=>yes(r[cnk])).length;
-  charts.conoce = new Chart(document.getElementById("cConoce"), {
-    type:"doughnut",
-    data:{ labels:["Conoce","No conoce"], datasets:[{ data:[cnOk, d.length-cnOk], backgroundColor:["#0D8A4E","#C47A15"], borderWidth:3, borderColor:"#fff" }] },
-    options:{ responsive:true, maintainAspectRatio:false, cutout:"62%", plugins:{legend:{position:"bottom",labels:{font:{size:11},padding:12}}} }
-  });
+  // 5. Presencia competencia (dona) — usa filteredC
+  const cmpK  = realKey(dC,"HAY_MATERIAL_COMPETENCIA");
+  const cmpSi = dC.filter(r=>yes(r[cmpK])).length;
+  const cmpNo = dC.length-cmpSi;
+  if(document.getElementById("cCompPres")){
+    donut("cCompPres",["Con competencia","Sin competencia"],[cmpSi,cmpNo],["#C0392B","#E2E8F4"]);
+  }
+
+  // 6. Estado general (dona) para el chart existente cEstado
+  donut("cEstado",["Con material BF","Sin material BF"],[mSi,dG.length-mSi],["#0D8A4E","#C0392B"]);
 }
 
-// ======== TABLE ========
-function tblCols(data) {
-  if (!data.length) return [];
-  return Object.keys(data[0]).filter(k => !OMIT_G.has(k.toUpperCase()) && !PHOTO_G.includes(k));
+// ======== TABLE — usa columnas del spec + fotos ========
+function getDisplayCols(data, specCols){
+  if(!data.length) return [];
+  const keys=Object.keys(data[0]);
+  const result=[];
+  specCols.forEach(sc=>{
+    const found=keys.find(k=>k.toUpperCase()===sc.toUpperCase())
+               ||keys.find(k=>k.toUpperCase().includes(sc.toUpperCase().replace(/_/g," ").trim()));
+    if(found && !result.includes(found)) result.push(found);
+  });
+  // Agregar cualquier columna de datos no cubierta y no omitida (excepto fotos)
+  keys.forEach(k=>{
+    if(!result.includes(k)&&!OMIT_G.has(k.toUpperCase())&&!PHOTO_G.includes(k)&&!PHOTO_C.includes(k))
+      result.push(k);
+  });
+  return result;
 }
-function isPillCol(c) {
-  const u = c.toUpperCase();
-  return u.includes("HAY_")||u.includes("CORRESPONDE")||u.includes("EXHIBIDO")||u.includes("CORRECTA")||u.includes("CONOCE")||u.includes("DESIGNADO");
+
+function isPillCol(c){
+  const u=c.toUpperCase();
+  return u.includes("HAY_")||u.includes("CORRESPONDE")||u.includes("CONOCE")||
+         u.includes("DESIGNADO")||u.includes("COLOCADO")||u.includes("PROMO_COMP");
 }
-function pill(v) {
-  const n = N(v);
-  if (n==="SI"||n==="SÍ") return '<span class="pill p-g">✓ SI</span>';
-  if (n==="NO")           return '<span class="pill p-r">✗ NO</span>';
-  if (!n)                 return '<span class="pill p-x">—</span>';
+
+function pill(v){
+  const n=N(v);
+  if(n==="SI"||n==="SÍ") return '<span class="pill p-g">✓ SI</span>';
+  if(n==="NO")           return '<span class="pill p-r">✗ NO</span>';
+  if(!n)                 return '<span class="pill p-x">—</span>';
   return '<span class="pill p-a">'+v+'</span>';
 }
-function thumb(url, lbl) {
-  if (!url || !url.trim()) return '<div class="no-photo">📷</div>';
-  const u = url.replace(/"/g,"&quot;").replace(/'/g,"&#39;");
-  const l = (lbl||"").replace(/'/g,"&#39;");
-  return '<img class="thumb" src="'+u+'" alt="'+l+'" loading="lazy" onclick="openPhoto(\''+u+'\',\''+l+'\')" onerror="this.outerHTML=\'<div class=&quot;no-photo&quot;>🚫</div>\'">';
+
+// Foto: abre en nueva pestaña al hacer click (Google Drive link)
+function thumb(url, lbl){
+  if(!url||!url.trim()) return '<div class="no-photo" title="Sin foto">📷</div>';
+  const u=url.replace(/"/g,"&quot;");
+  const l=(lbl||"").replace(/"/g,"&quot;");
+  // Convertir link de Drive a link directo si es posible
+  let viewUrl=url;
+  const driveMatch=url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  if(driveMatch) viewUrl="https://drive.google.com/file/d/"+driveMatch[1]+"/view";
+  const vu=viewUrl.replace(/"/g,"&quot;");
+  return '<a href="'+vu+'" target="_blank" rel="noopener" title="Ver foto: '+l+'">'
+        +'<img class="thumb" src="'+u+'" alt="'+l+'" loading="lazy" '
+        +'onerror="this.outerHTML=\'<div class=&quot;no-photo&quot; title=&quot;No disponible&quot;>🚫</div>\'">'
+        +'</a>';
 }
 
-function renderTable() {
-  const term = searchTerm.toLowerCase();
-  const src  = term ? filtered.filter(r => JSON.stringify(Object.values(r)).toLowerCase().includes(term)) : filtered;
-  const cols  = tblCols(src.length ? src : rawG);
-  const pKeys = PHOTO_G.filter(k => rawG.length && Object.prototype.hasOwnProperty.call(rawG[0], k));
+function renderTable(){
+  const term=searchTerm.toLowerCase();
+  const src = term ? filtered.filter(r=>JSON.stringify(Object.values(r)).toLowerCase().includes(term)) : filtered;
+  const cols = getDisplayCols(src.length?src:dedupG, COLS_G);
+  const pKeys= PHOTO_G.filter(k=>dedupG.length&&Object.prototype.hasOwnProperty.call(dedupG[0],k));
 
   // Header
-  document.getElementById("tblHead").innerHTML =
-    [...cols, pKeys.length ? "Fotos" : ""].filter(Boolean).map(c =>
-      '<th onclick="sortTbl(\''+c+'\')" class="'+(sortCol===c?(sortDir===1?"sa":"sd"):"")+'">'
-      + c.replace(/_/g," ") + '</th>'
+  document.getElementById("tblHead").innerHTML=
+    [...cols,pKeys.length?"Fotos":""].filter(Boolean).map(c=>
+      '<th onclick="sortTbl(\''+c+'\')" class="'+(sortCol===c?(sortDir===1?"sa":"sd"):"")+'">'+c.replace(/_/g," ")+'</th>'
     ).join("");
 
   // Sort
-  let rows = [...src];
-  if (sortCol) {
-    rows.sort((a,b) => {
-      const va=N(a[sortCol]), vb=N(b[sortCol]);
-      return va<vb ? -sortDir : va>vb ? sortDir : 0;
-    });
+  let rows=[...src];
+  if(sortCol){
+    rows.sort((a,b)=>{ const va=N(a[sortCol]),vb=N(b[sortCol]); return va<vb?-sortDir:va>vb?sortDir:0; });
   }
 
-  const total = rows.length;
-  const page  = rows.slice((pg-1)*PG_SIZE, pg*PG_SIZE);
-  set("tblCount", total+" registros");
+  const total=rows.length;
+  const page=rows.slice((pg-1)*PG_SIZE, pg*PG_SIZE);
+  set("tblCount", total+" locales únicos");
 
-  const body = document.getElementById("tblBody");
-  if (!page.length) { body.innerHTML='<tr><td colspan="'+(cols.length+1)+'" class="empty">Sin resultados</td></tr>'; renderPgn(total); return; }
+  const body=document.getElementById("tblBody");
+  if(!page.length){ body.innerHTML='<tr><td colspan="'+(cols.length+1)+'" class="empty">Sin resultados</td></tr>'; renderPgn(total); return; }
 
-  body.innerHTML = page.map(r => {
-    const cells = cols.map(c => {
-      const v = r[c] != null ? r[c] : "";
-      if (c.toUpperCase().includes("FECHA")) return "<td>"+v+"</td>";
-      if (isPillCol(c)) return "<td>"+pill(v)+"</td>";
-      const isName = c.toUpperCase().includes("LOCAL")||c.toUpperCase().includes("NOMBRE");
+  body.innerHTML=page.map(r=>{
+    const cells=cols.map(c=>{
+      const v=r[c]!=null?r[c]:"";
+      if(c.toUpperCase().includes("FECHA")) return "<td>"+v+"</td>";
+      if(isPillCol(c)) return "<td>"+pill(v)+"</td>";
+      const isName=c.toUpperCase().includes("LOCAL")||c.toUpperCase().includes("NOMBRE");
       return '<td class="'+(isName?"nm":"obs")+'" title="'+String(v).replace(/"/g,"&quot;")+'">'+( v||"—")+"</td>";
     }).join("");
-    const fotos = pKeys.length
-      ? "<td><div class='photo-strip'>"+pKeys.map(k=>thumb(r[k], r[cols[0]]||"")).join("")+"</div></td>"
-      : "";
+    const fotos=pKeys.length?"<td><div class='photo-strip'>"+pKeys.map(k=>thumb(r[k],r[cols[0]]||"")).join("")+"</div></td>":"";
     return "<tr>"+cells+fotos+"</tr>";
   }).join("");
 
   renderPgn(total);
 }
 
-function onSearch() { searchTerm = document.getElementById("tblSearch").value; pg=1; renderTable(); }
-function sortTbl(col) { sortCol===col ? sortDir*=-1 : (sortCol=col, sortDir=1); renderTable(); }
-function renderPgn(total) {
-  const tp = Math.ceil(total/PG_SIZE);
-  const el = document.getElementById("tblPgn");
-  if (tp<=1) { el.innerHTML=""; return; }
-  let h = '<button class="pg-btn '+(pg===1?"dis":"")+'" onclick="goPg('+(pg-1)+')">‹</button>';
-  for (let i=1;i<=tp;i++) {
-    if (i===1||i===tp||Math.abs(i-pg)<=1) h+='<button class="pg-btn '+(i===pg?"act":"")+'" onclick="goPg('+i+')">'+i+'</button>';
-    else if (Math.abs(i-pg)===2) h+='<span style="padding:0 4px;color:var(--tx3)">…</span>';
+function onSearch(){ searchTerm=document.getElementById("tblSearch").value; pg=1; renderTable(); }
+function sortTbl(col){ sortCol===col?sortDir*=-1:(sortCol=col,sortDir=1); renderTable(); }
+function renderPgn(total){
+  const tp=Math.ceil(total/PG_SIZE);
+  const el=document.getElementById("tblPgn");
+  if(tp<=1){el.innerHTML="";return;}
+  let h='<button class="pg-btn '+(pg===1?"dis":"")+'" onclick="goPg('+(pg-1)+')">&#8249;</button>';
+  for(let i=1;i<=tp;i++){
+    if(i===1||i===tp||Math.abs(i-pg)<=1) h+='<button class="pg-btn '+(i===pg?"act":"")+'" onclick="goPg('+i+')">'+i+'</button>';
+    else if(Math.abs(i-pg)===2) h+='<span style="padding:0 4px;color:var(--tx3)">…</span>';
   }
-  h+='<button class="pg-btn '+(pg===tp?"dis":"")+'" onclick="goPg('+(pg+1)+')">›</button>';
+  h+='<button class="pg-btn '+(pg===tp?"dis":"")+'" onclick="goPg('+(pg+1)+')">&#8250;</button>';
   el.innerHTML=h;
 }
-function goPg(p) {
+function goPg(p){
   const tp=Math.ceil(filtered.length/PG_SIZE);
   if(p<1||p>tp)return; pg=p; renderTable();
   document.querySelector(".tbl-wrap").scrollIntoView({behavior:"smooth",block:"nearest"});
 }
 
-// ======== FOTOS ========
-function renderFotos() {
+// ======== FOTOS — abre en nueva pestaña ========
+function renderFotos(){
   const photos=[];
   filtered.forEach(r=>{
-    const lbl = r[Object.keys(r).find(k=>k.toUpperCase().includes("LOCAL")||k.toUpperCase().includes("NOMBRE"))||""]||"Local";
-    PHOTO_G.forEach(k=>{ if(r[k]&&r[k].trim()) photos.push({url:r[k],lbl,key:k}); });
+    const lk=realKey([r],"LOCAL");
+    const lbl=r[lk]||"Local";
+    PHOTO_G.forEach(k=>{
+      const v=r[k]||r[Object.keys(r).find(kk=>kk.toUpperCase()===k.toUpperCase())||""]||"";
+      if(v&&v.trim()) photos.push({url:v.trim(),lbl,key:k});
+    });
   });
   const g=document.getElementById("fotosGrid");
   if(!photos.length){g.innerHTML='<div class="empty" style="grid-column:1/-1">No hay fotos disponibles.</div>';return;}
   g.innerHTML=photos.slice(0,200).map(p=>{
     const u=p.url.replace(/"/g,"&quot;").replace(/'/g,"&#39;");
     const l=p.lbl.replace(/'/g,"&#39;");
-    return '<div class="gal-item"><img src="'+u+'" alt="'+l+'" loading="lazy" onclick="openPhoto(\''+u+'\',\''+l+' · '+p.key.replace(/_/g," ")+'\')" onerror="this.parentElement.innerHTML=\'<div style=&quot;color:var(--tx3);font-size:22px;text-align:center&quot;>📷</div>\'"></div>';
+    let viewUrl=p.url;
+    const dm=p.url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+    if(dm) viewUrl="https://drive.google.com/file/d/"+dm[1]+"/view";
+    const vu=viewUrl.replace(/'/g,"&#39;");
+    return '<div class="gal-item">'
+      +'<a href="'+vu+'" target="_blank" rel="noopener">'
+      +'<img src="'+u+'" alt="'+l+'" loading="lazy" '
+      +'onerror="this.parentElement.parentElement.innerHTML=\'<div style=&quot;color:var(--tx3);font-size:22px;text-align:center;padding:10px&quot;>📷</div>\'">'
+      +'</a></div>';
   }).join("");
 }
 
-// ======== COMPETENCIA ========
-function renderComp() {
-  const d=rawC;
+// ======== COMPETENCIA — usa dedupC + filteredC ========
+function renderComp(){
+  const d=filteredC;
   set("k-cTotal", d.length);
-  const ek=findKey(d,["ENTIDAD","BANCO","COMPETENCIA"]);
-  const ck=findKey(d,["CIUDAD"]);
-  const pk=findKey(d,["TIPO_PROMO","PROMO","TIPO_PROMOCION"]);
-  set("k-cEnt",  uniq(d.map(r=>r[ek]).filter(Boolean)).length);
-  set("k-cCiud", uniq(d.map(r=>r[ck]).filter(Boolean)).length);
+  const marcaK = realKey(d,["MARCAS_IDENTIFICADAS","ENTIDAD","BANCO","COMPETENCIA"].find(n=>realKey(d,n)!==n)||"MARCAS_IDENTIFICADAS");
+  const ckC    = realKey(d,"CIUDAD");
+  const promoK = realKey(d,"TIPO_PROMO_COMPETENCIA");
+  const compK  = realKey(d,"HAY_MATERIAL_COMPETENCIA");
 
-  const ec=Object.entries(countBy(d,ek)).sort((a,b)=>b[1]-a[1]).slice(0,12);
+  set("k-cEnt",  uniq(d.flatMap(r=>(r[marcaK]||"").split(/[,;\/]/)).filter(Boolean)).length||
+                 uniq(d.map(r=>r[marcaK]).filter(Boolean)).length);
+  set("k-cCiud", uniq(d.map(r=>r[ckC]).filter(Boolean)).length);
+
+  // Barras por marca/entidad
+  const entMap={};
+  d.forEach(r=>{
+    const marcas=(r[marcaK]||"").split(/[,;\/]/);
+    marcas.forEach(m=>{ const mv=m.trim(); if(mv){ entMap[mv]=(entMap[mv]||0)+1; } });
+  });
+  const ec=Object.entries(entMap).sort((a,b)=>b[1]-a[1]).slice(0,12);
   const mx=ec.length?ec[0][1]:1;
   document.getElementById("entBars").innerHTML=ec.map(([nm,n],i)=>
-    '<div class="ent-bar"><span class="ent-nm">'+nm+'</span><div class="ent-trk"><div class="ent-fill" style="width:'+Math.round(n/mx*100)+'%;background:'+PAL[i%PAL.length]+'"></div></div><span class="ent-n">'+n+'</span></div>'
-  ).join("")||'<div style="color:var(--tx3);padding:8px">Sin datos</div>';
+    '<div class="ent-bar"><span class="ent-nm">'+nm+'</span>'
+    +'<div class="ent-trk"><div class="ent-fill" style="width:'+Math.round(n/mx*100)+'%;background:'+PAL[i%PAL.length]+'"></div></div>'
+    +'<span class="ent-n">'+n+'</span></div>'
+  ).join("")||'<div style="color:var(--tx3);padding:8px">Sin datos de entidades</div>';
 
+  // Donut tipos promo
   killChart("cmpPromo");
-  const pc=countBy(d,pk);
+  const pc=countBy(d,promoK);
   charts.cmpPromo=new Chart(document.getElementById("cCompPromo"),{
     type:"doughnut",
     data:{labels:Object.keys(pc),datasets:[{data:Object.values(pc),backgroundColor:PAL,borderWidth:3,borderColor:"#fff"}]},
     options:{responsive:true,maintainAspectRatio:false,cutout:"55%",plugins:{legend:{position:"right",labels:{font:{size:11},padding:10,boxWidth:12}}}}
   });
 
+  // Barras presencia por ciudad
   killChart("cmpCiud");
-  const mc=countBy(d,ck);
+  const mc=countBy(d,ckC);
   charts.cmpCiud=new Chart(document.getElementById("cCompCiud"),{
     type:"bar",
-    data:{labels:Object.keys(mc),datasets:[{label:"Registros",data:Object.values(mc),backgroundColor:"#C0392B",borderRadius:6,barPercentage:.6}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:11}}},y:{grid:{color:"#FFF0F0"},ticks:{font:{size:11}}}}}
+    data:{labels:Object.keys(mc),datasets:[{label:"Locales con competencia",data:Object.values(mc),backgroundColor:"#C0392B",borderRadius:6,barPercentage:.6}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{grid:{display:false},ticks:{font:{size:11}}},y:{grid:{color:"#FFF0F0"},ticks:{font:{size:11},stepSize:1}}}}
   });
 
-  renderGenTable(d, OMIT_C, PHOTO_C, "cmpHead","cmpBody","cmpCount");
+  // Tabla competencia con columnas del spec
+  renderGenTable(d, OMIT_C, PHOTO_C, COLS_C, "cmpHead","cmpBody","cmpCount");
 }
 
 // ======== TIENDAS ========
-function renderTiendas() {
+function renderTiendas(){
   const d=rawT;
   set("tndCount", d.length+" registros");
-  const ck=findKey(d,["CIUDAD"]);
-  const nCiud=uniq(d.map(r=>r[ck]).filter(Boolean)).length;
+  const ckT=realKey(d,"CIUDAD");
+  const nCiud=uniq(d.map(r=>r[ckT]).filter(Boolean)).length;
   document.getElementById("tndKpis").innerHTML=
     '<div class="kpi-card kpi-blue"><div class="kpi-ico">🏪</div><div class="kpi-val">'+d.length+'</div><div class="kpi-lbl">Tiendas relevadas</div></div>'+
     '<div class="kpi-card kpi-green"><div class="kpi-ico">📍</div><div class="kpi-val">'+nCiud+'</div><div class="kpi-lbl">Ciudades cubiertas</div></div>';
 
-  renderGenTable(d, new Set(), [], "tndHead","tndBody","tndCount");
+  renderGenTable(d, new Set(), [], null, "tndHead","tndBody","tndCount");
 
   const photos=[];
   if(d.length){
     const pks=Object.keys(d[0]).filter(k=>k.toUpperCase().includes("FOTO")||k.toUpperCase().includes("PHOTO")||k.toUpperCase().includes("IMG"));
     d.forEach(r=>{
-      const lbl=r[Object.keys(r).find(k=>k.toUpperCase().includes("NOMBRE")||k.toUpperCase().includes("LOCAL")||k.toUpperCase().includes("TIENDA"))||""]||"Tienda";
-      pks.forEach(k=>{ if(r[k]&&r[k].trim()) photos.push({url:r[k],lbl}); });
+      const lk=Object.keys(r).find(k=>k.toUpperCase().includes("NOMBRE")||k.toUpperCase().includes("LOCAL")||k.toUpperCase().includes("TIENDA"))||"";
+      const lbl=r[lk]||"Tienda";
+      pks.forEach(k=>{ if(r[k]&&r[k].trim()) photos.push({url:r[k].trim(),lbl}); });
     });
   }
   const g=document.getElementById("tndGal");
@@ -817,23 +874,30 @@ function renderTiendas() {
   g.innerHTML=photos.slice(0,100).map(p=>{
     const u=p.url.replace(/"/g,"&quot;").replace(/'/g,"&#39;");
     const l=p.lbl.replace(/'/g,"&#39;");
-    return '<div class="gal-item"><img src="'+u+'" alt="'+l+'" loading="lazy" onclick="openPhoto(\''+u+'\',\''+l+'\')" onerror="this.parentElement.innerHTML=\'<div style=&quot;color:var(--tx3);font-size:22px;text-align:center&quot;>📷</div>\'"></div>';
+    let vu=p.url;
+    const dm=p.url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+    if(dm) vu="https://drive.google.com/file/d/"+dm[1]+"/view";
+    vu=vu.replace(/'/g,"&#39;");
+    return '<div class="gal-item"><a href="'+vu+'" target="_blank" rel="noopener"><img src="'+u+'" alt="'+l+'" loading="lazy" onerror="this.parentElement.parentElement.innerHTML=\'<div style=&quot;color:var(--tx3);font-size:22px;text-align:center&quot;>📷</div>\'"></a></div>';
   }).join("");
 }
 
-function renderGenTable(data, omit, pKeys, headId, bodyId, countId) {
+// renderGenTable ahora acepta specCols opcional
+function renderGenTable(data, omit, pKeys, specCols, headId, bodyId, countId){
   if(!data.length){
     document.getElementById(headId).innerHTML="<th>Sin datos</th>";
     document.getElementById(bodyId).innerHTML='<tr><td class="empty">No se encontraron registros</td></tr>';
     return;
   }
-  const cols=Object.keys(data[0]).filter(k=>!omit.has(k.toUpperCase())&&!pKeys.includes(k));
+  const cols=specCols ? getDisplayCols(data,specCols)
+                      : Object.keys(data[0]).filter(k=>!(omit&&omit.has(k.toUpperCase()))&&!pKeys.includes(k));
   const ep=pKeys.filter(k=>Object.prototype.hasOwnProperty.call(data[0],k));
-  document.getElementById(headId).innerHTML=[...cols,ep.length?"Fotos":""].filter(Boolean).map(c=>"<th>"+c.replace(/_/g," ")+"</th>").join("");
-  document.getElementById(bodyId).innerHTML=data.slice(0,100).map(r=>{
+  document.getElementById(headId).innerHTML=[...cols,ep.length?"Fotos":""].filter(Boolean)
+    .map(c=>"<th>"+c.replace(/_/g," ")+"</th>").join("");
+  document.getElementById(bodyId).innerHTML=data.slice(0,150).map(r=>{
     const cells=cols.map(c=>{
       const v=r[c]!=null?r[c]:"";
-      if(isPillCol(c))return "<td>"+pill(v)+"</td>";
+      if(isPillCol(c)) return "<td>"+pill(v)+"</td>";
       return '<td class="obs" title="'+String(v).replace(/"/g,"&quot;")+'">'+( v||"—")+"</td>";
     }).join("");
     const fotos=ep.length?"<td><div class='photo-strip'>"+ep.map(k=>thumb(r[k],r[cols[0]]||"")).join("")+"</div></td>":"";
@@ -843,13 +907,13 @@ function renderGenTable(data, omit, pKeys, headId, bodyId, countId) {
 }
 
 // ======== EXPORT ========
-function exportExcel() {
-  if(!filtered.length){alert("No hay datos.");return;}
-  const cols=tblCols(filtered);
+function exportExcel(){
+  if(!filtered.length){alert("No hay datos para exportar.");return;}
+  const cols=getDisplayCols(filtered,COLS_G);
   const rows=[cols.map(c=>c.replace(/_/g," "))];
   filtered.forEach(r=>rows.push(cols.map(c=>r[c]||"")));
   const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), "Relevamiento");
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),"Relevamiento");
   XLSX.writeFile(wb,"relevamiento_bf_gastro.xlsx");
 }
 
@@ -866,7 +930,7 @@ function closeModal(){
   document.body.style.overflow="";
 }
 function closeModalBg(e){ if(e.target===document.getElementById("photoModal")) closeModal(); }
-document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeModal(); });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeModal(); });
 
 // ======== BOOT ========
 loadAll();
