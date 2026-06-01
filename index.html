@@ -1190,38 +1190,188 @@ function HeatBlock({ mode }) {
 function PageResumen() {
   const D = window.TableroData; if(!D) return null;
   const k = D.kpi;
+
+  // Zona Interior — gastronómico (RE_BF_GASTRO_INT)
+  const intTotal   = k.totalBF, intCon = k.conBF, intSin = k.sinBF;
+  const intCov     = k.covBF,   intConoce = k.knowsWell;
+  const intCovCP   = k.covCP,   intConCP  = k.conCP;
+
+  // Zona Asunción y alrededores — tiendas (RE_BF_TIENDAS)
+  const asuTotal   = k.tTotal,  asuCon = k.tConMat, asuSin = asuTotal - asuCon;
+  const asuCov     = asuTotal > 0 ? Math.round(asuCon / asuTotal * 100) : 0;
+  const asuConoce  = k.tConoce;
+  const asuConCP   = k.tConComp;
+  const asuCovCP   = asuTotal > 0 ? Math.round(asuConCP / asuTotal * 100) : 0;
+
+  // Globales
+  const totalGlobal = intTotal + asuTotal;
+  const conGlobal   = intCon   + asuCon;
+  const covGlobal   = totalGlobal > 0 ? Math.round(conGlobal / totalGlobal * 100) : 0;
+
+  const s = {
+    secLabel: { fontSize:9.5, fontWeight:700, color:'var(--muted)', textTransform:'uppercase',
+                letterSpacing:'.12em', margin:'4px 0 -2px' },
+    zoneHead: { fontSize:9, fontWeight:700, textTransform:'uppercase', letterSpacing:'.08em',
+                color:'var(--muted)', marginBottom:8 },
+    kpiWrap: { display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:10 },
+    kpiBox: (accent) => ({
+      background:'var(--white)', border:'1px solid var(--border)', borderRadius:'var(--r)',
+      boxShadow:'var(--sh)', padding:'12px 14px',
+      borderTop: `3px solid ${accent}`,
+    }),
+    kpiVal: { fontSize:28, fontWeight:800, lineHeight:1, fontVariantNumeric:'tabular-nums' },
+    kpiLbl: { fontSize:9.5, fontWeight:700, textTransform:'uppercase', letterSpacing:'.06em',
+              color:'var(--muted)', marginTop:4 },
+    kpiSub: (tone) => ({ fontSize:10.5, fontWeight:600, marginTop:3,
+              color: tone==='pos'?'var(--green)': tone==='neg'?'var(--red)': tone==='warn'?'var(--orange)':'var(--muted)' }),
+    zoneBorder: { background:'var(--white)', border:'1px solid var(--border)', borderRadius:'var(--r)',
+                  boxShadow:'var(--sh)', overflow:'hidden' },
+    zoneHd: (bg) => ({ background:bg, borderBottom:'1px solid var(--border2)', padding:'8px 16px',
+                  fontSize:10, fontWeight:700, color:'var(--navy)' }),
+    zoneBd: { padding:'14px 16px' },
+  };
+
+  function MiniKpi({ value, label, sub, color, subTone }) {
+    return (
+      <div style={s.kpiBox(color||'var(--border)')}>
+        <div style={{ ...s.kpiVal, color: color||'var(--navy)' }}>{value}</div>
+        <div style={s.kpiLbl}>{label}</div>
+        {sub && <div style={s.kpiSub(subTone)}>{sub}</div>}
+      </div>
+    );
+  }
+
+  // Competencia comparativa — barras simples
+  const cpData = [
+    { label:'Interior — Gastronómico', val: intCovCP, total: 100, color:'var(--red)',    sub: `${intConCP} de ${intTotal} locales` },
+    { label:'Asunción — Tiendas',      val: asuCovCP, total: 100, color:'var(--orange)', sub: `${asuConCP} de ${asuTotal} locales` },
+  ];
+
   return (
     <>
-      {/* EXEC BANNER */}
+      {/* ── BANNER ── */}
       <div className="exec">
         <div className="exec-l">
-          <div className="exec-eyebrow">Resumen del Relevamiento</div>
-          <div className="exec-head">Cobertura de material BF en <b>{k.covBF}%</b> de los locales gastronómicos</div>
+          <div className="exec-eyebrow">Resumen del Relevamiento — Interior + Asunción y alrededores</div>
+          <div className="exec-head">
+            Cobertura global BF: <b style={{color:'var(--yellow)'}}>{covGlobal}%</b> en {totalGlobal} puntos de venta relevados
+          </div>
           <div className="exec-sub">
-            Período {D.period} · {k.totalBF} locales relevados en {k.departments} departamentos del interior.
-            La competencia mantiene presencia en {k.covCP}% de los mismos puntos — la mayor concentración
-            propia se da en Itapúa y Alto Paraná.
+            <b>Interior del país</b> (gastronómico): {intTotal} locales · {intCov}% de cobertura · período {D.period}.{' '}
+            <b>Asunción y alrededores</b> (tiendas): {asuTotal} locales · {asuCov}% de cobertura · período {D.periodTiendas}.{' '}
+            La competencia mantiene presencia en el {intCovCP}% de los locales del Interior y el {asuCovCP}% en Asunción.
           </div>
         </div>
         <div className="exec-r">
-          <div className="exec-stat"><div className="exec-num">{k.conBF}</div><div className="exec-cap">Con material BF</div></div>
-          <div className="exec-stat"><div className="exec-num warn">{k.sinBF}</div><div className="exec-cap">Sin material</div></div>
+          <div className="exec-stat"><div className="exec-num">{totalGlobal}</div><div className="exec-cap">Total relevados</div></div>
+          <div className="exec-stat"><div className="exec-num" style={{color:'var(--yellow)'}}>{covGlobal}%</div><div className="exec-cap">Cobertura global</div></div>
         </div>
       </div>
 
-      {/* KPI ROW */}
-      <div className="kpi-grid">
-        <KpiCard accent="b" label="Locales relevados" value={k.totalBF} sub={D.period} subTone="muted" />
-        <KpiCard accent="g" label="Con material BF" value={k.conBF} sub={`${k.covBF}% cobertura`} subTone="pos" />
-        <KpiCard accent="r" label="Sin material BF" value={k.sinBF} sub={`${100-k.covBF}% del total`} subTone="neg" />
-        <KpiCard accent="y" label="Conocen la promo" value={k.knowsWell} sub="encargados informados" subTone="mid" />
-        <KpiCard accent="b" label="Presencia competencia" value={`${k.covCP}%`} sub={`${k.conCP} locales`} subTone="neg" />
+      {/* ── KPIs INTERIOR ── */}
+      <div style={s.secLabel}>Interior del país — Gastronómico</div>
+      <div style={s.kpiWrap}>
+        <MiniKpi color="var(--navy)"  value={intTotal}   label="Locales relevados"    sub={D.period}                        subTone="muted" />
+        <MiniKpi color="var(--green)" value={intCon}     label="Con material BF"      sub={`${intCov}% cobertura`}          subTone="pos" />
+        <MiniKpi color="var(--red)"   value={intSin}     label="Sin material BF"      sub={`${100-intCov}% del total`}      subTone="neg" />
+        <MiniKpi color="var(--yellow)"value={intConoce}  label="Conocen la promo"     sub="encargados informados"           subTone="mid" />
+        <MiniKpi color="var(--red)"   value={`${intCovCP}%`} label="Presencia competencia" sub={`${intConCP} locales`}      subTone="neg" />
       </div>
 
-      <div className="sec-lbl">Distribución geográfica</div>
-      <HeatBlock mode="bf" />
+      {/* ── KPIs ASUNCIÓN ── */}
+      <div style={s.secLabel}>Asunción y alrededores — Tiendas</div>
+      <div style={s.kpiWrap}>
+        <MiniKpi color="var(--navy)"  value={asuTotal}   label="Locales relevados"    sub={D.periodTiendas}                 subTone="muted" />
+        <MiniKpi color="var(--green)" value={asuCon}     label="Con material BF"      sub={`${asuCov}% cobertura`}          subTone="pos" />
+        <MiniKpi color="var(--red)"   value={asuSin}     label="Sin material BF"      sub={`${100-asuCov}% del total`}      subTone="neg" />
+        <MiniKpi color="var(--yellow)"value={asuConoce}  label="Conocen la promo"     sub="encargados informados"           subTone="mid" />
+        <MiniKpi color="var(--orange)"value={`${asuCovCP}%`} label="Presencia competencia" sub={`${asuConCP} locales`}     subTone="neg" />
+      </div>
 
-      <div className="sec-lbl">Cobertura por ciudad</div>
+      {/* ── MAPA + PANEL ASUNCIÓN ── */}
+      <div style={s.secLabel}>Distribución geográfica</div>
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 320px', gap:14 }}>
+        {/* mapa Interior */}
+        <div className="card heat-card">
+          <div className="card-h">
+            <span>Presencia de Material BF — Interior del país</span>
+            <span className="heat-legend">
+              <span className="hl-lbl">0%</span>
+              <span className="hl-bar" style={{ background:'linear-gradient(90deg,#DBEAFE,#1E3A8A)' }} />
+              <span className="hl-lbl">100%</span>
+            </span>
+          </div>
+          <div className="card-b heat-b">
+            <ParaguayHeatMap mode="bf" data={D.deptBF} deptCity={D.DEPT_CITY} height={480} />
+          </div>
+        </div>
+
+        {/* panel Asunción */}
+        <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+          <div style={s.zoneBorder}>
+            <div style={s.zoneHd('var(--bxpal)')}>🏙 Asunción y alrededores</div>
+            <div style={s.zoneBd}>
+              {[
+                ['Total relevados',     asuTotal,           'var(--navy)'],
+                ['Con material BF',     `${asuCon} (${asuCov}%)`,  'var(--green)'],
+                ['Sin material BF',     `${asuSin} (${100-asuCov}%)`, 'var(--red)'],
+                ['Conocen la promo',    `${asuConoce} (${asuTotal>0?Math.round(asuConoce/asuTotal*100):0}%)`, 'var(--yellow)'],
+                ['Con competencia',     `${asuConCP} (${asuCovCP}%)`, 'var(--orange)'],
+              ].map(([lbl, val, color]) => (
+                <div key={lbl} style={{ display:'flex', justifyContent:'space-between', alignItems:'baseline',
+                  padding:'7px 0', borderBottom:'1px solid var(--border2)' }}>
+                  <span style={{ fontSize:11, color:'var(--text)' }}>{lbl}</span>
+                  <span style={{ fontSize:13, fontWeight:800, color }}>{val}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={s.zoneBorder}>
+            <div style={s.zoneHd('var(--bxpal)')}>📊 Ranking — Interior</div>
+            <div style={{ ...s.zoneBd, maxHeight:220, overflowY:'auto' }}>
+              <RankList data={D.deptBF} deptCity={D.DEPT_CITY} mode="bf" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── COMPETENCIA COMPARATIVA ── */}
+      <div style={s.secLabel}>Competencia — presencia por zona</div>
+      <div className="grid-2">
+        <div className="card">
+          <div className="card-h">Presencia de material rival — Interior vs Asunción</div>
+          <div className="card-b" style={{ padding:'18px 20px', display:'flex', flexDirection:'column', gap:18 }}>
+            {cpData.map(row => (
+              <div key={row.label} style={{ display:'flex', flexDirection:'column', gap:5 }}>
+                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'baseline' }}>
+                  <span style={{ fontSize:12, fontWeight:600, color:'var(--text)' }}>{row.label}</span>
+                  <span style={{ fontSize:15, fontWeight:800, color:row.color }}>{row.val}%</span>
+                </div>
+                <div style={{ height:10, background:'var(--bpale)', borderRadius:5, overflow:'hidden', border:'1px solid var(--border2)' }}>
+                  <div style={{ height:'100%', width:row.val+'%', background:row.color, borderRadius:5 }}/>
+                </div>
+                <div style={{ fontSize:10, color:'var(--muted)' }}>{row.sub}</div>
+              </div>
+            ))}
+            <div style={{ marginTop:4, padding:'10px 12px', background:'var(--bxpal)', borderRadius:6,
+              border:'1px solid var(--border2)', fontSize:11, lineHeight:1.6, color:'var(--text)' }}>
+              {intCovCP > asuCovCP
+                ? `La competencia es más agresiva en el Interior (${intCovCP}% vs ${asuCovCP}% en Asunción). Reforzar la presencia BF en ciudades clave del interior es prioritario.`
+                : asuCovCP > intCovCP
+                ? `La competencia tiene mayor penetración en Asunción (${asuCovCP}% vs ${intCovCP}% en el Interior). El Interior muestra menor saturación competitiva.`
+                : `La competencia mantiene una presencia similar en ambas zonas (${intCovCP}%).`
+              }
+            </div>
+          </div>
+        </div>
+        <Card title="Marcas competidoras — Interior">
+          <HBarChart data={D.competitors} color="var(--red)" />
+        </Card>
+      </div>
+
+      {/* ── DETALLE INTERIOR ── */}
+      <div style={s.secLabel}>Cobertura por ciudad — Interior</div>
       <div className="grid-2">
         <Card title="Locales por ciudad — Con vs Sin material BF">
           <LegendRow items={[{label:'Con material',color:'var(--blue-700)'},{label:'Sin material',color:'#CBD5E1'}]} />
@@ -1232,8 +1382,8 @@ function PageResumen() {
         </Card>
       </div>
       <div className="grid-2">
-        <Card title="Conocimiento de la promoción"><Donut data={D.promoKnowledge} /></Card>
-        <Card title="Estado del material"><Donut data={D.materialState} /></Card>
+        <Card title="Conocimiento de la promoción — Interior"><Donut data={D.promoKnowledge} /></Card>
+        <Card title="Estado del material — Interior"><Donut data={D.materialState} /></Card>
       </div>
     </>
   );
