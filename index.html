@@ -777,7 +777,10 @@ function hideLoader() {
     setTimeout(() => {
       hideLoader();
       /* Mount React app after data is ready */
-      ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+      if (!window.__reactRoot) {
+        window.__reactRoot = ReactDOM.createRoot(document.getElementById('root'));
+      }
+      window.__reactRoot.render(React.createElement(App));
     }, 500);
 
   } catch(err) {
@@ -788,7 +791,7 @@ function hideLoader() {
     if (bar) { bar.style.background="#F87171"; bar.style.width="100%"; }
     /* Fallback: mount with empty data so UI doesn't break */
     window.TableroData = buildTableroData([],[],[]);
-    setTimeout(()=>{ hideLoader(); ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App)); }, 3000);
+    setTimeout(()=>{ hideLoader(); if(!window.__reactRoot){window.__reactRoot=ReactDOM.createRoot(document.getElementById('root'));} window.__reactRoot.render(React.createElement(App)); }, 3000);
   }
 })();
 
@@ -840,7 +843,6 @@ window.openLB=openLB; window.driveThumb=driveThumb;
 
 <!-- ── JSX bundle (data.js + charts.jsx + components.jsx + app.jsx inlined) ── -->
 <script type="text/babel">
-const D = window.TableroData;
 const { useState, useRef, useEffect } = React;
 
 /* ══════════════════════════════════════════════════════════════
@@ -1159,6 +1161,7 @@ function EvCard({ r }) {
    PAGES
 ══════════════════════════════════════════════════════════════ */
 function HeatBlock({ mode }) {
+  const D = window.TableroData; if(!D) return null;
   const data  = mode==='bf' ? D.deptBF : D.deptCP;
   const title = mode==='bf' ? 'Presencia de Material BF por Departamento' : 'Presencia de Competencia por Departamento';
   const grad  = mode==='bf' ? 'linear-gradient(90deg,#DBEAFE,#1E3A8A)' : 'linear-gradient(90deg,#FEE2E2,#991B1B)';
@@ -1185,6 +1188,7 @@ function HeatBlock({ mode }) {
 }
 
 function PageResumen() {
+  const D = window.TableroData; if(!D) return null;
   const k = D.kpi;
   return (
     <>
@@ -1236,6 +1240,7 @@ function PageResumen() {
 }
 
 function PageGastro() {
+  const D = window.TableroData; if(!D) return null;
   const [sub, setSub] = useState('bf');
   const k = D.kpi;
   return (
@@ -1283,6 +1288,7 @@ function PageGastro() {
 }
 
 function PageTiendas() {
+  const D = window.TableroData; if(!D) return null;
   const k = D.kpi;
   const tConMat = k.tConMat, tTotal = k.tTotal;
   const tiendasEstadoDonut = [
@@ -1322,6 +1328,7 @@ function PageTiendas() {
 }
 
 function PageDetalle() {
+  const D = window.TableroData; if(!D) return null;
   const [open, setOpen] = useState(null);
   const [city, setCity] = useState('');
   const [matFilt, setMatFilt] = useState('');
@@ -1417,6 +1424,7 @@ function PageDetalle() {
 }
 
 function PageEvidencias() {
+  const D = window.TableroData; if(!D) return null;
   const [tab, setTab] = useState('gastro');
   const [search, setSearch] = useState('');
   const [ciudad, setCiudad] = useState('');
@@ -1478,6 +1486,7 @@ const TITLES = {
    Análisis comparativo Interior + Asunción y alrededores
 ══════════════════════════════════════════════════════════════ */
 function PageConclusiones() {
+  const D = window.TableroData; if(!D) return null;
   const k  = D.kpi;
   // Interior data (from our sheets)
   const intTotal    = k.totalBF;
@@ -1783,12 +1792,25 @@ const PAGES = { resumen: PageResumen, gastro: PageGastro, tiendas: PageTiendas, 
 
 function App() {
   const [page, setPage] = useState('resumen');
+  // Guard: TableroData may not be ready if called before bootstrap completes
+  const D_safe = window.TableroData;
+  if (!D_safe || !D_safe.period) {
+    return (
+      <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',
+        background:'var(--bg)',flexDirection:'column',gap:16}}>
+        <div style={{width:40,height:40,border:'3px solid var(--border)',borderTopColor:'var(--navy)',
+          borderRadius:'50%',animation:'spin .8s linear infinite'}}/>
+        <div style={{fontSize:13,color:'var(--muted)'}}>Cargando datos…</div>
+        <style>{'@keyframes spin{to{transform:rotate(360deg)}}'}</style>
+      </div>
+    );
+  }
   const Page = PAGES[page];
   return (
     <div className="shell">
-      <Sidebar active={page} onNav={setPage} period={page==='tiendas' ? D.periodTiendas : D.period} />
+      <Sidebar active={page} onNav={setPage} period={page==='tiendas' ? D_safe.periodTiendas : D_safe.period} />
       <div className="main">
-        <Topbar title={TITLES[page][0]} sub={TITLES[page][1]} badge={page==='tiendas' ? D.periodTiendas : D.period} />
+        <Topbar title={TITLES[page][0]} sub={TITLES[page][1]} badge={page==='tiendas' ? D_safe.periodTiendas : D_safe.period} />
         <div className="pages"><div className="page" key={page}><Page /></div></div>
       </div>
     </div>
