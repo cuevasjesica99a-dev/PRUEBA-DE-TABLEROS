@@ -752,13 +752,13 @@ function hideLoader() {
 (async function bootstrap() {
   showLoader("Conectando con Google Sheets…");
   try {
-    setProgress(10, "Cargando RE_BF_GASTRO_INT…");
+    setProgress(10, "Cargando");
     const rG = await fetch(API_BASE + encodeURIComponent(SHEETS.gastro)).then(r=>{if(!r.ok)throw new Error("HTTP "+r.status+" — "+SHEETS.gastro);return r.json();});
 
-    setProgress(40, "Cargando RE_COMPE_GASTRO_INT…");
+    setProgress(40, "Cargando");
     const rC = await fetch(API_BASE + encodeURIComponent(SHEETS.compe)).then(r=>{if(!r.ok)throw new Error("HTTP "+r.status+" — "+SHEETS.compe);return r.json();});
 
-    setProgress(70, "Cargando RE_BF_TIENDAS…");
+    setProgress(70, "Cargando");
     const rT = await fetch(API_BASE + encodeURIComponent(SHEETS.tiendas)).then(r=>{if(!r.ok)throw new Error("HTTP "+r.status+" — "+SHEETS.tiendas);return r.json();});
 
     setProgress(88, "Procesando datos…");
