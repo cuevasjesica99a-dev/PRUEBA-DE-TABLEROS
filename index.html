@@ -274,6 +274,370 @@ footer{max-width:var(--max-w);margin:3rem auto 0;padding-top:1.5rem;border-top:1
 const GC = { wb:null, analysis:[], locales:[], fileName:'', periodo:'' };
 
 // ══════════════════════════════════════════════════════════
+// UTILS COMPARTIDOS
+// ══════════════════════════════════════════════════════════
+const $ = id => document.getElementById(id);
+const show = id => $(id).classList.remove('hidden');
+
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  $('tab-' + id).classList.add('active');
+}
+
+function setStatus(pfx, msg, type) {
+  const bar = $('sb-' + pfx);
+  bar.className = 'status-bar show ' + type;
+  $('sm-' + pfx).textContent = msg;
+}
+
+function toNum(v) {
+  if (v === null || v === undefined || v === '' || v === '-') return null;
+  const s = String(v).trim();
+  if (s === '-') return null;
+  const n = parseFloat(s.replace(/[^\d.]/g, ''));
+  return (!isNaN(n) && n > 100 && n < 2000000) ? n : null;
+}
+
+function fmtNum(n) { return Math.round(n).toLocaleString('es-PY'); }
+
+function setupDrop(pfx, handler) {
+  const dz = $('dz-' + pfx), fi = $('fi-' + pfx);
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+  dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag-over'); handler(e.dataTransfer.files[0]); });
+  fi.addEventListener('change', e => { if(e.target.files[0]) handler(e.target.files[0]); });
+}
+
+function loadExcelJS() {
+  return new Promise((res, rej) => {
+    if (window.ExcelJS) { res(); return; }
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js';
+    s.onload = res;
+    s.onerror = () => rej(new Error('No se pudo cargar ExcelJS. Verificá tu conexión a internet.'));
+    document.head.appendChild(s);
+  });
+}
+
+function sheetToArray(ws) {
+  if (!ws['!ref']) return [];
+  const range = XLSX.utils.decode_range(ws['!ref']);
+  const rows = [];
+  for (let r = range.s.r; r <= range.e.r; r++) {
+    const row = [];
+    for (let c = range.s.c; c <= range.e.c; c++) {
+      const cell = ws[XLSX.utils.encode_cell({ r, c })];
+      row.push(cell ? cell.v : null);
+    }
+    rows.push(row);
+  }
+  return rows;
+}
+
+// ExcelJS style helpers
+function exFill(hex)  { return { type:'pattern', pattern:'solid', fgColor:{argb:'FF'+hex} }; }
+function exFont(sz=10, bold=false, color='000000', name='Arial') { return { name, size:sz, bold, color:{argb:'FF'+color} }; }
+function exAlign(h='center', v='middle', wrap=true) { return { horizontal:h, vertical:v, wrapText:wrap }; }
+function applyCell(cell, val, fillHex, fontCfg, alignCfg, numFmt) {
+  cell.value = val;
+  if (fillHex)  cell.fill      = exFill(fillHex);
+  if (fontCfg)  cell.font      = fontCfg;
+  if (alignCfg) cell.alignment = alignCfg;
+  if (numFmt)   cell.numFmt    = numFmt;
+}
+
+// ─── Copia hoja original con formato completo (colores, anchos, merges, fuentes) ───
+function copySheetWithFormat(xlsxSheet, excelJsSheet) {
+  if (!xlsxSheet || !xlsxSheet['!ref']) return;
+  const range = XLSX.utils.decode_range(xlsxSheet['!ref']);
+
+  if (xlsxSheet['!cols']) {
+    xlsxSheet['!cols'].forEach((col, i) => {
+      if (col && col.wch) excelJsSheet.getColumn(i + 1).width = col.wch;
+      else if (col && col.wpx) excelJsSheet.getColumn(i + 1).width = col.wpx / 7;
+    });
+  }
+
+  if (xlsxSheet['!rows']) {
+    xlsxSheet['!rows'].forEach((row, i) => {
+      if (row && row.hpt) excelJsSheet.getRow(i + 1).height = row.hpt;
+    });
+  }
+
+  for (let R = range.s.r; R <= range.e.r; R++) {
+    for (let C = range.s.c; C <= range.e.c; C++) {
+      const addr  = XLSX.utils.encode_cell({ r: R, c: C });
+      const xlCell = xlsxSheet[addr];
+      if (!xlCell) continue;
+      const ejCell = excelJsSheet.getCell(R + 1, C + 1);
+
+      ejCell.value = (xlCell.t === 'n') ? xlCell.v
+                   : (xlCell.t === 'b') ? xlCell.v
+                   : (xlCell.v !== undefined && xlCell.v !== null) ? String(xlCell.v)
+                   : null;
+
+      const s = xlCell.s;
+      if (!s) continue;
+
+      try {
+        if (s.fill && s.fill.fgColor) {
+          const rgb = s.fill.fgColor.rgb || null;
+          if (rgb && rgb !== '00000000' && rgb.length >= 6) {
+            const hex = rgb.length === 8 ? rgb.slice(2) : rgb;
+            ejCell.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF'+hex } };
+          }
+        }
+      } catch(e) {}
+
+      try {
+        if (s.font) {
+          const fc = {};
+          if (s.font.name)  fc.name  = s.font.name;
+          if (s.font.sz)    fc.size  = s.font.sz;
+          if (s.font.bold)  fc.bold  = true;
+          if (s.font.italic) fc.italic = true;
+          if (s.font.color && s.font.color.rgb) {
+            const rgb = s.font.color.rgb;
+            fc.color = { argb: rgb.length === 8 ? rgb : 'FF'+rgb };
+          }
+          if (Object.keys(fc).length) ejCell.font = fc;
+        }
+      } catch(e) {}
+
+      try {
+        if (s.alignment) {
+          ejCell.alignment = {
+            horizontal: s.alignment.horizontal || undefined,
+            vertical:   s.alignment.vertical   || undefined,
+            wrapText:   s.alignment.wrapText    || false,
+          };
+        }
+      } catch(e) {}
+
+      try {
+        if (s.numFmt) ejCell.numFmt = s.numFmt;
+      } catch(e) {}
+    }
+  }
+
+  if (xlsxSheet['!merges']) {
+    xlsxSheet['!merges'].forEach(m => {
+      try {
+        excelJsSheet.mergeCells(m.s.r+1, m.s.c+1, m.e.r+1, m.e.c+1);
+      } catch(e) {}
+    });
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// ████  CARNICERIAS
+// ══════════════════════════════════════════════════════════
+setupDrop('carn', handleCarn);
+
+function handleCarn(file) {
+  if (!file || !file.name.endsWith('.xlsx')) { setStatus('carn', 'El archivo debe ser .xlsx', 'err'); return; }
+  GC.fileName = file.name.replace('.xlsx', '') + '_ANALIZADO.xlsx';
+  setStatus('carn', 'Procesando…', 'info');
+  $('sb-carn').classList.add('pulsing');
+  const reader = new FileReader();
+  reader.onerror = () => { $('sb-carn').classList.remove('pulsing'); setStatus('carn', 'Error al leer el archivo', 'err'); };
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(new Uint8Array(e.target.result), { type:'array' });
+      GC.wb = wb;
+      const sn = wb.SheetNames.find(n => {
+        const l = n.toLowerCase();
+        return l.includes('precio') && l.includes('carnicer') && !l.includes('analisis') && !l.includes('copia');
+      });
+      if (!sn) throw new Error('No se encontró la hoja de precios. Hojas disponibles: ' + wb.SheetNames.join(', '));
+      const r = processCarnSheet(wb.Sheets[sn]);
+      GC.analysis = r.analysis; GC.locales = r.locales; GC.periodo = r.periodo;
+      $('sb-carn').classList.remove('pulsing');
+      setStatus('carn', `✓ Procesado — ${GC.analysis.length} cortes en ${GC.locales.length} locales`, 'ok');
+      renderCarnStats(); renderCarnTable();
+      show('stats-carn'); show('preview-carn'); show('dl-carn');
+    } catch(err) {
+      $('sb-carn').classList.remove('pulsing');
+      setStatus('carn', 'Error: ' + err.message, 'err');
+      console.error(err);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function processCarnSheet(ws) {
+  const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:null });
+  let periodo = '', hIdx = -1, hCols = {};
+
+  const CORTE_COL_NAMES_C = new Set(['CORTE','CADENA','TIPO DE CORTE','CORTES','DESCRIPCION','DESCRIPCIÓN','PRODUCTO','ITEM']);
+  function isNumC(v) {
+    if (v === null || v === undefined) return false;
+    const n = parseFloat(String(v).replace(/[^\d.]/g,''));
+    return !isNaN(n) && n > 0;
+  }
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row || !row[0]) continue;
+    const first = String(row[0]).trim().toUpperCase();
+    if (first.includes('PRECIO DE CORTES') || first.includes('PRECIO DE CARNICER')) periodo = String(row[0]).trim();
+
+    const isKnown = CORTE_COL_NAMES_C.has(first);
+    const nonNull = row.slice(1).filter(v => v !== null && v !== undefined && String(v).trim() !== '');
+    const textCols = nonNull.filter(v => !isNumC(v) && String(v).trim() !== '-');
+    const nextRow = rows[i + 1];
+    const nextHasNums = nextRow ? nextRow.slice(1).filter(v => isNumC(v)).length >= 2 : false;
+    const isGuessed = first.length < 60 && textCols.length >= 3 && nextHasNums;
+
+    if (isKnown || isGuessed) {
+      hIdx = i;
+      let boxCnt = 0;
+      row.forEach((h, idx) => {
+        if (!h || idx === 0) return;
+        const k = String(h).trim().toUpperCase();
+        if (!k || k === 'OTRAS CARNES' || k === 'PRECIO') return;
+        if (k === 'BOX') { boxCnt++; hCols['BOX' + boxCnt] = idx; }
+        else hCols[k] = idx;
+      });
+      break;
+    }
+  }
+  if (hIdx < 0) throw new Error('No se encontró la fila de encabezado. Verificá que el archivo tenga una fila con los nombres de locales.');
+
+  const SKIP = new Set(['BOX1','BOX2','OTRAS CARNES','PRECIO']);
+  const locales = Object.keys(hCols).filter(k => !SKIP.has(k));
+  if (hCols['BOX1']) locales.push('BOX');
+
+  const lomo = { seen: false };
+  const analysis = [];
+
+  for (let i = hIdx + 1; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row || !row[0]) continue;
+    let corte = String(row[0]).trim();
+    if (!corte || corte.toUpperCase() === 'CORTE' || corte.toUpperCase() === 'CADENA') continue;
+    if (corte.toUpperCase() === 'LOMO') {
+      if (!lomo.seen) lomo.seen = true; else corte = 'LOMO DE CERDO';
+    }
+    const prices = {};
+    locales.forEach(loc => {
+      let val;
+      if (loc === 'BOX') {
+        const v1 = toNum(row[hCols['BOX1']]);
+        const v2 = hCols['BOX2'] != null ? toNum(row[hCols['BOX2']]) : null;
+        const vd = [v1, v2].filter(x => x !== null);
+        val = vd.length ? vd.reduce((a,b) => a+b) / vd.length : null;
+      } else {
+        val = toNum(row[hCols[loc]]);
+      }
+      if (val !== null) prices[loc] = val;
+    });
+    if (!Object.keys(prices).length) continue;
+    const maxL = Object.keys(prices).reduce((a,b) => prices[a] > prices[b] ? a : b);
+    const minL = Object.keys(prices).reduce((a,b) => prices[a] < prices[b] ? a : b);
+    analysis.push({
+      corte,
+      maxLocal: maxL, maxPrice: prices[maxL],
+      minLocal: minL, minPrice: prices[minL],
+      diff: prices[maxL] - prices[minL],
+      missing: locales.filter(l => !prices[l])
+    });
+  }
+  if (!analysis.length) throw new Error('No se encontraron cortes con precios válidos. Verificá que el archivo tenga datos numéricos.');
+  return { analysis, locales, periodo };
+}
+
+function renderCarnStats() {
+  $('sc-carn').textContent = GC.analysis.length;
+  $('sl-carn').textContent = GC.locales.length;
+  $('periodo-carn').textContent = GC.periodo;
+  if (GC.analysis.length > 0) {
+    const best = GC.analysis.reduce((a,b) => b.diff > a.diff ? b : a);
+    $('sd-carn').textContent = fmtNum(best.diff) + ' Gs';
+    $('sv-carn').textContent = best.corte;
+  }
+  $('rc-carn').textContent = GC.analysis.length + ' cortes';
+}
+
+function renderCarnTable() {
+  $('pb-carn').innerHTML = GC.analysis.map(d => {
+    const m = d.missing.length ? `<span class="missing">${d.missing.join(', ')}</span>` : `<span class="all-ok">✓ todos</span>`;
+    return `<tr><td class="corte">${d.corte}</td><td><span class="pill max">↑ ${d.maxLocal}</span></td><td>${fmtNum(d.maxPrice)}</td><td><span class="pill min">↓ ${d.minLocal}</span></td><td>${fmtNum(d.minPrice)}</td><td>${fmtNum(d.diff)}</td><td>${m}</td></tr>`;
+  }).join('');
+}
+
+function makeCarnComment(d) {
+  const ds = Math.round(d.diff).toLocaleString('es-PY').replace(/,/g,'.');
+  let o1;
+  if (!d.missing.length) o1 = '1.  EL CORTE PRESENTA EXISTENCIA EN TODOS LOS LOCALES AUDITADOS.';
+  else if (d.missing.length >= GC.locales.length - 1) o1 = `1.  EL CORTE SE ENCUENTRA ÚNICAMENTE EN EL LOCAL DE ${d.maxLocal}.`;
+  else o1 = `1.  EL CORTE NO PRESENTA EXISTENCIA EN LOS LOCALES DE ${d.missing.join(', ')}.`;
+  const o2 = d.diff > 0
+    ? `2. SE VISUALIZA UNA DIFERENCIA EN CUANTO AL PRECIO ENTRE ${d.maxLocal} Y ${d.minLocal} DE ${ds} GS.`
+    : `2. EL CORTE PRESENTA UN ÚNICO PRECIO REGISTRADO.`;
+  return o1 + '\n' + o2;
+}
+
+async function generateCarn() {
+  const btn = $('btn-carn'); btn.disabled = true; $('btxt-carn').textContent = 'Cargando ExcelJS…';
+  try {
+    await loadExcelJS();
+    $('btxt-carn').textContent = 'Generando Excel…';
+    const wb = new ExcelJS.Workbook();
+    const origSN = GC.wb.SheetNames.find(n => n.toLowerCase().includes('precio') && n.toLowerCase().includes('carnicer') && !n.toLowerCase().includes('analisis') && !n.toLowerCase().includes('copia'));
+    const ws1 = wb.addWorksheet(origSN);
+    copySheetWithFormat(GC.wb.Sheets[origSN], ws1);
+    const ws = wb.addWorksheet('Analisis de precio Carnicerias ');
+    ws.getColumn(1).width=27; ws.getColumn(2).width=22.7; ws.getColumn(3).width=17.7;
+    ws.getColumn(4).width=13; ws.getColumn(5).width=21.9; ws.getColumn(6).width=82.4;
+    for (let r=1;r<=4;r++) { ws.addRow([]); ws.getRow(r).height=21; }
+    ws.getRow(5).height=21; ws.mergeCells('A5:F5');
+    applyCell(ws.getCell('A5'), GC.periodo||'ANALISIS DE PRECIOS SEGUN EL TIPO DE CORTE', '0070C0', exFont(11,true,'FFFFFF'), exAlign('center','middle',false));
+    ws.getRow(6).height=21;
+    [['CORTE','000000'],['LOCAL','000000'],['INDICADORE DE PRECIOS','000000'],['PRECIOS','FFFFFF'],['DIFERENCIA','FFFFFF'],['COMENTARIOS','000000']].forEach(([l,c],i) => {
+      applyCell(ws.getCell(6,i+1), l, '2F5496', exFont(10,true,c), exAlign('center','middle',true));
+    });
+    let row = 7;
+    for (const d of GC.analysis) {
+      const r1=row, r2=row+1;
+      ws.getRow(r1).height=61.5; ws.getRow(r2).height=61.5; ws.getRow(r2+1).height=12;
+      ws.mergeCells(r1,1,r2,1);
+      applyCell(ws.getCell(r1,1), d.corte, 'D9E2F3', exFont(10,true,'3A3838'), exAlign('center','middle',true));
+      applyCell(ws.getCell(r1,2), d.maxLocal,            '8EAADB', exFont(10,false,'3A3838'), exAlign('center','middle',false));
+      applyCell(ws.getCell(r1,3), 'PRECIO MAXIMO',        'FF0000', exFont(10,false,'FFFFFF'), exAlign('center','middle',false));
+      applyCell(ws.getCell(r1,4), Math.round(d.maxPrice), '8EAADB', exFont(10,false,'3A3838'), exAlign('center','middle',false), '#,##0');
+      ws.mergeCells(r1,5,r2,5);
+      applyCell(ws.getCell(r1,5), Math.round(d.diff), '2F5496', exFont(11,false,'FFFFFF','Calibri'), exAlign('center','middle',true), '#,##0');
+      ws.mergeCells(r1,6,r2,6);
+      applyCell(ws.getCell(r1,6), makeCarnComment(d), 'D9E2F3', exFont(10,true,'3A3838'), exAlign('left','middle',true));
+      applyCell(ws.getCell(r2,2), d.minLocal,            'B4C6E7', exFont(10,false,'3A3838'), exAlign('center','middle',false));
+      applyCell(ws.getCell(r2,3), 'PRECIO MINIMO',        'FFFF00', exFont(10,false,'3A3838'), exAlign('center','middle',false));
+      applyCell(ws.getCell(r2,4), Math.round(d.minPrice), 'B4C6E7', exFont(10,false,'3A3838'), exAlign('center','middle',false), '#,##0');
+      row += 3;
+    }
+    ws.getRow(row).height=39;
+    applyCell(ws.getCell(row,1), 'OBSERVACIONES: ', null, exFont(10,true,'2F5496'), exAlign('left','middle',true));
+    const solos = GC.analysis.filter(d => d.missing.length >= GC.locales.length - 1);
+    if (solos.length) {
+      ws.getRow(row+1).height=60; ws.mergeCells(row+1,1,row+1,6);
+      applyCell(ws.getCell(row+1,1), solos.map(d=>`EL CORTE ${d.corte.toUpperCase()} SE ENCUENTRA ÚNICAMENTE EN EL LOCAL DE ${d.maxLocal}.`).join(' '), null, exFont(10,true,'FF0000'), exAlign('left','top',true));
+    }
+    const buf = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href=url; a.download=GC.fileName; a.click(); URL.revokeObjectURL(url);
+    $('btxt-carn').textContent = '✓ Descargado correctamente';
+    setTimeout(() => { $('btxt-carn').textContent='Generar y descargar Excel con formato del informe'; btn.disabled=false; }, 3000);
+  } catch(err) {
+    $('btxt-carn').textContent = 'Error: ' + err.message;
+    btn.disabled = false;
+    console.error(err);
+  }
+}
+
+// ══════════════════════════════════════════════════════════
 // ████  ENVASADOS — con comparación semana a semana
 // ══════════════════════════════════════════════════════════
 setupDrop('env',      handleEnv);
