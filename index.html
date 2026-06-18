@@ -3,1440 +3,1970 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Analizador de Precios — Carnicerias & Envasados</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,wght@0,300;0,600;1,300&display=swap" rel="stylesheet">
+<title>Cervepar — Productividad de Campo</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
+
+:root{
+  --bg:#0d0c0c;--bg2:#161414;--bg3:#1e1b1b;--bg4:#262222;
+  --bd:rgba(255,255,255,.07);--bd2:rgba(255,255,255,.13);
+  --red:#c11d2a;--red2:#e8293a;--rd:rgba(193,29,42,.15);--rg:rgba(193,29,42,.4);
+  --teal:#3cb3a8;--td:rgba(60,179,168,.15);
+  --tx:#f2eeee;--tx2:#9c9494;--tx3:#5a5252;
+  --ok:#3cb3a8;--ok-d:rgba(60,179,168,.13);
+  --er:#c11d2a;--er-d:rgba(193,29,42,.13);
+  --wa:#e8a045;--wa-d:rgba(232,160,69,.13);
+  --bl:#5b9bd5;--bl-d:rgba(91,155,213,.13);
+  --vi:#9b7fd4;--vi-d:rgba(155,127,212,.13);
+  --r:14px;--r2:9px;--sw:240px;--hh:58px;
+  --sh:0 8px 32px rgba(0,0,0,.6);--tr:.18s ease;
+}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#F5F0E8;--surface:#FDFBF7;--ink:#1A1209;--ink-2:#5C4E35;--ink-3:#9C8A6E;--accent:#C84B2F;--accent-light:#F4E0DB;--green:#2D6A4F;--green-light:#D8EDDF;--gold:#B8860B;--gold-light:#FDF3C8;--border:#D9CEB8;--border-dark:#B8A88A;--max-w:920px}
-body{background:var(--bg);color:var(--ink);font-family:'DM Mono',monospace;min-height:100vh;padding:0 1rem 4rem}
-header{max-width:var(--max-w);margin:0 auto;padding:2.5rem 0 1.5rem;border-bottom:1px solid var(--border-dark);display:flex;align-items:flex-end;justify-content:space-between;gap:1rem}
-.header-left h1{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(1.8rem,4vw,2.6rem);letter-spacing:-.02em;line-height:1}
-.header-left h1 em{font-style:italic;font-weight:300;color:var(--accent)}
-.header-left p{margin-top:.4rem;font-size:.68rem;color:var(--ink-3);letter-spacing:.08em;text-transform:uppercase}
-.badge{font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;padding:.3rem .7rem;border:1px solid var(--border-dark);color:var(--ink-2);border-radius:2px;white-space:nowrap}
-.tabs{max-width:var(--max-w);margin:0 auto;display:flex;border-bottom:2px solid var(--border-dark);margin-top:2rem}
-.tab-btn{font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;padding:.75rem 1.5rem;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;color:var(--ink-3);transition:color .15s,border-color .15s}
-.tab-btn:hover{color:var(--ink)}
-.tab-btn.active{color:var(--ink);border-bottom-color:var(--accent);font-weight:500}
-.tab-panel{display:none}.tab-panel.active{display:block}
-main{max-width:var(--max-w);margin:0 auto}
-.section{padding:2rem 0 1.5rem}
-.drop-zone{border:1.5px dashed var(--border-dark);border-radius:4px;background:var(--surface);padding:3rem 2rem;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;position:relative}
-.drop-zone:hover,.drop-zone.drag-over{border-color:var(--accent);background:#FDF9F5}
-.drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
-.drop-icon{width:44px;height:44px;margin:0 auto .8rem;border:1.5px solid var(--border-dark);border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;background:var(--bg)}
-.drop-title{font-family:'Fraunces',serif;font-size:1rem;font-weight:600;margin-bottom:.35rem}
-.drop-sub{font-size:.68rem;color:var(--ink-3);letter-spacing:.05em}
-.status-bar{margin-top:.8rem;padding:.65rem 1rem;border-radius:3px;font-size:.72rem;letter-spacing:.04em;border:1px solid;display:none;align-items:center;gap:.6rem}
-.status-bar.show{display:flex}
-.status-bar.ok{background:var(--green-light);color:var(--green);border-color:#A8D5B5}
-.status-bar.err{background:var(--accent-light);color:var(--accent);border-color:#E8B4A8}
-.status-bar.info{background:var(--gold-light);color:var(--gold);border-color:#E8D48A}
-.status-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0}
-.section-label{font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);padding:.4rem 0;border-top:1px solid var(--border);margin-bottom:.9rem;display:flex;align-items:center;justify-content:space-between}
-.section-label span{color:var(--ink-2)}
-.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:3px;overflow:hidden;margin-bottom:1.5rem}
-.stat-card{background:var(--surface);padding:.9rem 1rem}
-.stat-label{font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:.25rem}
-.stat-val{font-family:'Fraunces',serif;font-size:1.4rem;font-weight:600;color:var(--ink);line-height:1}
-.stat-val.red{color:var(--accent)}
-.table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:3px;background:var(--surface);margin-bottom:1.5rem}
-table{width:100%;border-collapse:collapse;font-size:.7rem}
-thead tr{background:var(--ink);color:var(--bg)}
-thead th{padding:.65rem .8rem;text-align:left;font-weight:500;letter-spacing:.06em;font-size:.6rem;text-transform:uppercase;white-space:nowrap}
-tbody tr{border-bottom:1px solid var(--border)}
-tbody tr:last-child{border-bottom:none}
-tbody tr:hover{background:#FAF6F0}
-td{padding:.6rem .8rem;vertical-align:middle}
-td.corte{font-weight:500}
-.pill{display:inline-flex;align-items:center;gap:.25rem;font-size:.62rem;padding:.18rem .5rem;border-radius:2px;white-space:nowrap;font-weight:500}
-.pill.max{background:var(--accent-light);color:var(--accent)}
-.pill.min{background:var(--green-light);color:var(--green)}
-.pill.grp{background:#EDE9E0;color:var(--ink-2)}
-.missing{font-size:.6rem;color:var(--ink-3);max-width:180px;line-height:1.4}
-.all-ok{color:var(--green);font-size:.6rem}
-.btn-download{display:flex;align-items:center;justify-content:center;gap:.7rem;width:100%;padding:.9rem;background:var(--ink);color:var(--bg);border:none;border-radius:3px;font-family:'DM Mono',monospace;font-size:.78rem;letter-spacing:.06em;cursor:pointer;transition:background .15s;margin-bottom:2rem}
-.btn-download:hover:not(:disabled){background:#2D2315}
-.btn-download:disabled{opacity:.35;cursor:not-allowed}
-.hidden{display:none!important}
-footer{max-width:var(--max-w);margin:3rem auto 0;padding-top:1.5rem;border-top:1px solid var(--border);font-size:.62rem;color:var(--ink-3);letter-spacing:.06em;display:flex;justify-content:space-between}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-.pulsing{animation:pulse 1.2s infinite}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Mosk','Outfit',sans-serif;background:var(--bg);color:var(--tx);font-size:14px;line-height:1.5}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:4px}
+button,input,select{font-family:'Mosk','Outfit',sans-serif}
+
+/* ── LIGHT MODE ── */
+body.light{
+  --bg:#edf0f4;--bg2:#ffffff;--bg3:#f4f6f9;--bg4:#e6eaee;
+  --bd:rgba(15,20,40,.09);--bd2:rgba(15,20,40,.16);
+  --tx:#111317;--tx2:#454a55;--tx3:#8c919c;
+  --sh:0 4px 20px rgba(15,20,40,.1),0 1px 4px rgba(15,20,40,.07);
+  --rd:rgba(193,29,42,.09);--rg:rgba(193,29,42,.25);
+  --ok-d:rgba(60,179,168,.11);--er-d:rgba(193,29,42,.09);
+  --wa-d:rgba(232,160,69,.11);--bl-d:rgba(91,155,213,.11);--vi-d:rgba(155,127,212,.11);
+  --td:rgba(60,179,168,.11);
+}
+body.light .sidebar{background:#fff;border-right:1px solid rgba(15,20,40,.09);box-shadow:3px 0 12px rgba(15,20,40,.06)}
+body.light .sidebar::after{display:none}
+body.light .topbar{background:#fff;border-bottom:1px solid rgba(15,20,40,.09);box-shadow:0 2px 10px rgba(15,20,40,.07)}
+body.light .card,body.light .tw{background:#fff;border-color:rgba(15,20,40,.08);box-shadow:0 2px 12px rgba(15,20,40,.08)}
+body.light .kpi{background:#fff;border-color:rgba(15,20,40,.08);box-shadow:0 2px 10px rgba(15,20,40,.07)}
+body.light .kpi:hover{box-shadow:0 8px 28px rgba(15,20,40,.14);transform:translateY(-2px)}
+body.light th{background:#f4f6f9;color:#8c919c;border-color:rgba(15,20,40,.09)}
+body.light td{border-color:rgba(15,20,40,.06)}
+body.light tr:hover td{background:rgba(15,20,40,.02)}
+body.light .fbar{background:#fff;border-color:rgba(15,20,40,.08);box-shadow:0 2px 8px rgba(15,20,40,.06)}
+body.light .fsel{background:#f4f6f9;border-color:rgba(15,20,40,.11);color:#111317}
+body.light .ni{color:#454a55}
+body.light .ni:hover{background:rgba(15,20,40,.05);color:#111317}
+body.light .ni.active{background:rgba(193,29,42,.08);color:var(--red);border-color:rgba(193,29,42,.18)}
+body.light .ni.active::before{background:var(--red)}
+body.light .sb-sect{color:#8c919c}
+body.light .sb-uname{color:#111317}
+body.light .prog-bar,body.light .eff-bar{background:rgba(15,20,40,.08)}
+body.light .sb-brand,body.light .sb-user,body.light .sb-live,body.light .sb-bottom,body.light .sb-sep{border-color:rgba(15,20,40,.09)}
+body.light ::-webkit-scrollbar-thumb{background:rgba(15,20,40,.2)}
+body.light .rb-btn:hover{background:rgba(193,29,42,.07);color:var(--red)}
+body.light .venc-badge.vencido{background:rgba(193,29,42,.09);color:#b01525}
+body.light .venc-badge.averiado{background:rgba(155,127,212,.09);color:#7050b8}
+body.light .venc-badge.merma{background:rgba(91,155,213,.09);color:#2e6aaa}
+body.light .venc-badge.proximo{background:rgba(232,160,69,.09);color:#b86010}
+body.light .map-container{background:#e6eaee}
+body.light .tf{background:#f4f6f9}
+body.light table th{background:#f4f6f9}
+
+/* REQ1: Input type=date estética dashboard */
+input[type="date"].fsel{color-scheme:dark;min-width:140px;cursor:pointer}
+body.light input[type="date"].fsel{color-scheme:light}
+
+/* REQ2: Badge alerta justificaciones */
+.justif-alerta-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:3px 9px;border-radius:20px;
+  font-size:9px;font-weight:800;
+  background:rgba(193,29,42,.18);color:#f87171;
+  border:1px solid rgba(193,29,42,.35);
+  margin-left:8px;white-space:nowrap;
+  animation:pulse-badge 2s infinite;
+}
+@keyframes pulse-badge{0%,100%{opacity:1}50%{opacity:.65}}
+.justif-alerta-banner{
+  padding:14px 20px;border-radius:var(--r);
+  background:rgba(193,29,42,.1);border:1px solid rgba(193,29,42,.25);
+  color:#f87171;font-size:12.5px;display:flex;align-items:flex-start;gap:12px;
+  line-height:1.6;margin-bottom:4px;
+}
+
+.app{display:flex;height:100vh;width:100vw;overflow:hidden}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  width:var(--sw);min-width:var(--sw);
+  background:var(--bg2);
+  border-right:1px solid var(--bd);
+  display:flex;flex-direction:column;
+  overflow-y:auto;overflow-x:hidden;
+  position:relative;z-index:50;
+}
+.sidebar::after{
+  content:'';position:absolute;top:0;right:0;bottom:0;width:1px;
+  background:linear-gradient(to bottom,transparent,var(--rg) 35%,var(--rg) 65%,transparent);
+  pointer-events:none;
+}
+.sb-brand{padding:22px 18px 18px;border-bottom:1px solid var(--bd)}
+.sb-logo{display:flex;align-items:center;gap:11px}
+.sb-ico{
+  width:34px;height:34px;border-radius:9px;
+  background:linear-gradient(135deg,var(--red),#8a1018);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:900;color:#fff;flex-shrink:0;
+  box-shadow:0 4px 12px rgba(193,29,42,.4);
+}
+.sb-name{font-size:16px;font-weight:800;letter-spacing:-.3px}
+.sb-tag{font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;margin-top:3px}
+.sb-user{padding:19px 24px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px}
+.sb-av{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--red),#8a1018);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff;flex-shrink:0}
+.sb-uname{font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;background:var(--rd);color:var(--red);border:1px solid var(--rg);display:inline-block;margin-top:3px}
+.sb-live{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--tx3);padding:14px 24px 4px;border-bottom:1px solid var(--bd)}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--wa);animation:pulse 2s infinite;flex-shrink:0}
+.live-dot.on{background:var(--ok)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.sb-nav{padding:15px 16px;flex:1}
+.sb-sect{font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:1.6px;padding:21px 16px 6px;font-weight:700}
+.ni{
+  display:flex;align-items:center;gap:10px;
+  padding:15px 18px;border-radius:var(--r2);
+  color:var(--tx2);font-size:12.5px;font-weight:500;
+  cursor:pointer;transition:var(--tr);margin-bottom:3px;
+  border:1px solid transparent;user-select:none;position:relative;
+}
+.ni i{width:15px;text-align:center;font-size:12px;flex-shrink:0}
+.ni:hover{background:rgba(255,255,255,.05);color:var(--tx)}
+.ni.active{background:var(--rd);color:#f87171;border-color:rgba(193,29,42,.2)}
+.ni.active::before{content:'';position:absolute;left:0;top:20%;bottom:20%;width:3px;background:var(--red);border-radius:0 3px 3px 0}
+.ni-badge{margin-left:auto;background:var(--er);color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px}
+.ni-badge.wa{background:var(--wa)}
+.ni-badge.vi{background:var(--vi)}
+.sb-sep{height:1px;background:var(--bd);margin:8px 10px}
+.sb-bottom{padding:10px;border-top:1px solid var(--bd)}
+.sb-upd{font-size:10px;color:var(--tx3);padding:5px 10px;margin-bottom:2px}
+.rb-btn{display:flex;align-items:center;gap:8px;padding:14px 18px;border-radius:var(--r2);color:var(--tx3);font-size:12px;cursor:pointer;border:none;background:none;width:100%;transition:var(--tr)}
+.rb-btn:hover{background:var(--rd);color:#f87171}
+
+/* ── MAIN ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.topbar{
+  height:var(--hh);background:var(--bg2);
+  border-bottom:1px solid var(--bd);
+  display:flex;align-items:center;padding:0 28px;gap:12px;
+  flex-shrink:0;box-shadow:var(--sh);
+}
+.tb-title{font-size:16px;font-weight:800;flex:1;letter-spacing:-.2px}
+.tb-sub{font-size:11px;color:var(--tx3)}
+.content{flex:1;overflow-y:auto;overflow-x:hidden;padding:28px 32px}
+
+.page{display:none;flex-direction:column;gap:28px;animation:fadeup .2s ease-out}
+.page.active{display:flex}
+@keyframes fadeup{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes rot{to{transform:rotate(360deg)}}
+
+/* ── UTILS ── */
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:28px}
+.kpi-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:28px}
+.kpi-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:28px}
+
+/* ── KPI CARDS ── */
+.kpi{
+  background:var(--bg2);border:1px solid var(--bd);
+  border-radius:var(--r);padding:22px 22px 18px;
+  position:relative;overflow:hidden;
+  transition:transform .2s ease, box-shadow .2s ease;
+  cursor:default;
+}
+.kpi:hover{transform:translateY(-2px);box-shadow:0 10px 36px rgba(0,0,0,.4)}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--r) var(--r) 0 0}
+.kpi.t-ok::before{background:linear-gradient(90deg,var(--ok),transparent 70%)}
+.kpi.t-er::before{background:linear-gradient(90deg,var(--er),transparent 70%)}
+.kpi.t-wa::before{background:linear-gradient(90deg,var(--wa),transparent 70%)}
+.kpi.t-bl::before{background:linear-gradient(90deg,var(--bl),transparent 70%)}
+.kpi.t-vi::before{background:linear-gradient(90deg,var(--vi),transparent 70%)}
+.kpi.t-red::before{background:linear-gradient(90deg,var(--red),transparent 70%)}
+.kpi-lbl{font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:.9px;font-weight:700;margin-bottom:18px}
+.kpi-val{font-size:32px;font-weight:900;line-height:1;margin-bottom:14px;letter-spacing:-1px}
+.kpi-sub{font-size:11px;color:var(--tx3);line-height:1.4}
+.kpi-ico{position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:28px;opacity:.05}
+
+/* ── CARDS ── */
+.card{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);box-shadow:0 2px 12px rgba(0,0,0,.2)}
+.card-p{padding:24px 26px}
+.card-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;gap:12px}
+.card-title{font-size:14px;font-weight:700;letter-spacing:-.1px}
+.card-sub{font-size:11px;color:var(--tx2);margin-top:3px}
+
+/* ── CHARTS ── */
+.chart-h{position:relative;height:200px}
+.chart-h-sm{position:relative;height:160px}
+.chart-h-lg{position:relative;height:280px}
+
+/* ── PILLS ── */
+.pill{display:inline-flex;align-items:center;gap:3px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.pill.ok{background:var(--ok-d);color:var(--ok);border:1px solid rgba(60,179,168,.25)}
+.pill.er{background:var(--er-d);color:#f87171;border:1px solid rgba(193,29,42,.25)}
+.pill.wa{background:var(--wa-d);color:var(--wa);border:1px solid rgba(232,160,69,.25)}
+.pill.bl{background:var(--bl-d);color:var(--bl);border:1px solid rgba(91,155,213,.25)}
+.pill.vi{background:var(--vi-d);color:var(--vi);border:1px solid rgba(155,127,212,.25)}
+.pill.tx{background:rgba(255,255,255,.06);color:var(--tx2);border:1px solid var(--bd)}
+
+/* ── TABLES ── */
+.tw{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.2)}
+.tf{padding:19px 26px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--bg3)}
+table{width:100%;border-collapse:collapse}
+th{padding:17px 24px;font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.7px;text-align:left;border-bottom:1px solid var(--bd);background:var(--bg3);white-space:nowrap}
+td{padding:18px 24px;font-size:12.5px;border-bottom:1px solid var(--bd);color:var(--tx)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.02)}
+.eff-bar{flex:1;height:5px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;min-width:50px}
+.eff-fill{height:100%;border-radius:3px}
+
+/* ── ALERTS ── */
+.alert{padding:19px 24px;border-radius:var(--r);font-size:12.5px;display:flex;align-items:flex-start;gap:12px;line-height:1.6}
+.alert.er{background:var(--er-d);border:1px solid rgba(193,29,42,.2);color:#f87171}
+.alert.wa{background:var(--wa-d);border:1px solid rgba(232,160,69,.2);color:var(--wa)}
+.alert.ok{background:var(--ok-d);border:1px solid rgba(60,179,168,.2);color:var(--ok)}
+.alert.vi{background:var(--vi-d);border:1px solid rgba(155,127,212,.2);color:var(--vi)}
+
+/* ── PROGRESS ── */
+.prog-row{margin-bottom:21px}
+.prog-lbl{display:flex;justify-content:space-between;font-size:11.5px;color:var(--tx2);margin-bottom:13px}
+.prog-bar{height:5px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden}
+.prog-fill{height:100%;border-radius:3px;transition:width .5s ease}
+
+/* ── AVATAR ── */
+.av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;flex-shrink:0}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(120px);background:var(--bg3);border:1px solid var(--bd2);color:var(--tx);padding:15px 26px;border-radius:50px;font-size:12.5px;font-weight:500;z-index:9999;transition:transform .3s cubic-bezier(.34,1.56,.64,1);white-space:nowrap;pointer-events:none;box-shadow:var(--sh)}
+#toast.show{transform:translateX(-50%) translateY(0)}
+#toast.s{border-color:rgba(60,179,168,.4);color:var(--teal)}
+#toast.e{border-color:rgba(193,29,42,.4);color:#f87171}
+#toast.w{border-color:rgba(232,160,69,.4);color:var(--wa)}
+
+/* ── FILTER BAR ── */
+.fbar{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:19px 26px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.fbar-label{font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:.8px;font-weight:700;white-space:nowrap}
+.fsel{padding:6px 10px;background:var(--bg3);border:1px solid var(--bd);border-radius:var(--r2);color:var(--tx2);font-size:11.5px;outline:none;cursor:pointer;transition:var(--tr)}
+.fsel:focus{border-color:var(--red)}
+.fbar-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;background:var(--rd);color:#f87171;border:1px solid rgba(193,29,42,.3);border-radius:20px;font-size:10px;font-weight:600;cursor:pointer}
+.fbar-sep{width:1px;height:22px;background:var(--bd);flex-shrink:0}
+.active-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;background:var(--rd);color:#f87171;border:1px solid rgba(193,29,42,.25);border-radius:20px;font-size:10px;font-weight:600;cursor:pointer}
+
+/* ── MAP ── */
+.map-container{background:var(--bg3);border-radius:var(--r);overflow:hidden;border:1px solid var(--bd)}
+.leaflet-container{background:#151212 !important}
+body.light .leaflet-container{background:#e8eaed !important}
+
+/* ── VENCIMIENTOS BADGES ── */
+.venc-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700}
+.venc-badge.vencido{background:rgba(193,29,42,.15);color:#f87171;border:1px solid rgba(193,29,42,.3)}
+.venc-badge.proximo{background:rgba(232,160,69,.15);color:var(--wa);border:1px solid rgba(232,160,69,.3)}
+.venc-badge.averiado{background:rgba(155,127,212,.15);color:var(--vi);border:1px solid rgba(155,127,212,.3)}
+.venc-badge.merma{background:rgba(91,155,213,.15);color:var(--bl);border:1px solid rgba(91,155,213,.3)}
+
+/* ── THEME BTN ── */
+.theme-btn{width:32px;height:32px;border-radius:var(--r2);background:var(--bg3);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--tx2);font-size:13px;transition:var(--tr);flex-shrink:0}
+.theme-btn:hover{border-color:var(--red);color:var(--red)}
+
 </style>
 </head>
 <body>
-<header>
-  <div class="header-left">
-    <h1>Análisis de <em>Precios</em></h1>
-    <p>Automatizador de informes semanales</p>
-  </div>
-  <div class="badge">xlsx → análisis</div>
-</header>
 
-<div class="tabs">
-  <button class="tab-btn active" onclick="switchTab('carn',this)">🥩 Carnicerias</button>
-  <button class="tab-btn" onclick="switchTab('env',this)">📦 Envasados</button>
-  <button class="tab-btn" onclick="switchTab('oferta',this)">🏷️ Ofertas Fin de Semana</button>
+<div class="app">
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sb-brand">
+      <div class="sb-logo">
+        <div class="sb-ico" style="background:linear-gradient(135deg,#c11d2a,#8a1018)">CV</div>
+        <div>
+          <div class="sb-name">Cervepar</div>
+          <div class="sb-tag">Productividad de Campo</div>
+        </div>
+      </div>
+    </div>
+    <div class="sb-user">
+      <div class="sb-av">CV</div>
+      <div>
+        <div class="sb-uname">Cervepar BI</div>
+        <div class="sb-badge">Field Ops</div>
+      </div>
+    </div>
+    <div class="sb-live">
+      <div class="live-dot on" id="sync-dot"></div>
+      <span style="font-size:10.5px;color:var(--tx3)" id="sync-info">Conectando...</span>
+    </div>
+    <div class="sb-nav">
+      <div class="sb-sect">Visión General</div>
+      <div class="ni active" data-p="dashboard" onclick="goPage('dashboard')"><i class="fas fa-chart-pie"></i>Dashboard</div>
+
+      <div class="sb-sect">Equipo de Campo</div>
+      <div class="ni" data-p="personas" onclick="goPage('personas')"><i class="fas fa-user-check"></i>Por persona</div>
+      <div class="ni" data-p="seguimiento" onclick="goPage('seguimiento')"><i class="fas fa-route"></i>Seguimiento en campo</div>
+      <div class="ni" data-p="ruteo" onclick="goPage('ruteo')"><i class="fas fa-clipboard-list"></i>Cumplimiento de ruteo</div>
+
+      <div class="sb-sect">Análisis</div>
+      <div class="ni" data-p="zonas" onclick="goPage('zonas')"><i class="fas fa-map"></i>Por regional / zona</div>
+      <div class="ni" data-p="justif" onclick="goPage('justif')">
+        <i class="fas fa-exclamation-triangle"></i>Justificaciones
+        <span class="ni-badge wa" id="nb-just">0</span>
+      </div>
+      <div class="ni" data-p="fueraruta" onclick="goPage('fueraruta')">
+        <i class="fas fa-random"></i>Fuera de ruta
+        <span class="ni-badge" style="background:var(--vi)" id="nb-fr">0</span>
+      </div>
+
+      <div class="sb-sect">Campo</div>
+      <div class="ni" data-p="mapa" onclick="goPage('mapa')"><i class="fas fa-map-marked-alt"></i>Mapa de cobertura</div>
+    </div>
+    <div class="sb-bottom">
+      <div class="sb-upd">
+        <i class="fas fa-clock" style="margin-right:4px;opacity:.4"></i>
+        <span id="last-update" style="font-size:10px">—</span>
+      </div>
+      <button class="rb-btn" onclick="syncData()">
+        <i class="fas fa-sync-alt" id="sync-icon"></i>Actualizar ahora
+      </button>
+      <button class="rb-btn" onclick="window.location.href='/'">
+        <i class="fas fa-sign-out-alt"></i>Cerrar sesión
+      </button>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <div class="tb-title" id="tb-title">Dashboard general</div>
+        <div style="font-size:11px;color:var(--tx3)">Cervepar · Campo</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-left:auto">
+        <span style="font-size:11px;color:var(--tx3)" id="sync-status"></span>
+        <div class="theme-btn" onclick="toggleTheme()" title="Claro/Oscuro">
+          <i class="fas fa-sun" id="theme-icon"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- FILTER BAR — REQ1: inputs type=date en vez de selects -->
+    <div class="fbar" style="border-radius:0;border-left:none;border-right:none;border-top:none;padding:10px 20px">
+      <span class="fbar-label"><i class="fas fa-filter" style="margin-right:5px"></i>Filtros</span>
+      <span class="fbar-sep"></span>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <label style="font-size:9px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.6px">Desde</label>
+        <input type="date" class="fsel" id="f-desde" onchange="applyFilters()" style="min-width:140px">
+      </div>
+      <span style="font-size:11px;color:var(--tx3);padding-top:14px">→</span>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <label style="font-size:9px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.6px">Hasta</label>
+        <input type="date" class="fsel" id="f-hasta" onchange="applyFilters()" style="min-width:140px">
+      </div>
+      <span class="fbar-sep"></span>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <label style="font-size:9px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.6px">Persona</label>
+        <select class="fsel" id="f-persona" onchange="applyFilters()" style="min-width:160px">
+          <option value="">Todas las personas</option>
+        </select>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <label style="font-size:9px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.6px">Regional</label>
+        <select class="fsel" id="f-regional" onchange="applyFilters()" style="min-width:150px">
+          <option value="">Todas las regionales</option>
+        </select>
+      </div>
+      <button class="fbar-chip" onclick="clearAll()"><i class="fas fa-times" style="font-size:9px"></i>Limpiar</button>
+      <div id="active-pills" style="display:flex;gap:5px;flex-wrap:wrap;margin-left:8px"></div>
+    </div>
+
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div class="page active" id="pg-dashboard">
+        <div class="kpi-grid">
+          <div class="kpi t-bl"><div class="kpi-lbl">PDVs planificados</div><div class="kpi-val" style="color:var(--bl)" id="kpi-plan">—</div><div class="kpi-sub">Total ruteo</div><i class="fas fa-map-marker-alt kpi-ico"></i></div>
+          <!-- REQ4: PDVs Realizados = solo efectivos en ruta (sin fuera de ruta) -->
+          <div class="kpi t-ok"><div class="kpi-lbl">PDVs realizados</div><div class="kpi-val" style="color:var(--ok)" id="kpi-real">—</div><div class="kpi-sub" id="kpi-ef">—</div><i class="fas fa-check-circle kpi-ico"></i></div>
+          <div class="kpi t-wa"><div class="kpi-lbl">Sin realizar</div><div class="kpi-val" style="color:var(--wa)" id="kpi-pend">—</div><div class="kpi-sub">Sin check-in ni motivo</div><i class="fas fa-clock kpi-ico"></i></div>
+          <div class="kpi t-er"><div class="kpi-lbl">Justificaciones</div><div class="kpi-val" style="color:var(--er)" id="kpi-just">—</div><div class="kpi-sub">PDVs con motivo registrado</div><i class="fas fa-exclamation-triangle kpi-ico"></i></div>
+          <div class="kpi t-vi"><div class="kpi-lbl">Fuera de ruta</div><div class="kpi-val" style="color:var(--vi)" id="kpi-fr">—</div><div class="kpi-sub">Visitas no planificadas</div><i class="fas fa-random kpi-ico"></i></div>
+        </div>
+
+        <!-- PvR + Efectividad -->
+        <div style="display:grid;grid-template-columns:2fr 1fr;gap:20px">
+          <div class="card card-p">
+            <div class="card-hdr"><div><div class="card-title">Planificado vs Realizado</div><div class="card-sub">Distribución por día</div></div></div>
+            <div class="chart-h"><canvas id="ch-pvr"></canvas></div>
+          </div>
+          <div class="card card-p">
+            <div class="card-hdr"><div class="card-title">Efectividad global</div></div>
+            <div style="position:relative;height:160px">
+              <canvas id="ch-efect"></canvas>
+              <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center">
+                <div style="font-size:28px;font-weight:900;color:var(--ok)" id="efect-num">—</div>
+                <div style="font-size:10px;color:var(--tx2)" id="efect-sub">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Macrozona + Mapa -->
+        <div style="display:grid;grid-template-columns:1fr 1.2fr;gap:20px;align-items:start">
+          <div class="tw">
+            <div class="tf" style="padding:10px 16px">
+              <i class="fas fa-map" style="color:var(--red)"></i>
+              <span style="font-weight:600;font-size:12.5px">Macrozona / Regional</span>
+            </div>
+            <div style="overflow-y:auto;max-height:360px">
+              <table style="font-size:11.5px"><thead style="position:sticky;top:0;z-index:2"><tr>
+                <th style="padding:8px 12px">Zona</th>
+                <th style="color:var(--bl);padding:8px 10px;text-align:center">Plan</th>
+                <th style="color:var(--ok);padding:8px 10px;text-align:center">Real.</th>
+                <th style="color:var(--wa);padding:8px 10px;text-align:center">S/R</th>
+                <th style="padding:8px 12px">Efect.</th>
+              </tr></thead>
+              <tbody id="tb-macro"></tbody></table>
+            </div>
+          </div>
+          <div class="card" style="overflow:hidden">
+            <div style="padding:12px 16px 10px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between">
+              <div>
+                <div class="card-title"><i class="fas fa-map-marked-alt" style="color:var(--teal);margin-right:7px"></i>Cobertura por efectividad</div>
+                <div class="card-sub">Círculos = regionales · rojo = bajo rendimiento</div>
+              </div>
+              <span class="pill bl" style="cursor:pointer;font-size:10px" onclick="goPage('mapa')">Ver completo →</span>
+            </div>
+            <div id="dash-mapa" style="height:340px"></div>
+          </div>
+        </div>
+
+        <!-- Bottom 3 cols -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px">
+          <div class="card card-p">
+            <div class="card-hdr"><div><div class="card-title"><i class="fas fa-trophy" style="color:var(--wa);margin-right:7px"></i>Top productores</div></div></div>
+            <div id="top-productores"></div>
+          </div>
+          <div class="card card-p">
+            <div class="card-hdr"><div><div class="card-title"><i class="fas fa-list-ul" style="color:var(--er);margin-right:7px"></i>Top justificaciones</div></div></div>
+            <div id="top-justif"></div>
+          </div>
+          <div class="card card-p">
+            <div class="card-hdr"><div><div class="card-title"><i class="fas fa-random" style="color:var(--vi);margin-right:7px"></i>Fuera de ruta</div></div></div>
+            <div id="top-fueraruta"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PERSONAS -->
+      <div class="page" id="pg-personas">
+        <div style="display:grid;grid-template-columns:2fr 1fr;gap:20px">
+          <div class="card card-p">
+            <div class="card-hdr"><div><div class="card-title">Planificado vs Realizado por persona</div></div></div>
+            <div class="chart-h"><canvas id="ch-pvr-p"></canvas></div>
+          </div>
+          <div class="card card-p">
+            <div class="card-hdr"><div><div class="card-title">Efectividad por zona</div></div></div>
+            <div class="chart-h"><canvas id="ch-zonas"></canvas></div>
+          </div>
+        </div>
+        <div class="tw">
+          <div class="tf">
+            <div class="tfs" style="display:flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--bd);border-radius:var(--r2);padding:6px 10px;max-width:240px">
+              <i class="fas fa-search" style="color:var(--tx3);font-size:11px"></i>
+              <input id="personas-q" placeholder="Buscar..." oninput="if(_lastData)renderPersonas(_lastData)" style="background:none;border:none;outline:none;color:var(--tx);font-size:13px;flex:1;font-family:inherit">
+            </div>
+          </div>
+          <div style="overflow-x:auto;overflow-y:auto;max-height:460px">
+            <table><thead style="position:sticky;top:0;z-index:2"><tr>
+              <th>Promotor</th><th style="color:var(--bl)">Ruteo</th>
+              <th style="color:var(--ok)">Real.</th><th style="color:var(--wa)">Pend.</th>
+              <th style="color:var(--er)">Just.</th><th style="color:var(--teal)">PDVs</th>
+              <th>Check-in</th><th>Tpo/PDV</th><th style="color:var(--ok)">Cumpl. Ruteo</th><th>Efectividad</th><th>Tend.</th><th></th>
+            </tr></thead>
+            <tbody id="tb-personas"></tbody></table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ZONAS -->
+      <div class="page" id="pg-zonas">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+          <div class="card card-p">
+            <div class="card-hdr"><div><div class="card-title">Efectividad por Macrozona</div></div></div>
+            <div class="chart-h"><canvas id="ch-macro-prod"></canvas></div>
+          </div>
+          <div class="card card-p">
+            <div class="card-hdr"><div><div class="card-title">Ruteo vs Realizadas por Macrozona</div></div></div>
+            <div class="chart-h"><canvas id="ch-macro-pvr"></canvas></div>
+          </div>
+        </div>
+        <div id="zonas-wrap"></div>
+      </div>
+
+      <!-- JUSTIF — REQ2: columna alerta + REQ3: filtro motivo corregido -->
+      <div class="page" id="pg-justif">
+        <div id="justif-pdv-alert-banner"></div>
+        <div style="display:grid;grid-template-columns:1fr 320px;gap:20px">
+          <div class="tw">
+            <div class="tf">
+              <span style="font-weight:700;font-size:13px" id="justif-badge">— justificaciones</span>
+              <div class="tfs" style="display:flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--bd);border-radius:var(--r2);padding:6px 10px;max-width:220px;margin-left:auto">
+                <i class="fas fa-search" style="color:var(--tx3);font-size:11px"></i>
+                <input id="justif-q" placeholder="Buscar..." oninput="if(_lastData)renderJustif(_lastData)" style="background:none;border:none;outline:none;color:var(--tx);font-size:13px;flex:1;font-family:inherit">
+              </div>
+              <select class="fsel" id="justif-mot" onchange="if(_lastData)renderJustif(_lastData)" style="min-width:200px"><option value="">Todos los motivos</option></select>
+            </div>
+            <div style="overflow-x:auto;overflow-y:auto;max-height:500px">
+              <!-- REQ2: columna Estado agregada -->
+              <table><thead style="position:sticky;top:0;z-index:2"><tr>
+                <th>PDV</th><th>Promotor</th><th>Regional</th><th>Motivo</th><th>Hora</th><th>Estado</th>
+              </tr></thead>
+              <tbody id="tb-justif"></tbody></table>
+            </div>
+          </div>
+          <div class="card card-p">
+            <div class="card-hdr"><div class="card-title">Motivos</div></div>
+            <div style="position:relative;height:200px"><canvas id="ch-justif-m"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FUERA RUTA -->
+      <div class="page" id="pg-fueraruta">
+        <div class="kpi-grid-4">
+          <div class="kpi t-vi"><div class="kpi-lbl">Total fuera de ruta</div><div class="kpi-val" style="color:var(--vi)" id="fr-total">—</div><i class="fas fa-random kpi-ico"></i></div>
+          <div class="kpi t-bl"><div class="kpi-lbl">Promotores</div><div class="kpi-val" style="color:var(--bl)" id="fr-colabs">—</div><i class="fas fa-users kpi-ico"></i></div>
+          <div class="kpi t-teal"><div class="kpi-lbl">PDVs únicos</div><div class="kpi-val" style="color:var(--teal)" id="fr-pdvs">—</div><i class="fas fa-store kpi-ico"></i></div>
+          <div class="kpi t-ok"><div class="kpi-lbl">% del ruteo</div><div class="kpi-val" style="color:var(--ok)" id="kpi-fr-pct">—</div><i class="fas fa-percentage kpi-ico"></i></div>
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 1fr;gap:20px">
+          <div class="card card-p">
+            <div class="card-hdr"><div><div class="card-title">Plan vs Fuera de ruta por regional</div></div></div>
+            <div class="chart-h"><canvas id="ch-fr-reg"></canvas></div>
+          </div>
+          <div class="card card-p">
+            <div class="card-hdr"><div class="card-title">Motivos</div></div>
+            <div style="position:relative;height:200px"><canvas id="ch-fr-mot"></canvas></div>
+          </div>
+        </div>
+        <div class="tw">
+          <div class="tf"><i class="fas fa-random" style="color:var(--vi)"></i><span style="font-weight:600;font-size:13px">Detalle de visitas fuera de ruta</span></div>
+          <div style="overflow-x:auto;overflow-y:auto;max-height:400px">
+            <table><thead style="position:sticky;top:0;z-index:2"><tr>
+              <th>Promotor</th><th>PDV</th><th>Regional</th><th>Cadena</th><th>Hora</th><th>Motivo</th>
+            </tr></thead>
+            <tbody id="tb-fueraruta"></tbody></table>
+          </div>
+        </div>
+      </div>
+
+      <!-- MAPA COBERTURA -->
+      <div class="page" id="pg-mapa">
+        <div class="fbar" style="padding:10px 18px">
+          <select class="fsel" id="mapa-reg" onchange="if(_lastData)renderMapaCobertura(_lastData)" style="min-width:180px">
+            <option value="">Todas las regionales</option>
+            <option>CAAGUAZU</option><option>CAAZAPA</option><option>CIUDAD DEL ESTE</option>
+            <option>CORONEL BOGADO</option><option>CORONEL OVIEDO</option><option>ENCARNACION</option>
+            <option>HERNANDERIAS</option><option>SAN ALBERTO</option><option>SAN JUAN NEPOMUCENO</option>
+            <option>SANTA RITA</option><option>VILLARRICA</option>
+          </select>
+          <select class="fsel" id="mapa-cad" onchange="if(_lastData)renderMapaCobertura(_lastData)" style="min-width:160px">
+            <option value="">Todas las cadenas</option>
+            <option>BODEGA</option><option>DESPENSA</option><option>AUTOSERVICIO</option>
+            <option>COMERCIAL</option><option>C-STORE REGULAR</option><option>BIGGIE</option>
+            <option>RETAIL</option><option>SUPERMERCADO INDEPENDIENTE</option>
+          </select>
+          <div style="font-weight:700;font-size:12px" id="mapa-counter">— PDVs</div>
+        </div>
+        <div id="mapa-legend" style="display:flex;gap:10px;flex-wrap:wrap;padding:8px 20px 0"></div>
+        <div class="card" style="overflow:hidden;height:540px">
+          <div id="mapa-cobertura" style="height:100%"></div>
+        </div>
+      </div>
+
+      <!-- RUTEO -->
+      <div class="page" id="pg-ruteo">
+        <div id="ruteo-content"></div>
+      </div>
+
+      <!-- SEGUIMIENTO -->
+      <div class="page" id="pg-seguimiento">
+        <div id="seg-content"></div>
+      </div>
+
+    </div>
+  </div>
 </div>
 
-<main>
-
-<!-- ══════════════ TAB CARNICERIAS ══════════════ -->
-<div class="tab-panel active" id="tab-carn">
-  <div class="section">
-    <div class="section-label"><span>01 — Cargar archivo de Carnicerias</span></div>
-    <div class="drop-zone" id="dz-carn">
-      <input type="file" id="fi-carn" accept=".xlsx">
-      <div class="drop-icon">📂</div>
-      <div class="drop-title">Subí el Excel de Carnicerias</div>
-      <div class="drop-sub">Debe contener la hoja "Precio de Carnicerias" · .xlsx</div>
-    </div>
-    <div class="status-bar" id="sb-carn"><div class="status-dot"></div><span id="sm-carn"></span></div>
-  </div>
-  <div id="stats-carn" class="hidden">
-    <div class="section-label"><span>02 — Resumen</span><span id="periodo-carn"></span></div>
-    <div class="stats-row">
-      <div class="stat-card"><div class="stat-label">Cortes</div><div class="stat-val" id="sc-carn">—</div></div>
-      <div class="stat-card"><div class="stat-label">Locales</div><div class="stat-val" id="sl-carn">—</div></div>
-      <div class="stat-card"><div class="stat-label">Mayor dif.</div><div class="stat-val red" id="sd-carn">—</div></div>
-      <div class="stat-card"><div class="stat-label">Corte volátil</div><div class="stat-val red" id="sv-carn" style="font-size:.8rem;padding-top:.25rem">—</div></div>
-    </div>
-  </div>
-  <div id="preview-carn" class="hidden">
-    <div class="section-label"><span>03 — Vista previa</span><span id="rc-carn"></span></div>
-    <div class="table-wrap">
-      <table><thead><tr><th>Corte</th><th>Local máx.</th><th>Precio máx.</th><th>Local mín.</th><th>Precio mín.</th><th>Diferencia</th><th>Sin datos</th></tr></thead>
-      <tbody id="pb-carn"></tbody></table>
-    </div>
-  </div>
-  <div id="dl-carn" class="hidden">
-    <div class="section-label"><span>04 — Exportar</span></div>
-    <button class="btn-download" id="btn-carn" onclick="generateCarn()">
-      <span>↓</span><span id="btxt-carn">Generar y descargar Excel con formato del informe</span>
-    </button>
-  </div>
-</div>
-
-<!-- ══════════════ TAB ENVASADOS ══════════════ -->
-<!-- ══════════════ TAB ENVASADOS ══════════════ -->
-<div class="tab-panel" id="tab-env">
-
-  <!-- Upload grid: semana actual + semana anterior -->
-  <div class="section">
-    <div class="section-label"><span>01 — Cargar archivos</span></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-
-      <div>
-        <div style="font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);margin-bottom:.5rem;font-weight:500">Semana actual <span style="color:var(--accent)">*</span></div>
-        <div class="drop-zone" id="dz-env" style="padding:2rem 1rem">
-          <input type="file" id="fi-env" accept=".xlsx">
-          <div class="drop-icon" style="width:36px;height:36px;font-size:1.1rem">📦</div>
-          <div class="drop-title" style="font-size:.9rem">Excel semana actual</div>
-          <div class="drop-sub">Hoja "Precio de Cortes Envasados"</div>
-        </div>
-        <div class="status-bar" id="sb-env"><div class="status-dot"></div><span id="sm-env"></span></div>
-      </div>
-
-      <div>
-        <div style="font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);margin-bottom:.5rem;font-weight:500">Semana anterior <span style="color:var(--ink-3)">(opcional)</span></div>
-        <div class="drop-zone" id="dz-env-prev" style="padding:2rem 1rem;border-style:dashed;opacity:.8">
-          <input type="file" id="fi-env-prev" accept=".xlsx">
-          <div class="drop-icon" style="width:36px;height:36px;font-size:1.1rem">📅</div>
-          <div class="drop-title" style="font-size:.9rem">Excel semana anterior</div>
-          <div class="drop-sub">Para comparación de precios</div>
-        </div>
-        <div class="status-bar" id="sb-env-prev"><div class="status-dot"></div><span id="sm-env-prev"></span></div>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- Stats resumen -->
-  <div id="stats-env" class="hidden">
-    <div class="section-label"><span>02 — Resumen ejecutivo</span><span id="periodo-env"></span></div>
-
-    <!-- Métricas principales -->
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1rem">
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:3px;padding:.8rem 1rem">
-        <div style="font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:.25rem">Grupos</div>
-        <div style="font-family:'Fraunces',serif;font-size:1.5rem;font-weight:600" id="sc-env">—</div>
-      </div>
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:3px;padding:.8rem 1rem">
-        <div style="font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:.25rem">Cortes totales</div>
-        <div style="font-family:'Fraunces',serif;font-size:1.5rem;font-weight:600" id="sl-env">—</div>
-      </div>
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:3px;padding:.8rem 1rem">
-        <div style="font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:.25rem">Mayor diferencia</div>
-        <div style="font-family:'Fraunces',serif;font-size:1.3rem;font-weight:600;color:var(--accent)" id="sd-env">—</div>
-      </div>
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:3px;padding:.8rem 1rem">
-        <div style="font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:.25rem">Grupo volátil</div>
-        <div style="font-family:'Fraunces',serif;font-size:.85rem;font-weight:600;color:var(--accent);padding-top:.25rem;line-height:1.2" id="sv-env">—</div>
-      </div>
-    </div>
-
-    <!-- Resumen ejecutivo detallado -->
-    <div id="exec-summary" style="background:var(--surface);border:1px solid var(--border);border-radius:3px;padding:1rem 1.1rem;margin-bottom:1rem;display:none">
-      <div style="font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:.75rem">Puntos destacados de la semana</div>
-      <div id="exec-content" style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;font-size:.72rem"></div>
-    </div>
-
-    <!-- Cobertura por local -->
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:3px;padding:1rem 1.1rem;margin-bottom:1rem">
-      <div style="font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:.75rem">Cobertura por local</div>
-      <div id="coverage-bars"></div>
-    </div>
-
-    <!-- Ranking de marcas -->
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:3px;padding:1rem 1.1rem;margin-bottom:1rem">
-      <div style="font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:.75rem">Ranking de marcas por precio promedio</div>
-      <div id="brand-ranking" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:.7rem"></div>
-    </div>
-
-  </div>
-
-  <!-- Vista previa análisis -->
-  <div id="preview-env" class="hidden">
-    <div class="section-label"><span>03 — Análisis por grupo</span><span id="rc-env"></span></div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Grupo</th><th>Cobertura</th><th>Marca máx.</th><th>Corte</th><th>Local</th><th>Precio máx.</th>
-            <th>Marca mín.</th><th>Corte</th><th>Local</th><th>Precio mín.</th>
-            <th>Diferencia</th><th id="th-var" style="display:none">Var. sem. ant.</th>
-          </tr>
-        </thead>
-        <tbody id="pb-env"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- Export -->
-  <div id="dl-env" class="hidden">
-    <div class="section-label"><span>04 — Exportar</span></div>
-    <button class="btn-download" id="btn-env" onclick="generateEnv()">
-      <span>↓</span><span id="btxt-env">Generar y descargar Excel con análisis completo</span>
-    </button>
-  </div>
-
-</div><!-- /tab-env -->
-
-
-<!-- ══════════════ TAB OFERTAS FIN DE SEMANA ══════════════ -->
-<div class="tab-panel" id="tab-oferta">
-  <div class="section">
-    <div class="section-label"><span>01 — Cargar archivo de Ofertas</span></div>
-    <div class="drop-zone" id="dz-oferta">
-      <input type="file" id="fi-oferta" accept=".xlsx">
-      <div class="drop-icon">🏷️</div>
-      <div class="drop-title">Subí el Excel de Ofertas de Fin de Semana</div>
-      <div class="drop-sub">Debe contener la hoja de precios con las ofertas registradas · .xlsx</div>
-    </div>
-    <div class="status-bar" id="sb-oferta"><div class="status-dot"></div><span id="sm-oferta"></span></div>
-  </div>
-  <div id="stats-oferta" class="hidden">
-    <div class="section-label"><span>02 — Resumen</span><span id="periodo-oferta"></span></div>
-    <div class="stats-row">
-      <div class="stat-card"><div class="stat-label">Cortes totales</div><div class="stat-val" id="sc-oferta">—</div></div>
-      <div class="stat-card"><div class="stat-label">Con oferta</div><div class="stat-val" id="sl-oferta" style="color:var(--green)">—</div></div>
-      <div class="stat-card"><div class="stat-label">Sin oferta</div><div class="stat-val red" id="sd-oferta">—</div></div>
-      <div class="stat-card"><div class="stat-label">Locales</div><div class="stat-val" id="sv-oferta">—</div></div>
-    </div>
-  </div>
-  <div id="preview-oferta" class="hidden">
-    <div class="section-label"><span>03 — Vista previa</span><span id="rc-oferta"></span></div>
-    <div class="table-wrap">
-      <table><thead><tr><th>Corte</th><th>Local máx.</th><th>Precio máx.</th><th>Local mín.</th><th>Precio mín.</th><th>Diferencia</th><th>Locales con oferta</th><th>Sin oferta</th></tr></thead>
-      <tbody id="pb-oferta"></tbody></table>
-    </div>
-  </div>
-  <div id="dl-oferta" class="hidden">
-    <div class="section-label"><span>04 — Exportar</span></div>
-    <button class="btn-download" id="btn-oferta" onclick="generateOferta()">
-      <span>↓</span><span id="btxt-oferta">Generar y descargar Excel con análisis de ofertas</span>
-    </button>
-  </div>
-</div><!-- /tab-oferta -->
-
-
-</main>
-<footer>
-  <span>Analizador v4.2 — Carnicerias & Envasados</span>
-  <span>Procesamiento local · ningún dato sale de tu equipo</span>
-</footer>
+<div id="toast"></div>
 
 <script>
-// ══════════════════════════════════════════════════════════
-// ESTADO GLOBAL
-// ══════════════════════════════════════════════════════════
-const GC = { wb:null, analysis:[], locales:[], fileName:'', periodo:'' };
-
-// ══════════════════════════════════════════════════════════
-// UTILS COMPARTIDOS
-// ══════════════════════════════════════════════════════════
-const $ = id => document.getElementById(id);
-const show = id => $(id).classList.remove('hidden');
-
-function switchTab(id, btn) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  btn.classList.add('active');
-  $('tab-' + id).classList.add('active');
-}
-
-function setStatus(pfx, msg, type) {
-  const bar = $('sb-' + pfx);
-  bar.className = 'status-bar show ' + type;
-  $('sm-' + pfx).textContent = msg;
-}
-
-function toNum(v) {
-  if (v === null || v === undefined || v === '' || v === '-') return null;
-  const s = String(v).trim();
-  if (s === '-') return null;
-  const n = parseFloat(s.replace(/[^\d.]/g, ''));
-  return (!isNaN(n) && n > 100 && n < 2000000) ? n : null;
-}
-
-function fmtNum(n) { return Math.round(n).toLocaleString('es-PY'); }
-
-function setupDrop(pfx, handler) {
-  const dz = $('dz-' + pfx), fi = $('fi-' + pfx);
-  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
-  dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
-  dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag-over'); handler(e.dataTransfer.files[0]); });
-  fi.addEventListener('change', e => { if(e.target.files[0]) handler(e.target.files[0]); });
-}
-
-function loadExcelJS() {
-  return new Promise((res, rej) => {
-    if (window.ExcelJS) { res(); return; }
-    const s = document.createElement('script');
-    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js';
-    s.onload = res;
-    s.onerror = () => rej(new Error('No se pudo cargar ExcelJS. Verificá tu conexión a internet.'));
-    document.head.appendChild(s);
-  });
-}
-
-function sheetToArray(ws) {
-  if (!ws['!ref']) return [];
-  const range = XLSX.utils.decode_range(ws['!ref']);
-  const rows = [];
-  for (let r = range.s.r; r <= range.e.r; r++) {
-    const row = [];
-    for (let c = range.s.c; c <= range.e.c; c++) {
-      const cell = ws[XLSX.utils.encode_cell({ r, c })];
-      row.push(cell ? cell.v : null);
-    }
-    rows.push(row);
-  }
-  return rows;
-}
-
-// ExcelJS style helpers
-function exFill(hex)  { return { type:'pattern', pattern:'solid', fgColor:{argb:'FF'+hex} }; }
-function exFont(sz=10, bold=false, color='000000', name='Arial') { return { name, size:sz, bold, color:{argb:'FF'+color} }; }
-function exAlign(h='center', v='middle', wrap=true) { return { horizontal:h, vertical:v, wrapText:wrap }; }
-function applyCell(cell, val, fillHex, fontCfg, alignCfg, numFmt) {
-  cell.value = val;
-  if (fillHex)  cell.fill      = exFill(fillHex);
-  if (fontCfg)  cell.font      = fontCfg;
-  if (alignCfg) cell.alignment = alignCfg;
-  if (numFmt)   cell.numFmt    = numFmt;
-}
-
-// ─── Copia hoja original con formato completo (colores, anchos, merges, fuentes) ───
-function copySheetWithFormat(xlsxSheet, excelJsSheet) {
-  if (!xlsxSheet || !xlsxSheet['!ref']) return;
-  const range = XLSX.utils.decode_range(xlsxSheet['!ref']);
-
-  if (xlsxSheet['!cols']) {
-    xlsxSheet['!cols'].forEach((col, i) => {
-      if (col && col.wch) excelJsSheet.getColumn(i + 1).width = col.wch;
-      else if (col && col.wpx) excelJsSheet.getColumn(i + 1).width = col.wpx / 7;
-    });
-  }
-
-  if (xlsxSheet['!rows']) {
-    xlsxSheet['!rows'].forEach((row, i) => {
-      if (row && row.hpt) excelJsSheet.getRow(i + 1).height = row.hpt;
-    });
-  }
-
-  for (let R = range.s.r; R <= range.e.r; R++) {
-    for (let C = range.s.c; C <= range.e.c; C++) {
-      const addr  = XLSX.utils.encode_cell({ r: R, c: C });
-      const xlCell = xlsxSheet[addr];
-      if (!xlCell) continue;
-      const ejCell = excelJsSheet.getCell(R + 1, C + 1);
-
-      ejCell.value = (xlCell.t === 'n') ? xlCell.v
-                   : (xlCell.t === 'b') ? xlCell.v
-                   : (xlCell.v !== undefined && xlCell.v !== null) ? String(xlCell.v)
-                   : null;
-
-      const s = xlCell.s;
-      if (!s) continue;
-
-      try {
-        if (s.fill && s.fill.fgColor) {
-          const rgb = s.fill.fgColor.rgb || null;
-          if (rgb && rgb !== '00000000' && rgb.length >= 6) {
-            const hex = rgb.length === 8 ? rgb.slice(2) : rgb;
-            ejCell.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF'+hex } };
-          }
-        }
-      } catch(e) {}
-
-      try {
-        if (s.font) {
-          const fc = {};
-          if (s.font.name)  fc.name  = s.font.name;
-          if (s.font.sz)    fc.size  = s.font.sz;
-          if (s.font.bold)  fc.bold  = true;
-          if (s.font.italic) fc.italic = true;
-          if (s.font.color && s.font.color.rgb) {
-            const rgb = s.font.color.rgb;
-            fc.color = { argb: rgb.length === 8 ? rgb : 'FF'+rgb };
-          }
-          if (Object.keys(fc).length) ejCell.font = fc;
-        }
-      } catch(e) {}
-
-      try {
-        if (s.alignment) {
-          ejCell.alignment = {
-            horizontal: s.alignment.horizontal || undefined,
-            vertical:   s.alignment.vertical   || undefined,
-            wrapText:   s.alignment.wrapText    || false,
-          };
-        }
-      } catch(e) {}
-
-      try {
-        if (s.numFmt) ejCell.numFmt = s.numFmt;
-      } catch(e) {}
-    }
-  }
-
-  if (xlsxSheet['!merges']) {
-    xlsxSheet['!merges'].forEach(m => {
-      try {
-        excelJsSheet.mergeCells(m.s.r+1, m.s.c+1, m.e.r+1, m.e.c+1);
-      } catch(e) {}
-    });
-  }
-}
-
-// ══════════════════════════════════════════════════════════
-// ████  CARNICERIAS
-// ══════════════════════════════════════════════════════════
-setupDrop('carn', handleCarn);
-
-function handleCarn(file) {
-  if (!file || !file.name.endsWith('.xlsx')) { setStatus('carn', 'El archivo debe ser .xlsx', 'err'); return; }
-  GC.fileName = file.name.replace('.xlsx', '') + '_ANALIZADO.xlsx';
-  setStatus('carn', 'Procesando…', 'info');
-  $('sb-carn').classList.add('pulsing');
-  const reader = new FileReader();
-  reader.onerror = () => { $('sb-carn').classList.remove('pulsing'); setStatus('carn', 'Error al leer el archivo', 'err'); };
-  reader.onload = e => {
-    try {
-      const wb = XLSX.read(new Uint8Array(e.target.result), { type:'array' });
-      GC.wb = wb;
-      const sn = wb.SheetNames.find(n => {
-        const l = n.toLowerCase();
-        return l.includes('precio') && l.includes('carnicer') && !l.includes('analisis') && !l.includes('copia');
-      });
-      if (!sn) throw new Error('No se encontró la hoja de precios. Hojas disponibles: ' + wb.SheetNames.join(', '));
-      const r = processCarnSheet(wb.Sheets[sn]);
-      GC.analysis = r.analysis; GC.locales = r.locales; GC.periodo = r.periodo;
-      $('sb-carn').classList.remove('pulsing');
-      setStatus('carn', `✓ Procesado — ${GC.analysis.length} cortes en ${GC.locales.length} locales`, 'ok');
-      renderCarnStats(); renderCarnTable();
-      show('stats-carn'); show('preview-carn'); show('dl-carn');
-    } catch(err) {
-      $('sb-carn').classList.remove('pulsing');
-      setStatus('carn', 'Error: ' + err.message, 'err');
-      console.error(err);
-    }
-  };
-  reader.readAsArrayBuffer(file);
-}
-
-function processCarnSheet(ws) {
-  const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:null });
-  let periodo = '', hIdx = -1, hCols = {};
-
-  const CORTE_COL_NAMES_C = new Set(['CORTE','CADENA','TIPO DE CORTE','CORTES','DESCRIPCION','DESCRIPCIÓN','PRODUCTO','ITEM']);
-  function isNumC(v) {
-    if (v === null || v === undefined) return false;
-    const n = parseFloat(String(v).replace(/[^\d.]/g,''));
-    return !isNaN(n) && n > 0;
-  }
-
-  for (let i = 0; i < rows.length; i++) {
-    const row = rows[i];
-    if (!row || !row[0]) continue;
-    const first = String(row[0]).trim().toUpperCase();
-    if (first.includes('PRECIO DE CORTES') || first.includes('PRECIO DE CARNICER')) periodo = String(row[0]).trim();
-
-    const isKnown = CORTE_COL_NAMES_C.has(first);
-    const nonNull = row.slice(1).filter(v => v !== null && v !== undefined && String(v).trim() !== '');
-    const textCols = nonNull.filter(v => !isNumC(v) && String(v).trim() !== '-');
-    const nextRow = rows[i + 1];
-    const nextHasNums = nextRow ? nextRow.slice(1).filter(v => isNumC(v)).length >= 2 : false;
-    const isGuessed = first.length < 60 && textCols.length >= 3 && nextHasNums;
-
-    if (isKnown || isGuessed) {
-      hIdx = i;
-      let boxCnt = 0;
-      row.forEach((h, idx) => {
-        if (!h || idx === 0) return;
-        const k = String(h).trim().toUpperCase();
-        if (!k || k === 'OTRAS CARNES' || k === 'PRECIO') return;
-        if (k === 'BOX') { boxCnt++; hCols['BOX' + boxCnt] = idx; }
-        else hCols[k] = idx;
-      });
-      break;
-    }
-  }
-  if (hIdx < 0) throw new Error('No se encontró la fila de encabezado. Verificá que el archivo tenga una fila con los nombres de locales.');
-
-  const SKIP = new Set(['BOX1','BOX2','OTRAS CARNES','PRECIO']);
-  const locales = Object.keys(hCols).filter(k => !SKIP.has(k));
-  if (hCols['BOX1']) locales.push('BOX');
-
-  const lomo = { seen: false };
-  const analysis = [];
-
-  for (let i = hIdx + 1; i < rows.length; i++) {
-    const row = rows[i];
-    if (!row || !row[0]) continue;
-    let corte = String(row[0]).trim();
-    if (!corte || corte.toUpperCase() === 'CORTE' || corte.toUpperCase() === 'CADENA') continue;
-    if (corte.toUpperCase() === 'LOMO') {
-      if (!lomo.seen) lomo.seen = true; else corte = 'LOMO DE CERDO';
-    }
-    const prices = {};
-    locales.forEach(loc => {
-      let val;
-      if (loc === 'BOX') {
-        const v1 = toNum(row[hCols['BOX1']]);
-        const v2 = hCols['BOX2'] != null ? toNum(row[hCols['BOX2']]) : null;
-        const vd = [v1, v2].filter(x => x !== null);
-        val = vd.length ? vd.reduce((a,b) => a+b) / vd.length : null;
-      } else {
-        val = toNum(row[hCols[loc]]);
-      }
-      if (val !== null) prices[loc] = val;
-    });
-    if (!Object.keys(prices).length) continue;
-    const maxL = Object.keys(prices).reduce((a,b) => prices[a] > prices[b] ? a : b);
-    const minL = Object.keys(prices).reduce((a,b) => prices[a] < prices[b] ? a : b);
-    analysis.push({
-      corte,
-      maxLocal: maxL, maxPrice: prices[maxL],
-      minLocal: minL, minPrice: prices[minL],
-      diff: prices[maxL] - prices[minL],
-      missing: locales.filter(l => !prices[l])
-    });
-  }
-  if (!analysis.length) throw new Error('No se encontraron cortes con precios válidos. Verificá que el archivo tenga datos numéricos.');
-  return { analysis, locales, periodo };
-}
-
-function renderCarnStats() {
-  $('sc-carn').textContent = GC.analysis.length;
-  $('sl-carn').textContent = GC.locales.length;
-  $('periodo-carn').textContent = GC.periodo;
-  if (GC.analysis.length > 0) {
-    const best = GC.analysis.reduce((a,b) => b.diff > a.diff ? b : a);
-    $('sd-carn').textContent = fmtNum(best.diff) + ' Gs';
-    $('sv-carn').textContent = best.corte;
-  }
-  $('rc-carn').textContent = GC.analysis.length + ' cortes';
-}
-
-function renderCarnTable() {
-  $('pb-carn').innerHTML = GC.analysis.map(d => {
-    const m = d.missing.length ? `<span class="missing">${d.missing.join(', ')}</span>` : `<span class="all-ok">✓ todos</span>`;
-    return `<tr><td class="corte">${d.corte}</td><td><span class="pill max">↑ ${d.maxLocal}</span></td><td>${fmtNum(d.maxPrice)}</td><td><span class="pill min">↓ ${d.minLocal}</span></td><td>${fmtNum(d.minPrice)}</td><td>${fmtNum(d.diff)}</td><td>${m}</td></tr>`;
-  }).join('');
-}
-
-function makeCarnComment(d) {
-  const ds = Math.round(d.diff).toLocaleString('es-PY').replace(/,/g,'.');
-  let o1;
-  if (!d.missing.length) o1 = '1.  EL CORTE PRESENTA EXISTENCIA EN TODOS LOS LOCALES AUDITADOS.';
-  else if (d.missing.length >= GC.locales.length - 1) o1 = `1.  EL CORTE SE ENCUENTRA ÚNICAMENTE EN EL LOCAL DE ${d.maxLocal}.`;
-  else o1 = `1.  EL CORTE NO PRESENTA EXISTENCIA EN LOS LOCALES DE ${d.missing.join(', ')}.`;
-  const o2 = d.diff > 0
-    ? `2. SE VISUALIZA UNA DIFERENCIA EN CUANTO AL PRECIO ENTRE ${d.maxLocal} Y ${d.minLocal} DE ${ds} GS.`
-    : `2. EL CORTE PRESENTA UN ÚNICO PRECIO REGISTRADO.`;
-  return o1 + '\n' + o2;
-}
-
-async function generateCarn() {
-  const btn = $('btn-carn'); btn.disabled = true; $('btxt-carn').textContent = 'Cargando ExcelJS…';
-  try {
-    await loadExcelJS();
-    $('btxt-carn').textContent = 'Generando Excel…';
-    const wb = new ExcelJS.Workbook();
-    const origSN = GC.wb.SheetNames.find(n => n.toLowerCase().includes('precio') && n.toLowerCase().includes('carnicer') && !n.toLowerCase().includes('analisis') && !n.toLowerCase().includes('copia'));
-    const ws1 = wb.addWorksheet(origSN);
-    copySheetWithFormat(GC.wb.Sheets[origSN], ws1);
-    const ws = wb.addWorksheet('Analisis de precio Carnicerias ');
-    ws.getColumn(1).width=27; ws.getColumn(2).width=22.7; ws.getColumn(3).width=17.7;
-    ws.getColumn(4).width=13; ws.getColumn(5).width=21.9; ws.getColumn(6).width=82.4;
-    for (let r=1;r<=4;r++) { ws.addRow([]); ws.getRow(r).height=21; }
-    ws.getRow(5).height=21; ws.mergeCells('A5:F5');
-    applyCell(ws.getCell('A5'), GC.periodo||'ANALISIS DE PRECIOS SEGUN EL TIPO DE CORTE', '0070C0', exFont(11,true,'FFFFFF'), exAlign('center','middle',false));
-    ws.getRow(6).height=21;
-    [['CORTE','000000'],['LOCAL','000000'],['INDICADORE DE PRECIOS','000000'],['PRECIOS','FFFFFF'],['DIFERENCIA','FFFFFF'],['COMENTARIOS','000000']].forEach(([l,c],i) => {
-      applyCell(ws.getCell(6,i+1), l, '2F5496', exFont(10,true,c), exAlign('center','middle',true));
-    });
-    let row = 7;
-    for (const d of GC.analysis) {
-      const r1=row, r2=row+1;
-      ws.getRow(r1).height=61.5; ws.getRow(r2).height=61.5; ws.getRow(r2+1).height=12;
-      ws.mergeCells(r1,1,r2,1);
-      applyCell(ws.getCell(r1,1), d.corte, 'D9E2F3', exFont(10,true,'3A3838'), exAlign('center','middle',true));
-      applyCell(ws.getCell(r1,2), d.maxLocal,            '8EAADB', exFont(10,false,'3A3838'), exAlign('center','middle',false));
-      applyCell(ws.getCell(r1,3), 'PRECIO MAXIMO',        'FF0000', exFont(10,false,'FFFFFF'), exAlign('center','middle',false));
-      applyCell(ws.getCell(r1,4), Math.round(d.maxPrice), '8EAADB', exFont(10,false,'3A3838'), exAlign('center','middle',false), '#,##0');
-      ws.mergeCells(r1,5,r2,5);
-      applyCell(ws.getCell(r1,5), Math.round(d.diff), '2F5496', exFont(11,false,'FFFFFF','Calibri'), exAlign('center','middle',true), '#,##0');
-      ws.mergeCells(r1,6,r2,6);
-      applyCell(ws.getCell(r1,6), makeCarnComment(d), 'D9E2F3', exFont(10,true,'3A3838'), exAlign('left','middle',true));
-      applyCell(ws.getCell(r2,2), d.minLocal,            'B4C6E7', exFont(10,false,'3A3838'), exAlign('center','middle',false));
-      applyCell(ws.getCell(r2,3), 'PRECIO MINIMO',        'FFFF00', exFont(10,false,'3A3838'), exAlign('center','middle',false));
-      applyCell(ws.getCell(r2,4), Math.round(d.minPrice), 'B4C6E7', exFont(10,false,'3A3838'), exAlign('center','middle',false), '#,##0');
-      row += 3;
-    }
-    ws.getRow(row).height=39;
-    applyCell(ws.getCell(row,1), 'OBSERVACIONES: ', null, exFont(10,true,'2F5496'), exAlign('left','middle',true));
-    const solos = GC.analysis.filter(d => d.missing.length >= GC.locales.length - 1);
-    if (solos.length) {
-      ws.getRow(row+1).height=60; ws.mergeCells(row+1,1,row+1,6);
-      applyCell(ws.getCell(row+1,1), solos.map(d=>`EL CORTE ${d.corte.toUpperCase()} SE ENCUENTRA ÚNICAMENTE EN EL LOCAL DE ${d.maxLocal}.`).join(' '), null, exFont(10,true,'FF0000'), exAlign('left','top',true));
-    }
-    const buf = await wb.xlsx.writeBuffer();
-    const blob = new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href=url; a.download=GC.fileName; a.click(); URL.revokeObjectURL(url);
-    $('btxt-carn').textContent = '✓ Descargado correctamente';
-    setTimeout(() => { $('btxt-carn').textContent='Generar y descargar Excel con formato del informe'; btn.disabled=false; }, 3000);
-  } catch(err) {
-    $('btxt-carn').textContent = 'Error: ' + err.message;
-    btn.disabled = false;
-    console.error(err);
-  }
-}
-
-// ══════════════════════════════════════════════════════════
-// ████  ENVASADOS — con comparación semana a semana
-// ══════════════════════════════════════════════════════════
-setupDrop('env',      handleEnv);
-setupDrop('env-prev', handleEnvPrev);
-
-const GE = {
-  wb: null, groups: [], locales: [], fileName: '', periodo: '', totalCortes: 0,
-  prevGroups: null, prevLoaded: false
+/* ══════════════════════════════════════════════════
+   CERVEPAR v2 — 4 Requerimientos aplicados
+   REQ1: Filtros de fecha con input[type=date]
+   REQ2: Alerta PDVs con >5 justificaciones/mes
+   REQ3: Filtro de motivo corregido (strict match)
+   REQ4: KPI Realizados = solo efectivos en ruta
+══════════════════════════════════════════════════ */
+const CVP = {
+  nombre:   'Cervepar',
+  ini:      'C',
+  color:    '#c11d2a',
+  sheetsId: '1AO9_IQZOMplKxbyMrA1hEUAMwHYLLyCS6uTJSWtPcoc',
+  sheetsTab:'Hoja 1',
+  ruteoId:  '1lpQ6FyUkZPo9rgUUReTMjfzLY_HUwfUe',
+  ruteoTab: 'RUTA ACTUALIZADA - JUNIO',
+  worker:   'https://involves-proxy.ximenam-marka.workers.dev',
 };
 
-// ── Archivo semana anterior ────────────────────────────────
-function handleEnvPrev(file) {
-  if (!file || !file.name.endsWith('.xlsx')) { setStatus('env-prev','El archivo debe ser .xlsx','err'); return; }
-  setStatus('env-prev','Procesando semana anterior…','info');
-  const reader = new FileReader();
-  reader.onload = e => {
-    try {
-      const wb2 = XLSX.read(new Uint8Array(e.target.result), { type:'array' });
-      const sn2 = findEnvSheet(wb2);
-      if (!sn2) throw new Error('No se encontró la hoja de precios');
-      const r2 = processEnvSheet(wb2.Sheets[sn2], sn2);
-      GE.prevGroups = {};
-      r2.groups.forEach(g => { GE.prevGroups[g.grupo] = g; });
-      GE.prevLoaded = true;
-      setStatus('env-prev', `✓ ${r2.groups.length} grupos cargados`, 'ok');
-      // Si ya tenemos la semana actual, re-renderizar con comparación
-      if (GE.groups.length > 0) { renderEnvTable(); renderEnvStats(); }
-    } catch(err) {
-      setStatus('env-prev','Error: '+err.message,'err');
+// Ruteo: cargado desde planilla externa
+// Cod Cliente numérico = válido; letras = excluir
+let _ruteo = new Map();        // cod_str → {cod,pdv,merchant,region,ciudad,lat,lng,canal}
+let _ruteoByMerchant = {};     // norm(merchant) → [cods]
+let _ruteoLoaded = false;
+
+// Función: ¿es código de cliente válido?
+// Cod numérico (ej: "83496" o "83496.0") = válido
+// Texto (ej: "VER CON OSCAR") = excluir
+function esCodValido(cod) {
+  if(!cod) return false;
+  const s = cod.toString().trim();
+  if(!s) return false;
+  // Intentar parsear como número
+  const n = parseFloat(s.replace(',','.'));
+  return !isNaN(n) && n > 0;
+}
+
+// Fetch y parse del ruteo
+async function fetchRuteo() {
+  try {
+    const url = CVP.worker + '/api/sheets/' + CVP.ruteoId +
+      '?range=' + encodeURIComponent(CVP.ruteoTab + '!A:H');
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    const rows = data.values || [];
+    if(rows.length < 2) return;
+
+    _ruteo.clear();
+    _ruteoByMerchant = {};
+
+    // Headers: OBSERVACION | Cod Cliente | (PDV col2) | Merchant | Region | Ciudad | Latitud | Longitud
+    rows.slice(1).forEach(r => {
+      const cod      = (r[1]||'').toString().trim();
+      const pdv      = (r[2]||'').toString().trim();
+      const merchant = (r[3]||'').toString().trim();
+      const region   = (r[4]||'').toString().trim();
+      const ciudad   = (r[5]||'').toString().trim();
+      const lat      = parseFloat(r[6]||'') || null;
+      const lng      = parseFloat(r[7]||'') || null;
+
+      // Excluir si el código no es numérico
+      if(!esCodValido(cod)) return;
+      // Excluir si no hay PDV
+      if(!pdv) return;
+
+      const codNum = cod.replace(/[.,]/g,'').trim();
+      const entry = { cod:codNum, pdv, merchant, region, ciudad, lat, lng };
+      _ruteo.set(codNum, entry);
+
+      // Index por merchant normalizado (mayúsculas, sin tildes)
+      const mNorm = (merchant||'').toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
+      if(mNorm) {
+        if(!_ruteoByMerchant[mNorm]) _ruteoByMerchant[mNorm] = [];
+        _ruteoByMerchant[mNorm].push(codNum);
+        // También indexar por primeras 2 palabras para matching flexible
+        const mWords = mNorm.split(' ').filter(Boolean);
+        if(mWords.length >= 2) {
+          const mShort = mWords.slice(0,2).join(' ');
+          if(!_ruteoByMerchant[mShort]) _ruteoByMerchant[mShort] = [];
+          if(!_ruteoByMerchant[mShort].includes(codNum))
+            _ruteoByMerchant[mShort].push(codNum);
+        }
+      }
+    });
+
+    _ruteoLoaded = true;
+    console.log('[CVP] Ruteo cargado:', _ruteo.size, 'PDVs válidos de', rows.length-1, 'filas');
+    console.log('[CVP] Merchants en índice:', Object.keys(_ruteoByMerchant).length);
+    // Log muestra de merchants para debug
+    const sampleMerchants = Object.keys(_ruteoByMerchant).slice(0,5);
+    console.log('[CVP] Muestra merchants:', sampleMerchants);
+  } catch(e) {
+    _ruteoLoaded = true; // marcar como intentado para no quedar en loop
+    console.warn('[CVP] Error cargando ruteo:', e.message, e);
+  }
+}
+
+// Obtener PDVs del ruteo asignados a un merchant
+// Matching: exacto → 2 palabras → flexible por prefijo
+function getRuteoPorMerchant(merchantNombre) {
+  const mNorm = (merchantNombre||'').toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
+
+  // 1. Exacto
+  let cods = _ruteoByMerchant[mNorm] || [];
+  if(cods.length) return [...new Set(cods)].map(c => _ruteo.get(c)).filter(Boolean);
+
+  // 2. Primeras 2 palabras
+  const words = mNorm.split(' ').filter(Boolean);
+  if(words.length >= 2) {
+    const short2 = words.slice(0,2).join(' ');
+    cods = _ruteoByMerchant[short2] || [];
+    if(cods.length) return [...new Set(cods)].map(c => _ruteo.get(c)).filter(Boolean);
+  }
+
+  // 3. Flexible: buscar clave que comparte las 2 primeras palabras
+  if(words.length >= 2) {
+    const prefix2 = words.slice(0,2).join(' ');
+    for(const key of Object.keys(_ruteoByMerchant)) {
+      const keyWords = key.split(' ').filter(Boolean);
+      const keyPrefix2 = keyWords.slice(0,2).join(' ');
+      if(keyPrefix2 === prefix2) {
+        cods = _ruteoByMerchant[key];
+        return [...new Set(cods)].map(c => _ruteo.get(c)).filter(Boolean);
+      }
     }
-  };
-  reader.readAsArrayBuffer(file);
+  }
+
+  return [];
 }
 
-// ── Archivo semana actual ─────────────────────────────────
-function handleEnv(file) {
-  if (!file || !file.name.endsWith('.xlsx')) { setStatus('env','El archivo debe ser .xlsx','err'); return; }
-  GE.fileName = file.name.replace('.xlsx','') + '_ANALIZADO.xlsx';
-  setStatus('env','Procesando…','info');
-  $('sb-env').classList.add('pulsing');
-  const reader = new FileReader();
-  reader.onerror = () => { $('sb-env').classList.remove('pulsing'); setStatus('env','Error al leer el archivo','err'); };
-  reader.onload = e => {
-    try {
-      const wb = XLSX.read(new Uint8Array(e.target.result), { type:'array' });
-      GE.wb = wb;
-      const sn = findEnvSheet(wb);
-      if (!sn) throw new Error('No se encontró la hoja de precios. Hojas: '+wb.SheetNames.join(', '));
-      const r = processEnvSheet(wb.Sheets[sn], sn);
-      GE.groups = r.groups; GE.locales = r.locales; GE.periodo = r.periodo; GE.totalCortes = r.totalCortes;
-      $('sb-env').classList.remove('pulsing');
-      if (!GE.groups.length) throw new Error('No se encontraron grupos reconocibles.');
-      setStatus('env', `✓ ${GE.groups.length} grupos · ${GE.totalCortes} cortes`, 'ok');
-      renderEnvStats(); renderEnvTable();
-      show('stats-env'); show('preview-env'); show('dl-env');
-    } catch(err) {
-      $('sb-env').classList.remove('pulsing');
-      setStatus('env','Error: '+err.message,'err');
-      console.error(err);
-    }
-  };
-  reader.readAsArrayBuffer(file);
+// Calcular semana ISO del año
+function getSemana(fechaStr) {
+  // fechaStr = DD/MM/YYYY
+  if(!fechaStr) return null;
+  const p = fechaStr.split('/');
+  const d = new Date(+p[2], +p[1]-1, +p[0]);
+  const jan1 = new Date(d.getFullYear(), 0, 1);
+  return Math.ceil(((d - jan1) / 86400000 + jan1.getDay() + 1) / 7);
 }
 
-function findEnvSheet(wb) {
-  return wb.SheetNames.find(n => {
-    const l = n.toLowerCase();
-    return l.includes('envasad') && !l.includes('analisis') && !l.includes('copia') && !l.includes('análisis');
-  }) || wb.SheetNames.find(n => {
-    const l = n.toLowerCase();
-    return l.includes('precio') && !l.includes('analisis') && !l.includes('copia');
-  });
+const MACROZONA = {
+  'ESTE':   ['CIUDAD DEL ESTE','SANTA RITA','SAN ALBERTO','HERNANDERIAS'],
+  'SUR':    ['ENCARNACION','CAAZAPA','SAN JUAN NEPOMUCENO','CORONEL BOGADO','SAN JOSE DE LOS ARROYOS'],
+  'CENTRO': ['CORONEL OVIEDO','VILLARRICA','CAAGUAZU'],
+  'NORTE':  [],
+};
+const MACRO_COLORS = { ESTE:'#60a5fa', SUR:'#3cb3a8', CENTRO:'#a78bfa', NORTE:'#fbbf24' };
+
+function getMacro(regional) {
+  for (const [m, zs] of Object.entries(MACROZONA))
+    if (zs.includes((regional||'').toUpperCase())) return m;
+  return 'NORTE';
 }
 
-// Grupos canónicos — orden importa (más específico primero)
-const ENV_GROUPS = [
-  ['BIFE DE CHORIZO','BIFE DE CHORIZO'],['BIFE DE VACÍO','BIFE DE VACÍO'],['BIFE DE VACIO','BIFE DE VACÍO'],
-  ['BIFE ANCHO','BIFE ANCHO'],['BRISCKET','BRISCKET'],
-  ['COLITA CUADRIL PREMIUM','COLITA CUADRIL'],['COLITA CUADRIL TIPO A','COLITA CUADRIL'],
-  ['COLITA CUADRIL','COLITA CUADRIL'],['COLITA ','COLITA CUADRIL'],
-  ['COSTILLA SIN HUESO','COSTILLA'],['COSTILLA TIRA','COSTILLA'],['COSTILLA ESPECIAL','COSTILLA'],
-  ['COSTILLA POPULAR','COSTILLA'],['COSTILLA SEMI ANCHA','COSTILLA'],['COSTILLA PAMPA','COSTILLA'],
-  ['COSTILLA AL PLATO','COSTILLA'],['COSTILLA CORTE','COSTILLA'],['COSTILLA','COSTILLA'],
-  ['CUPIM','CUPIM'],['ENTRAÑA FINA','ENTRAÑA FINA'],['ENTRECOSTILLA','ENTRECOSTILLA'],
-  ['LOMITO','LOMITO'],['PECETO','PECETO'],['PICADA PARRILLERA','PICADA PARRILLERA'],
-  ['PUNTA DE PECHO','PUNTA DE PECHO'],
-  ['TAPA CUADRIL FETEADA','TAPA CUADRIL FETEADA'],['TAPA CUADRIL POPULAR','TAPA CUADRIL POPULAR'],
-  ['TAPA CUADRIL PREMIUM','TAPA CUADRIL PREMIUM'],['TAPA CUADRIL TIPO A','TAPA CUADRIL'],
-  ['TAPA CUADRIL','TAPA CUADRIL'],
-  ['TAPA DE ASADO','TAPA DE ASADO'],['TAPA ESPECIAL','TAPA ESPECIAL'],
-  ['VACIO ESPECIAL','VACÍO'],['VACÍO PAMPA','VACÍO'],['VACÍO POPULAR','VACÍO'],['VACÍO','VACÍO'],['VACIO','VACÍO'],
-];
+const SC = ['#a78bfa','#34d399','#60a5fa','#fbbf24','#3cb3a8','#f87171',
+            '#38bdf8','#fb923c','#e879f9','#4ade80','#f97316','#06b6d4',
+            '#ec4899','#84cc16','#8b5cf6','#14b8a6'];
 
-function getEnvGroup(corteRaw) {
-  const u = corteRaw.toUpperCase().trim();
-  for (const [key, label] of ENV_GROUPS) {
-    if (u.startsWith(key.toUpperCase())) return label;
+/* ── State ── */
+let _allRecords = [], _allFechas = [], _lastData = null;
+let _loading = false;
+let _liveMap = null, _rutaMap = null, _coberMap = null;
+let _rutaMarkers = [];
+const F = { desde:'', hasta:'', persona:'', regional:'' };
+const charts = {};
+
+/* ── Parse hora ── */
+function parseHora(val) {
+  if (!val||val==='') return null;
+  const s = String(val).trim();
+  const hms = s.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+  if (hms) return { h:parseInt(hms[1]), m:parseInt(hms[2]) };
+  const n = parseFloat(s);
+  if (!isNaN(n)&&n>0) {
+    const tot = Math.round((n%1)*1440);
+    return { h:Math.floor(tot/60)%24, m:tot%60 };
   }
   return null;
 }
-
-function getMarca(corteRaw) {
-  const idx = corteRaw.indexOf(' - ');
-  return idx >= 0 ? corteRaw.slice(idx+3).trim() : corteRaw.trim();
+function horaStr(val) {
+  const h = parseHora(val); if(!h) return '—';
+  return `${String(h.h).padStart(2,'0')}:${String(h.m).padStart(2,'0')}`;
+}
+function promHora(arr) {
+  const ps = arr.map(parseHora).filter(Boolean); if(!ps.length) return '—';
+  const avg = ps.reduce((s,t)=>s+t.h*60+t.m,0)/ps.length;
+  return `${String(Math.floor(avg/60)%24).padStart(2,'0')}:${String(Math.round(avg%60)).padStart(2,'0')}`;
 }
 
-function processEnvSheet(ws, sheetName) {
-  const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:null });
-  let periodo = '', hIdx = -1, hCols = {}, locales = [];
-
-  const KNOWN_HDR = new Set(['CORTE','CADENA','TIPO DE CORTE','CORTES','DESCRIPCION','DESCRIPCIÓN']);
-
-  function looksNum(v) {
-    if (v===null||v===undefined) return false;
-    const s = String(v).trim();
-    if (s==='-'||s==='') return false;
-    const n = parseFloat(s.replace(/[^\d.]/g,''));
-    return !isNaN(n) && n>0;
-  }
-
-  for (let i=0; i<rows.length; i++) {
-    const row = rows[i];
-    if (!row||!row[0]) continue;
-    const first = String(row[0]).trim().toUpperCase();
-    if (first.includes('PRECIO DE CORTE')||(first.includes('ENVASAD')&&first.length>15)) periodo=String(row[0]).trim();
-    const exact = KNOWN_HDR.has(first);
-    const textCols = row.slice(1).filter(v=>v&&!looksNum(v)&&String(v).trim()!=='-');
-    const nextNums = (rows[i+1]||[]).slice(1).filter(looksNum).length>=2;
-    const guess = first.length<60 && textCols.length>=2 && nextNums;
-    if (exact||guess) {
-      hIdx=i;
-      row.forEach((h,ci)=>{
-        if(ci===0||!h) return;
-        const k=String(h).trim().toUpperCase();
-        if(!k||k==='-'||k==='NUEVA MARCA'||k.startsWith('PRECIO DE LA')) return;
-        hCols[k]=ci; locales.push(k);
-      });
-      if(locales.length>0) break;
-      hIdx=-1; locales=[]; hCols={};
-    }
-  }
-
-  if(hIdx<0) throw new Error(`No se encontró el encabezado en "${sheetName}"`);
-
-  const allCuts=[];
-  for(let i=hIdx+1;i<rows.length;i++){
-    const row=rows[i];
-    if(!row||!row[0]) continue;
-    const corteRaw=String(row[0]).trim();
-    if(!corteRaw||KNOWN_HDR.has(corteRaw.toUpperCase())) continue;
-    const grupo=getEnvGroup(corteRaw);
-    if(!grupo) continue;
-    const prices={};
-    locales.forEach(loc=>{ const v=toNum(row[hCols[loc]]); if(v!==null) prices[loc]=v; });
-    if(!Object.keys(prices).length) continue;
-    allCuts.push({corteRaw,grupo,marca:getMarca(corteRaw),prices});
-  }
-
-  if(!allCuts.length) throw new Error('No se encontraron cortes con precios válidos.');
-
-  const groupMap={};
-  allCuts.forEach(c=>{ if(!groupMap[c.grupo]) groupMap[c.grupo]=[]; groupMap[c.grupo].push(c); });
-
-  const groups=[];
-  for(const [grupo,cuts] of Object.entries(groupMap)){
-    let maxP=-Infinity,minP=Infinity,maxE=null,minE=null;
-    const present=new Set();
-    cuts.forEach(c=>{
-      Object.entries(c.prices).forEach(([loc,price])=>{
-        present.add(loc);
-        if(price>maxP){maxP=price;maxE={...c,local:loc};}
-        if(price<minP){minP=price;minE={...c,local:loc};}
-      });
-    });
-    groups.push({
-      grupo,cuts,
-      maxPrice:maxP,maxMarca:maxE.marca,maxCorte:maxE.corteRaw,maxLocal:maxE.local,
-      minPrice:minP,minMarca:minE.marca,minCorte:minE.corteRaw,minLocal:minE.local,
-      diff:maxP-minP,missing:locales.filter(l=>!present.has(l)),
-      localesCount:present.size
-    });
-  }
-  return{groups,locales,periodo,totalCortes:allCuts.length};
+/* ── Fetch Sheets ── */
+async function fetchSheets() {
+  const range = `${CVP.sheetsTab}!A:U`;
+  const url = `${CVP.worker}/api/sheets/${CVP.sheetsId}?range=${encodeURIComponent(range)}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  return data.values || [];
 }
 
-// ── Cobertura por local ───────────────────────────────────
-function getCoverageByLocal() {
-  const counts={};
-  GE.locales.forEach(l=>counts[l]=0);
-  GE.groups.forEach(g=>{
-    g.cuts.forEach(c=>{ Object.keys(c.prices).forEach(loc=>{ if(counts[loc]!==undefined) counts[loc]++; }); });
+function parseRows(rows) {
+  if (rows.length < 2) return [];
+  const headers = rows[0];
+  return rows.slice(1).map(row => {
+    const obj = {};
+    headers.forEach((h,i) => { obj[h] = row[i]!==undefined ? row[i] : ''; });
+    return obj;
   });
-  const total=GE.totalCortes;
-  return GE.locales.map(l=>({ local:l, count:counts[l]||0, pct:total>0?Math.round((counts[l]||0)/total*100):0 }))
-                   .sort((a,b)=>b.pct-a.pct);
 }
 
-// ── Ranking de marcas ─────────────────────────────────────
-function getBrandRanking() {
-  const brands={};
-  GE.groups.forEach(g=>{
-    g.cuts.forEach(c=>{
-      const vals=Object.values(c.prices);
-      if(!vals.length) return;
-      if(!brands[c.marca]) brands[c.marca]={sum:0,count:0};
-      const avg=vals.reduce((a,b)=>a+b,0)/vals.length;
-      brands[c.marca].sum+=avg; brands[c.marca].count++;
-    });
+function getFechas(records) {
+  const s = new Set();
+  records.forEach(r => { if(r['Fecha de la visita']) s.add(r['Fecha de la visita']); });
+  return Array.from(s).sort((a,b) => {
+    const pa=a.split('/'), pb=b.split('/');
+    return new Date(pa[2],pa[1]-1,pa[0]) - new Date(pb[2],pb[1]-1,pb[0]);
   });
-  return Object.entries(brands)
-    .map(([m,v])=>({marca:m,avg:Math.round(v.sum/v.count),count:v.count}))
-    .filter(b=>b.count>=2)
-    .sort((a,b)=>b.avg-a.avg);
 }
 
-function renderEnvStats() {
-  $('sc-env').textContent = GE.groups.length;
-  $('sl-env').textContent = GE.totalCortes;
-  $('periodo-env').textContent = GE.periodo;
-  if(GE.groups.length>0){
-    const best=GE.groups.reduce((a,b)=>b.diff>a.diff?b:a);
-    $('sd-env').textContent=fmtNum(best.diff)+' Gs';
-    $('sv-env').textContent=best.grupo;
-  }
-  $('rc-env').textContent=GE.groups.length+' grupos';
+/* ── Process ── */
+function processRecords(records) {
+  const empMap={}, zonaMap={}, justifs=[], fueraRuta=[];
+  // REQ2: contador de justificaciones por PDV en el mes corriente
+  const mesActual = new Date().getMonth();
+  const anioActual = new Date().getFullYear();
+  const justifPorPDV = {}; // {pdv: count_mes}
 
-  // Cobertura bars
-  const coverage=getCoverageByLocal();
-  $('coverage-bars').innerHTML=coverage.map(c=>{
-    const pct=c.pct;
-    const color=pct>=50?'#639922':pct>=25?'#BA7517':'#E24B4A';
-    const bg=pct>=50?'#EAF3DE':pct>=25?'#FAEEDA':'#FCEBEB';
-    return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
-      <span style="font-size:.68rem;color:var(--ink-2);width:100px;flex-shrink:0;text-align:right">${c.local}</span>
-      <div style="flex:1;height:7px;background:var(--bg);border-radius:4px;overflow:hidden">
-        <div style="width:${pct}%;height:100%;background:${color};border-radius:4px"></div>
-      </div>
-      <span style="font-size:.68rem;font-weight:500;color:${color};min-width:36px">${pct}%</span>
-      <span style="font-size:.62rem;color:var(--ink-3)">${c.count} cortes</span>
-      ${pct<15?`<span style="font-size:.6rem;background:${bg};color:${color};padding:1px 6px;border-radius:2px">⚠ bajo</span>`:''}
-    </div>`;
-  }).join('');
+  records.forEach(r => {
+    const emp    = r['Empleado']||'—';
+    const pdv    = r['Punto de venta']||'—';
+    const zona   = r['Regional']||'—';
+    const cadena = r['Cadena']||'—';
+    const fuera  = r['¿Fuera del itinerario?']==='Sí';
+    const motivo = r['Motivo para no realizar la visita']||'';
+    const motivoT= r['Motivo para no realizar la tarea']||'';
+    const cin    = r['Primer check-in manual']||'';
+    const cout   = r['Último check-out manual']||'';
+    const checkin= r['Tipo de check-in']||'';
+    const lat    = parseFloat(r['Latitud']||r['lat']||'');
+    const lng    = parseFloat(r['Longitud']||r['lng']||'');
+    const sinCI  = checkin==='Sin check-in'||checkin==='';
+    const visitado   = !sinCI;
+    const justif     = sinCI && motivo!=='';
+    const noRealiz   = sinCI && motivo==='';
 
-  // Ranking marcas
-  const brands=getBrandRanking();
-  const maxAvg=brands[0]?.avg||1;
-  $('brand-ranking').innerHTML=brands.map((b,i)=>{
-    const isTop=i===0, isLow=i===brands.length-1;
-    const dot=isTop?'#639922':isLow?'#E24B4A':'var(--ink-3)';
-    return `<div style="display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:3px;background:var(--bg)">
-      <span style="font-size:.9rem;color:${dot}">●</span>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:.68rem;font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${b.marca}</div>
-        <div style="font-size:.6rem;color:var(--ink-3)">${b.count} cortes</div>
-      </div>
-      <div style="font-size:.72rem;font-weight:500;color:var(--ink);text-align:right">${fmtNum(b.avg)} Gs</div>
-    </div>`;
-  }).join('');
+    // REQ2: contar justificaciones del mes por PDV
+    // Tiempo en PDV = checkout - checkin (en minutos)
+    const tiempoPDV = (()=>{
+      const ci = parseHora(cin); const co = parseHora(cout);
+      if(!ci || !co) return null;
+      const diff = co.total - ci.total;
+      return diff > 0 ? diff : null;
+    })();
 
-  // Resumen ejecutivo
-  const coverage2=getCoverageByLocal();
-  const low=coverage2.filter(c=>c.pct<20);
-  const maxDiffGroup=GE.groups.reduce((a,b)=>b.diff>a.diff?b:a);
-  const soloCoverage=GE.groups.filter(g=>g.localesCount<=1);
-  const items=[];
-  items.push({icon:'↑',label:'Precio más alto de la semana',val:`${fmtNum(maxDiffGroup.maxPrice)} Gs`,sub:`${maxDiffGroup.maxMarca} · ${maxDiffGroup.maxLocal}`});
-  if(brands.length) items.push({icon:'★',label:'Marca con precio más alto (prom.)',val:brands[0].marca,sub:`${fmtNum(brands[0].avg)} Gs promedio`});
-  if(brands.length>1) items.push({icon:'◆',label:'Marca más económica (prom.)',val:brands[brands.length-1].marca,sub:`${fmtNum(brands[brands.length-1].avg)} Gs promedio`});
-  if(low.length) items.push({icon:'!',label:'Locales con cobertura baja (<20%)',val:low.map(c=>c.local).join(', '),sub:'Revisar relevamiento'});
-  if(soloCoverage.length) items.push({icon:'○',label:'Grupos con un solo precio registrado',val:soloCoverage.length+' grupos',sub:soloCoverage.map(g=>g.grupo).slice(0,3).join(', ')+(soloCoverage.length>3?'…':'')});
-  items.push({icon:'≠',label:'Mayor brecha de precios',val:maxDiffGroup.grupo,sub:`Diferencia: ${fmtNum(maxDiffGroup.diff)} Gs`});
-
-  $('exec-content').innerHTML=items.map(it=>`
-    <div style="background:var(--bg);border-radius:3px;padding:.6rem .8rem;border:1px solid var(--border)">
-      <div style="font-size:.6rem;color:var(--ink-3);margin-bottom:2px">${it.label}</div>
-      <div style="font-size:.78rem;font-weight:500;color:var(--ink);line-height:1.3">${it.val}</div>
-      <div style="font-size:.62rem;color:var(--ink-3);margin-top:2px">${it.sub}</div>
-    </div>`).join('');
-  $('exec-summary').style.display='block';
-}
-
-function renderEnvTable() {
-  const hasPrev = GE.prevLoaded && GE.prevGroups;
-  $('th-var').style.display = hasPrev ? '' : 'none';
-
-  $('pb-env').innerHTML=GE.groups.map(g=>{
-    const soloPrice=(g.diff===0||g.maxLocal===g.minLocal);
-    const coveragePct=GE.locales.length>0?Math.round(g.localesCount/GE.locales.length*100):0;
-    const covColor=coveragePct>=50?'#639922':coveragePct>=25?'#BA7517':'#E24B4A';
-    const covBg=coveragePct>=50?'#EAF3DE':coveragePct>=25?'#FAEEDA':'#FCEBEB';
-    const covBadge=`<span style="font-size:.6rem;padding:2px 6px;border-radius:2px;background:${covBg};color:${covColor};font-weight:500">${coveragePct}% · ${g.localesCount}/${GE.locales.length}</span>`;
-
-    // Variación semana anterior
-    let varCell='<td style="display:none"></td>';
-    if(hasPrev){
-      const prev=GE.prevGroups[g.grupo];
-      if(prev&&prev.diff>0&&g.diff>0){
-        const chg=Math.round(((g.maxPrice-prev.maxPrice)/prev.maxPrice)*100);
-        const color=chg>0?'#A32D2D':chg<0?'#3B6D11':'var(--ink-3)';
-        const arrow=chg>0?'↑':chg<0?'↓':'→';
-        varCell=`<td style="font-size:.68rem;font-weight:500;color:${color};white-space:nowrap">${arrow} ${Math.abs(chg)}%</td>`;
+    if (motivo) {
+      const fechaStr = r['Fecha de la visita']||'';
+      let esMesActual = false;
+      if (fechaStr) {
+        const partes = fechaStr.split('/');
+        if (partes.length === 3) {
+          const mes = parseInt(partes[1]) - 1;
+          const anio = parseInt(partes[2]);
+          esMesActual = (mes === mesActual && anio === anioActual);
+        }
       } else {
-        varCell=`<td style="font-size:.62rem;color:var(--ink-3)">—</td>`;
+        // Si no hay fecha, contar igual (datos sin fecha se consideran del período actual)
+        esMesActual = true;
+      }
+      if (esMesActual) {
+        justifPorPDV[pdv] = (justifPorPDV[pdv]||0) + 1;
       }
     }
 
-    return `<tr>
-      <td class="corte">${g.grupo}</td>
-      <td>${covBadge}</td>
-      <td><span class="pill max">↑ ${g.maxMarca}</span></td>
-      <td style="font-size:.6rem;max-width:120px;line-height:1.3">${g.maxCorte}</td>
-      <td style="font-size:.68rem">${g.maxLocal}</td>
-      <td>${fmtNum(g.maxPrice)}</td>
-      <td><span class="pill min">${soloPrice?'·':('↓ '+g.minMarca)}</span></td>
-      <td style="font-size:.6rem;max-width:120px;line-height:1.3">${soloPrice?'—':g.minCorte}</td>
-      <td style="font-size:.68rem">${soloPrice?'—':g.minLocal}</td>
-      <td>${soloPrice?'—':fmtNum(g.minPrice)}</td>
-      <td><strong>${fmtNum(g.diff)}</strong></td>
-      ${varCell}
-    </tr>`;
-  }).join('');
-}
+    if (!empMap[emp]) empMap[emp]={nombre:emp,zona,plan:0,real:0,just:0,justifN:0,noReal:0,fuera:0,cins:[],couts:[],pdvs:new Set(),registros:[]};
+    const e=empMap[emp];
+    e.plan++; e.registros.push({pdv,zona,cadena,cin,cout,lat,lng,fuera,motivo,checkin,visitado});
 
-function makeEnvComment(g) {
-  const ds=Math.round(g.diff).toLocaleString('es-PY').replace(/,/g,'.');
-  const soloPrice=(g.diff===0||g.maxLocal===g.minLocal);
-  let o1=g.missing.length===0
-    ?'1. EL CORTE PRESENTA EXISTENCIA EN TODOS LOS LOCALES.'
-    :`1. OPORTUNIDAD DE CRECIMIENTO DE INGRESO DE ESTE CORTE EN LOS LOCALES: ${g.missing.join(', ')}. YA QUE NO SE CUENTA CON REGISTROS DE PRECIOS DE ESTE CORTE.`;
-  let o2=soloPrice
-    ?`2. EL ÚNICO REGISTRO DE ESTE CORTE ES EN EL LOCAL DE ${g.maxLocal}.`
-    :`2. SE VISUALIZA UNA DIFERENCIA EN CUANTO AL PRECIO ENTRE LOS CORTES DE ${g.maxMarca} Y ${g.minMarca} EN LOS LOCALES DE ${g.maxLocal} Y ${g.minLocal} DE ${ds} GS.`;
-  return o1+'\n'+o2;
-}
+    // Lógica de negocio correcta:
+    // - visitado en ruta → real++
+    // - justificado (sin CI + motivo) → real++ (cuenta como gestionado)
+    // - fuera de ruta → fuera++ (KPI separado, no afecta productividad del ruteo)
+    // - no realizado (sin CI + sin motivo) → noReal++
+    if (visitado && !fuera) e.real++;   // visitado en ruta
+    if (justif)             { e.real++; e.justifN++; }  // justificado = realizado
+    if (motivo)             e.just++;
+    if (noRealiz && !fuera) e.noReal++;
+    if (fuera)              e.fuera++;
+    if (cin)                e.cins.push(cin);
+    if (cout)               e.couts.push(cout);
+    if (visitado || justif) e.pdvs.add(pdv);
 
-async function generateEnv() {
-  const btn=$('btn-env'); btn.disabled=true; $('btxt-env').textContent='Cargando ExcelJS…';
-  try {
-    await loadExcelJS();
-    $('btxt-env').textContent='Generando Excel…';
-    const wb=new ExcelJS.Workbook();
+    if (!zonaMap[zona]) zonaMap[zona]={zona,plan:0,real:0,justifN:0,noReal:0,cins:[],couts:[]};
+    const z=zonaMap[zona];
+    z.plan++;
+    if (visitado && !fuera) z.real++;
+    if (justif)  { z.real++; z.justifN++; }
+    if (noRealiz && !fuera) z.noReal++;
+    if (cin) z.cins.push(cin); if (cout) z.couts.push(cout);
 
-    // ── Hoja 1: Resumen Ejecutivo ──────────────────────────
-    const wsExec=wb.addWorksheet('Resumen Ejecutivo');
-    wsExec.getColumn(1).width=35; wsExec.getColumn(2).width=45;
-    for(let r=1;r<=3;r++){wsExec.addRow([]);wsExec.getRow(r).height=18;}
-    wsExec.mergeCells('A4:B4');
-    applyCell(wsExec.getCell('A4'),'RESUMEN EJECUTIVO — '+GE.periodo,'2F5496',exFont(11,true,'FFFFFF'),exAlign('center','middle',false));
-    wsExec.getRow(4).height=22;
-    const execItems=[
-      ['PERÍODO',GE.periodo],
-      ['TOTAL GRUPOS ANALIZADOS',GE.groups.length],
-      ['TOTAL CORTES',GE.totalCortes],
-    ];
-    const maxDiffG=GE.groups.reduce((a,b)=>b.diff>a.diff?b:a);
-    execItems.push(['GRUPO CON MAYOR DIFERENCIA',maxDiffG.grupo]);
-    execItems.push(['DIFERENCIA MÁXIMA',fmtNum(maxDiffG.diff)+' Gs']);
-    execItems.push(['PRECIO MÁX. REGISTRADO',fmtNum(maxDiffG.maxPrice)+' Gs ('+maxDiffG.maxMarca+' en '+maxDiffG.maxLocal+')']);
-    const brands=getBrandRanking();
-    if(brands.length){
-      execItems.push(['MARCA PRECIO MÁS ALTO (prom.)',brands[0].marca+' — '+fmtNum(brands[0].avg)+' Gs']);
-      execItems.push(['MARCA PRECIO MÁS BAJO (prom.)',brands[brands.length-1].marca+' — '+fmtNum(brands[brands.length-1].avg)+' Gs']);
-    }
-    const coverage=getCoverageByLocal();
-    execItems.push(['COBERTURA MEJOR LOCAL',coverage[0].local+' ('+coverage[0].pct+'%)']);
-    execItems.push(['COBERTURA MENOR LOCAL',coverage[coverage.length-1].local+' ('+coverage[coverage.length-1].pct+'%)']);
-    execItems.forEach(([k,v],i)=>{
-      const rn=5+i;
-      wsExec.getRow(rn).height=20;
-      applyCell(wsExec.getCell(rn,1),k,'D9E2F3',exFont(10,true,'3A3838'),exAlign('left','middle',false));
-      applyCell(wsExec.getCell(rn,2),String(v),null,exFont(10,false,'3A3838'),exAlign('left','middle',false));
+    if (motivo&&justifs.length<500) justifs.push({pdv,colab:emp,zona,motivo,hora:horaStr(cin)});
+    // Registrar tiempo por PDV por persona
+    if(!empMap[emp].tiemposPDV) empMap[emp].tiemposPDV=[];
+    if(tiempoPDV) empMap[emp].tiemposPDV.push({pdv,tiempo:tiempoPDV,cin:horaStr(cin),cout:horaStr(cout),fecha:r['Fecha de la visita']||''});
+    if (fuera&&fueraRuta.length<300) fueraRuta.push({colab:emp,pdv,zona,cadena,hora:horaStr(cin),motivo:(motivoT||'Fuera de ruta').slice(0,60),lat,lng});
+  });
+
+  const colorMap={};
+  const PERSONAS = Object.values(empMap).map((p,i)=>{
+    const col=SC[i%SC.length]; colorMap[p.nombre]=col;
+    // Promedio de tiempo en PDV
+    const tiempos = (p.tiemposPDV||[]).map(t=>t.tiempo);
+    const promTiempo = tiempos.length ? Math.round(tiempos.reduce((s,v)=>s+v,0)/tiempos.length) : null;
+    // PDVs del ruteo asignados a esta persona
+    const ruteoPDVs = getRuteoPorMerchant(p.nombre);
+    // PDVs del ruteo visitados (cruce por nombre normalizado)
+    const pdvsVisitadosNorm = new Set([...p.pdvs].map(n=>n.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')));
+    const ruteoVisitados = ruteoPDVs.filter(r=>{
+      const rNorm = r.pdv.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+      return [...pdvsVisitadosNorm].some(v=>v.includes(rNorm.slice(0,15))||rNorm.includes(v.slice(0,15)));
     });
+    const ruteoTotal = ruteoPDVs.length;
+    const ruteoRealiz = ruteoVisitados.length;
+    const ruteoPct = ruteoTotal > 0 ? Math.round(ruteoRealiz/ruteoTotal*100) : null;
+    return {
+      nombre:p.nombre, ini:p.nombre.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2),
+      color:col, zona:p.zona, plan:p.plan, real:p.real, just:p.just,
+      justifN:p.justifN, noReal:p.noReal, fuera:p.fuera,
+      pdvsCount:p.pdvs.size,
+      cin:promHora(p.cins), cout:promHora(p.couts),
+      registros:p.registros,
+      tiemposPDV: p.tiemposPDV||[],
+      promTiempo,
+      ruteoTotal, ruteoRealiz, ruteoPct,
+      tend:p.plan===0?'steady':p.real/p.plan>=0.85?'up':p.real/p.plan>=0.6?'steady':'down',
+    };
+  });
 
-    // ── Hoja 2: Cobertura por local ────────────────────────
-    const wsCov=wb.addWorksheet('Cobertura por Local');
-    wsCov.getColumn(1).width=22; wsCov.getColumn(2).width=12; wsCov.getColumn(3).width=20;
-    wsCov.mergeCells('A1:C1');
-    applyCell(wsCov.getCell('A1'),'COBERTURA DE LOCALES — '+GE.periodo,'0070C0',exFont(11,true,'FFFFFF'),exAlign('center','middle',false));
-    wsCov.getRow(1).height=22;
-    [['LOCAL','COBERTURA %','CORTES REGISTRADOS']].forEach((h,ri)=>{
-      h.forEach((v,ci)=>applyCell(wsCov.getCell(2,ci+1),v,'2F5496',exFont(10,true,'FFFFFF'),exAlign('center','middle',true)));
-    });
-    wsCov.getRow(2).height=18;
-    coverage.forEach((c,i)=>{
-      const rn=3+i;
-      wsCov.getRow(rn).height=18;
-      const fillHex=c.pct>=50?'D8EDDF':c.pct>=25?'FDF3C8':'FCEBEB';
-      applyCell(wsCov.getCell(rn,1),c.local,fillHex,exFont(10,false,'3A3838'),exAlign('left','middle',false));
-      applyCell(wsCov.getCell(rn,2),c.pct/100,fillHex,exFont(10,true,'3A3838'),exAlign('center','middle',false),'0%');
-      applyCell(wsCov.getCell(rn,3),c.count,fillHex,exFont(10,false,'3A3838'),exAlign('center','middle',false));
-    });
+  fueraRuta.forEach(x=>{ x.color=colorMap[x.colab]||'#60a5fa'; });
 
-    // ── Hoja 3: Ranking de Marcas ──────────────────────────
-    const wsBr=wb.addWorksheet('Ranking de Marcas');
-    wsBr.getColumn(1).width=35; wsBr.getColumn(2).width=20; wsBr.getColumn(3).width=14;
-    wsBr.mergeCells('A1:C1');
-    applyCell(wsBr.getCell('A1'),'RANKING DE MARCAS POR PRECIO PROMEDIO','0070C0',exFont(11,true,'FFFFFF'),exAlign('center','middle',false));
-    wsBr.getRow(1).height=22;
-    [['MARCA','PRECIO PROMEDIO (Gs)','CORTES']].forEach(h=>{
-      h.forEach((v,ci)=>applyCell(wsBr.getCell(2,ci+1),v,'2F5496',exFont(10,true,'FFFFFF'),exAlign('center','middle',true)));
-    });
-    brands.forEach((b,i)=>{
-      const rn=3+i;
-      wsBr.getRow(rn).height=18;
-      const isTop=i===0,isLow=i===brands.length-1;
-      const fillHex=isTop?'D8EDDF':isLow?'FCEBEB':'FFFFFF';
-      applyCell(wsBr.getCell(rn,1),b.marca,fillHex,exFont(10,false,'3A3838'),exAlign('left','middle',false));
-      applyCell(wsBr.getCell(rn,2),b.avg,fillHex,exFont(10,false,'3A3838'),exAlign('center','middle',false),'#,##0');
-      applyCell(wsBr.getCell(rn,3),b.count,fillHex,exFont(10,false,'3A3838'),exAlign('center','middle',false));
-    });
+  const ZONAS = Object.values(zonaMap).map(z=>({
+    zona:z.zona, plan:z.plan, real:z.real, justifN:z.justifN, noReal:z.noReal,
+    cin:promHora(z.cins), cout:promHora(z.couts),
+  }));
 
-    // ── Hoja 4: Precio de Cortes Envasados (original) ─────
-    const origSN=findEnvSheet(GE.wb);
-    const ws1=wb.addWorksheet(origSN);
-    copySheetWithFormat(GE.wb.Sheets[origSN],ws1);
+  // Totales globales con lógica correcta
+  const totalFR      = records.filter(r=>r['¿Fuera del itinerario?']==='Sí').length;
+  const totalPlan    = records.filter(r=>r['¿Fuera del itinerario?']!=='Sí').length;
 
-    // ── Hoja 5: Análisis de precio de cortes ──────────────
-    const ws=wb.addWorksheet('Analisis de precio de cortes');
-    ws.getColumn(1).width=27; ws.getColumn(2).width=18.1; ws.getColumn(3).width=50.3;
-    ws.getColumn(4).width=18.1; ws.getColumn(5).width=17.7; ws.getColumn(6).width=16.1;
-    ws.getColumn(7).width=16.9; ws.getColumn(8).width=71.1;
-    for(let r=1;r<=4;r++){ws.addRow([]);ws.getRow(r).height=21;}
-    ws.getRow(5).height=21; ws.mergeCells('A5:H5');
-    applyCell(ws.getCell('A5'),GE.periodo||'ANALISIS DE PRECIOS DE CORTES ENVASADOS','2F5496',exFont(10,true,'FFFFFF'),exAlign('center','middle',true));
-    ws.getRow(6).height=21;
-    [['CORTE','000000'],['MARCA','FFFFFF'],['TIPO DE CORTE ','000000'],['LOCAL','000000'],['INDICADORE DE PRECIOS','000000'],['PRECIOS','FFFFFF'],['DIFERENCIA','FFFFFF'],['COMENTARIOS','000000']].forEach(([l,c],i)=>{
-      applyCell(ws.getCell(6,i+1),l,'2F5496',exFont(10,true,c),exAlign('center','middle',true));
-    });
-    let row=7;
-    for(const g of GE.groups){
-      const r1=row,r2=row+1;
-      ws.getRow(r1).height=63; ws.getRow(r2).height=63; ws.getRow(r2+1).height=12;
-      ws.mergeCells(r1,1,r2,1);
-      applyCell(ws.getCell(r1,1),g.grupo,'D9E2F3',exFont(10,true,'3A3838'),exAlign('center','middle',true));
-      // Indicador de cobertura baja
-      const coveragePct=GE.locales.length>0?Math.round(g.localesCount/GE.locales.length*100):100;
-      const groupFill=coveragePct<25?'FFF2CC':coveragePct<50?'FDEBD0':'D9E2F3';
-      ws.getCell(r1,1).fill=exFill(groupFill);
-      applyCell(ws.getCell(r1,2),g.maxMarca,'8EAADB',exFont(10,false,'3A3838'),exAlign('center','middle',false));
-      applyCell(ws.getCell(r1,3),g.maxCorte,'8EAADB',exFont(10,false,'3A3838'),exAlign('center','middle',true));
-      applyCell(ws.getCell(r1,4),g.maxLocal,'8EAADB',exFont(10,false,'3A3838'),exAlign('center','middle',false));
-      applyCell(ws.getCell(r1,5),'PRECIO MAXIMO','FF0000',exFont(10,false,'FFFFFF'),exAlign('center','middle',false));
-      applyCell(ws.getCell(r1,6),Math.round(g.maxPrice),'8EAADB',exFont(10,false,'3A3838'),exAlign('center','middle',false),'#,##0');
-      ws.mergeCells(r1,7,r2,7);
-      applyCell(ws.getCell(r1,7),Math.round(g.diff),'2F5496',exFont(11,false,'FFFFFF','Calibri'),exAlign('center','middle',true),'#,##0');
-      ws.mergeCells(r1,8,r2,8);
-      applyCell(ws.getCell(r1,8),makeEnvComment(g),'D9E2F3',exFont(10,true,'3A3838'),exAlign('left','middle',true));
-      const soloPrice=(g.diff===0||g.maxLocal===g.minLocal);
-      if(!soloPrice){
-        applyCell(ws.getCell(r2,2),g.minMarca,'B4C6E7',exFont(10,false,'3A3838'),exAlign('center','middle',false));
-        applyCell(ws.getCell(r2,3),g.minCorte,'B4C6E7',exFont(10,false,'3A3838'),exAlign('center','middle',true));
-        applyCell(ws.getCell(r2,4),g.minLocal,'B4C6E7',exFont(10,false,'3A3838'),exAlign('center','middle',false));
-        applyCell(ws.getCell(r2,5),'PRECIO MINIMO','FFFF00',exFont(10,false,'3A3838'),exAlign('center','middle',false));
-        applyCell(ws.getCell(r2,6),Math.round(g.minPrice),'B4C6E7',exFont(10,false,'3A3838'),exAlign('center','middle',false),'#,##0');
-      } else {
-        for(let col=2;col<=6;col++) ws.getCell(r2,col).fill=exFill('B4C6E7');
-        applyCell(ws.getCell(r2,5),'PRECIO MINIMO','FFFF00',exFont(10,false,'3A3838'),exAlign('center','middle',false));
-      }
-      row+=3;
-    }
-    // Observaciones
-    ws.getRow(row).height=39;
-    applyCell(ws.getCell(row,1),'OBSERVACIONES: ',null,exFont(10,false,'2F5496'),exAlign('left','middle',true));
-    const minBrands=[...new Set(GE.groups.map(g=>g.minMarca))];
-    const obsText=`EL CORTE DE ${GE.groups.map(g=>g.grupo).join(', ')} DE ${minBrands.join(', ')} PRESENTAN EL PRECIO MINIMO.`;
-    ws.getRow(row+1).height=60; ws.mergeCells(row+1,1,row+1,8);
-    applyCell(ws.getCell(row+1,1),obsText,null,exFont(10,true,'FF0000'),exAlign('left','middle',true));
+  // Realizados = visitados en ruta + justificados (ambos cuentan como gestionados)
+  const totalReal    = records.filter(r=>{
+    const ci=r['Tipo de check-in']||'';
+    const fuera=r['¿Fuera del itinerario?']==='Sí';
+    const visitado = ci!==''&&ci!=='Sin check-in';
+    const justif   = (ci===''||ci==='Sin check-in') && r['Motivo para no realizar la visita'];
+    return !fuera && (visitado || justif);
+  }).length;
 
-    const buf=await wb.xlsx.writeBuffer();
-    const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a'); a.href=url; a.download=GE.fileName; a.click(); URL.revokeObjectURL(url);
-    $('btxt-env').textContent='✓ Descargado — 5 hojas generadas';
-    setTimeout(()=>{$('btxt-env').textContent='Generar y descargar Excel con análisis completo';btn.disabled=false;},3000);
-  } catch(err) {
-    $('btxt-env').textContent='Error: '+err.message;
-    btn.disabled=false; console.error(err);
-  }
-}
+  const totalJustF   = records.filter(r=>{
+    const ci=r['Tipo de check-in']||'';
+    const fuera=r['¿Fuera del itinerario?']==='Sí';
+    return !fuera && (ci===''||ci==='Sin check-in') && r['Motivo para no realizar la visita'];
+  }).length;
 
+  // No realizados = sin check-in, sin motivo, y en ruta planificada
+  const totalNoR     = records.filter(r=>{
+    const ci=r['Tipo de check-in']||'';
+    const fuera=r['¿Fuera del itinerario?']==='Sí';
+    return !fuera && (ci===''||ci==='Sin check-in') && !r['Motivo para no realizar la visita'];
+  }).length;
 
-// ══════════════════════════════════════════════════════════
-// ████  OFERTAS FIN DE SEMANA
-// ══════════════════════════════════════════════════════════
-setupDrop('oferta', handleOferta);
+  const totalJust    = records.filter(r=>r['Motivo para no realizar la visita']).length;
 
-const GO = { wb:null, analysis:[], locales:[], fileName:'', periodo:'' };
-
-function handleOferta(file) {
-  if (!file || !file.name.endsWith('.xlsx')) { setStatus('oferta','El archivo debe ser .xlsx','err'); return; }
-  GO.fileName = file.name.replace('.xlsx','') + '_ANALIZADO.xlsx';
-  setStatus('oferta','Procesando…','info');
-  $('sb-oferta').classList.add('pulsing');
-  const reader = new FileReader();
-  reader.onerror = () => { $('sb-oferta').classList.remove('pulsing'); setStatus('oferta','Error al leer el archivo','err'); };
-  reader.onload = e => {
-    try {
-      const wb = XLSX.read(new Uint8Array(e.target.result), { type:'array' });
-      GO.wb = wb;
-      // Buscar hoja de precios — puede llamarse "Precio de Carnicerias" o "Hoja X"
-      const sn = wb.SheetNames.find(n => {
-        const l = n.toLowerCase();
-        return (l.includes('precio') && l.includes('carnicer')) && !l.includes('analisis') && !l.includes('copia');
-      }) || wb.SheetNames.find(n => !n.toLowerCase().includes('analisis') && !n.toLowerCase().includes('copia'));
-
-      if (!sn) throw new Error('No se encontró la hoja de precios. Hojas: ' + wb.SheetNames.join(', '));
-      const r = processOfertaSheet(wb.Sheets[sn]);
-      GO.analysis = r.analysis; GO.locales = r.locales; GO.periodo = r.periodo;
-      $('sb-oferta').classList.remove('pulsing');
-      const conOferta = GO.analysis.filter(d => d.hasOffer).length;
-      setStatus('oferta', `✓ Procesado — ${GO.analysis.length} cortes (${conOferta} con oferta)`, 'ok');
-      renderOfertaStats(); renderOfertaTable();
-      show('stats-oferta'); show('preview-oferta'); show('dl-oferta');
-    } catch(err) {
-      $('sb-oferta').classList.remove('pulsing');
-      setStatus('oferta','Error: '+err.message,'err');
-      console.error(err);
-    }
+  return { PERSONAS, ZONAS, justifs, fueraRuta, colorMap, justifPorPDV,
+    totalPlan, totalReal, totalJust, totalFR, totalNoR, totalJustF,
   };
-  reader.readAsArrayBuffer(file);
 }
 
-function processOfertaSheet(ws) {
-  const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:null });
-  let periodo = '', hIdx = -1, hCols = {}, locales = [];
-
-  const KNOWN_HDR = new Set(['CORTE','CADENA','TIPO DE CORTE','CORTES','DESCRIPCION','DESCRIPCIÓN','PRODUCTO','ITEM']);
-
-  function looksNumeric(v) {
-    if (v === null || v === undefined) return false;
-    const s = String(v).trim();
-    if (s === '-' || s === '') return false;
-    const n = parseFloat(s.replace(/[^\d.]/g,''));
-    return !isNaN(n) && n > 0;
-  }
-
-  for (let i = 0; i < rows.length; i++) {
-    const row = rows[i];
-    if (!row || !row[0]) continue;
-    const first = String(row[0]).trim().toUpperCase();
-
-    if (first.includes('PRECIO') || first.includes('OFERTA') || first.includes('SEMANA')) {
-      if (String(row[0]).length > 8) periodo = String(row[0]).trim();
-    }
-
-    const exactMatch = KNOWN_HDR.has(first);
-    const otherCells = row.slice(1).filter(v => v !== null && v !== undefined && String(v).trim() !== '' && String(v).trim() !== '-');
-    const textCells  = otherCells.filter(v => !looksNumeric(v));
-    const nextRow    = (i + 1 < rows.length) ? rows[i + 1] : null;
-    const nextHasNums = nextRow ? nextRow.slice(1).filter(v => looksNumeric(v)).length >= 1 : false;
-    const guessMatch = (first.length < 60) && (textCells.length >= 2) && nextHasNums;
-
-    if (exactMatch || guessMatch) {
-      hIdx = i;
-      row.forEach((h, colIdx) => {
-        if (colIdx === 0 || !h) return;
-        const k = String(h).trim().toUpperCase();
-        if (!k || k === '-' || k === 'OTRAS CARNES' || k === 'PRECIO') return;
-        hCols[k] = colIdx;
-        locales.push(k);
-      });
-      if (locales.length > 0) break;
-      hIdx = -1; locales = []; hCols = {};
-    }
-  }
-
-  if (hIdx < 0) throw new Error('No se encontró la fila de encabezado. Verificá el formato del archivo.');
-  if (locales.length === 0) throw new Error('No se encontraron columnas de locales en el encabezado.');
-
-  const analysis = [];
-  for (let i = hIdx + 1; i < rows.length; i++) {
-    const row = rows[i];
-    if (!row || !row[0]) continue;
-    let corte = String(row[0]).trim();
-    if (!corte || KNOWN_HDR.has(corte.toUpperCase())) continue;
-
-    // Recolectar precios de oferta por local
-    const prices = {};
-    locales.forEach(loc => {
-      const val = toNum(row[hCols[loc]]);
-      if (val !== null) prices[loc] = val;
-    });
-
-    const localesConOferta   = Object.keys(prices);
-    const localesSinOferta   = locales.filter(l => !prices[l]);
-    const hasOffer           = localesConOferta.length > 0;
-
-    if (!hasOffer) {
-      analysis.push({ corte, hasOffer:false, maxLocal:'', maxPrice:null, minLocal:'', minPrice:null, diff:0, localesConOferta:[], localesSinOferta });
-      continue;
-    }
-
-    const maxL = localesConOferta.reduce((a,b) => prices[a] > prices[b] ? a : b);
-    const minL = localesConOferta.reduce((a,b) => prices[a] < prices[b] ? a : b);
-    analysis.push({
-      corte, hasOffer:true,
-      maxLocal:maxL, maxPrice:prices[maxL],
-      minLocal:minL, minPrice:prices[minL],
-      diff: prices[maxL] - prices[minL],
-      localesConOferta, localesSinOferta
-    });
-  }
-
-  if (analysis.length === 0) throw new Error('No se encontraron cortes en el archivo.');
-  return { analysis, locales, periodo };
-}
-
-function renderOfertaStats() {
-  const conOferta  = GO.analysis.filter(d => d.hasOffer).length;
-  const sinOferta  = GO.analysis.filter(d => !d.hasOffer).length;
-  $('sc-oferta').textContent  = GO.analysis.length;
-  $('sl-oferta').textContent  = conOferta;
-  $('sd-oferta').textContent  = sinOferta;
-  $('sv-oferta').textContent  = GO.locales.length;
-  $('periodo-oferta').textContent = GO.periodo;
-  $('rc-oferta').textContent  = GO.analysis.length + ' cortes';
-}
-
-function renderOfertaTable() {
-  $('pb-oferta').innerHTML = GO.analysis.map(d => {
-    if (!d.hasOffer) {
-      return `<tr style="opacity:.55">
-        <td class="corte">${d.corte}</td>
-        <td colspan="4" style="font-size:.62rem;color:var(--ink-3);text-align:center">— sin oferta registrada —</td>
-        <td>—</td>
-        <td><span class="all-ok" style="color:var(--ink-3)">ninguno</span></td>
-        <td style="font-size:.6rem;color:var(--accent)">${d.localesSinOferta.join(', ')}</td>
-      </tr>`;
-    }
-    const missingHtml = d.localesSinOferta.length
-      ? `<span class="missing">${d.localesSinOferta.join(', ')}</span>`
-      : `<span class="all-ok">✓ todos</span>`;
-    return `<tr>
-      <td class="corte">${d.corte}</td>
-      <td><span class="pill max">↑ ${d.maxLocal}</span></td>
-      <td>${fmtNum(d.maxPrice)}</td>
-      <td><span class="pill min">↓ ${d.minLocal}</span></td>
-      <td>${d.diff > 0 ? fmtNum(d.minPrice) : '—'}</td>
-      <td>${d.diff > 0 ? fmtNum(d.diff) : '—'}</td>
-      <td style="font-size:.62rem">${d.localesConOferta.join(', ')}</td>
-      <td>${missingHtml}</td>
-    </tr>`;
-  }).join('');
-}
-
-function makeOfertaComment(d) {
-  // ── Caso: sin oferta registrada ──
-  if (!d.hasOffer) {
-    return '1.  NO SE REGISTRAN OFERTAS DE ESTE CORTE. ';
-  }
-
-  // ── Caso: oferta en un único local ──
-  const soloLocal = d.localesConOferta.length === 1;
-  if (soloLocal) {
-    let o1;
-    if (d.localesSinOferta.length > 0) {
-      o1 = `1.  NO SE REGISTRA OFERTAS DE ESTE CORTE EN ${d.localesSinOferta.join(', ')}.`;
-    } else {
-      o1 = '1. EN TODOS LOS LOCALES AUDITADOS SE REGISTRA OFERTAS DE ESTE CORTE.';
-    }
-    const o2 = `2. LA UNICA OFERTA REGISTRADA DE ESTE CORTE ES  EN ${d.maxLocal}.`;
-    return o1 + '\n' + o2;
-  }
-
-  // ── Caso: oferta en todos los locales ──
-  if (d.localesSinOferta.length === 0) {
-    const ds = Math.round(d.diff).toLocaleString('es-PY').replace(/,/g,'.');
-    const o1 = '1. EN TODOS LOS LOCALES AUDITADOS SE REGISTRA OFERTAS DE ESTE CORTE.';
-    const o2 = d.diff > 0
-      ? `2. SE VISUALIZA UNA DIFERENCIA EN CUANTO AL PRECIO DE OFERTA ENTRE ${d.maxLocal} Y ${d.minLocal} DE ${ds} GS.`
-      : `2. TODOS LOS LOCALES PRESENTAN EL MISMO PRECIO DE OFERTA.`;
-    return o1 + '\n' + o2;
-  }
-
-  // ── Caso: oferta en algunos locales ──
-  const ds = Math.round(d.diff).toLocaleString('es-PY').replace(/,/g,'.');
-  const o1 = `1.  NO SE REGISTRA OFERTAS DE ESTE CORTE EN ${d.localesSinOferta.join(', ')}.`;
-  const o2 = d.diff > 0
-    ? `2. SE VISUALIZA UNA DIFERENCIA EN CUANTO AL PRECIO DE OFERTA ENTRE ${d.maxLocal} Y ${d.minLocal} DE ${ds} GS.`
-    : `2. LOS LOCALES QUE OFRECEN ESTE CORTE PRESENTAN EL MISMO PRECIO DE OFERTA.`;
-  return o1 + '\n' + o2;
-}
-
-async function generateOferta() {
-  const btn = $('btn-oferta'); btn.disabled = true; $('btxt-oferta').textContent = 'Cargando ExcelJS…';
+/* ── Sync ── */
+async function syncData() {
+  if (_loading) { showToast('Cargando...','w'); return; }
+  _loading = true;
+  setLoadingUI(true);
   try {
-    await loadExcelJS();
-    $('btxt-oferta').textContent = 'Generando Excel…';
-    const wb = new ExcelJS.Workbook();
-
-    // ── Hoja 1: Precio de Carnicerias original con formato ──
-    const origSN = GO.wb.SheetNames.find(n => {
-      const l = n.toLowerCase();
-      return (l.includes('precio') && l.includes('carnicer')) && !l.includes('analisis') && !l.includes('copia');
-    }) || GO.wb.SheetNames.find(n => !n.toLowerCase().includes('analisis'));
-    const ws1 = wb.addWorksheet(origSN);
-    copySheetWithFormat(GO.wb.Sheets[origSN], ws1);
-
-    // ── Hoja 2: Análisis de ofertas con formato exacto del informe ──
-    const ws = wb.addWorksheet('Analisis de precio Carnicerias ');
-    ws.getColumn(1).width = 33.6;
-    ws.getColumn(2).width = 24.9;
-    ws.getColumn(3).width = 17.7;
-    ws.getColumn(4).width = 13;
-    ws.getColumn(5).width = 21.9;
-    ws.getColumn(6).width = 82.4;
-
-    // Filas 1-4 vacías
-    for (let r = 1; r <= 4; r++) { ws.addRow([]); ws.getRow(r).height = 21; }
-
-    // Fila 5: Título
-    ws.getRow(5).height = 21;
-    ws.mergeCells('A5:F5');
-    applyCell(ws.getCell('A5'), GO.periodo || 'ANALISIS DE PRECIO OFERTAS DE FIN DE SEMANA',
-      '0070C0', exFont(11,true,'FFFFFF'), exAlign('center','middle',false));
-
-    // Fila 6: Encabezados
-    ws.getRow(6).height = 21;
-    [['CORTE','000000'],['LOCAL','000000'],['INDICADORE DE PRECIOS','000000'],['PRECIOS','FFFFFF'],['DIFERENCIA','FFFFFF'],['COMENTARIOS','000000']].forEach(([l,c],i) => {
-      applyCell(ws.getCell(6,i+1), l, '2F5496', exFont(10,true,c), exAlign('center','middle',true));
-    });
-
-    // ── Datos: un bloque por corte ──
-    let row = 7;
-    const sinOfertaList = [];
-
-    for (const d of GO.analysis) {
-      const r1 = row, r2 = row + 1;
-      ws.getRow(r1).height = 61.5;
-      ws.getRow(r2).height = 61.5;
-      ws.getRow(r2+1).height = 12;
-
-      // Col A: corte (merged)
-      ws.mergeCells(r1,1,r2,1);
-      applyCell(ws.getCell(r1,1), d.corte, 'D9E2F3', exFont(11,true,'000000'), exAlign('center','middle',true));
-
-      if (!d.hasOffer) {
-        // Sin oferta: MAX y MIN vacíos, sin local, comentario
-        sinOfertaList.push(d.corte);
-        applyCell(ws.getCell(r1,3), 'PRECIO MAXIMO', 'FF0000', exFont(10,false,'FFFFFF'), exAlign('center','middle',false));
-        applyCell(ws.getCell(r2,3), 'PRECIO MINIMO', 'FFFF00', exFont(10,false,'3A3838'), exAlign('center','middle',false));
-        ws.mergeCells(r1,5,r2,5);
-        applyCell(ws.getCell(r1,5), null, '2F5496', exFont(11,false,'FFFFFF'), exAlign('center','middle',true));
-        ws.mergeCells(r1,6,r2,6);
-        applyCell(ws.getCell(r1,6), makeOfertaComment(d), 'D9E2F3', exFont(10,true,'FF0000'), exAlign('left','middle',true));
-
-      } else if (d.localesConOferta.length === 1) {
-        // Un único local con oferta: MAX con precio, MIN vacía
-        applyCell(ws.getCell(r1,2), d.maxLocal, '8EAADB', exFont(10,false,'3A3838'), exAlign('center','middle',false));
-        applyCell(ws.getCell(r1,3), 'PRECIO MAXIMO', 'FF0000', exFont(10,false,'FFFFFF'), exAlign('center','middle',false));
-        applyCell(ws.getCell(r1,4), Math.round(d.maxPrice), '8EAADB', exFont(10,false,'3A3838'), exAlign('center','middle',false), '#,##0');
-        applyCell(ws.getCell(r2,3), 'PRECIO MINIMO', 'FFFF00', exFont(10,false,'3A3838'), exAlign('center','middle',false));
-        // MIN fila — fondo pero sin datos
-        for (let col=2; col<=4; col++) ws.getCell(r2,col).fill = exFill('B4C6E7');
-        ws.mergeCells(r1,5,r2,5);
-        applyCell(ws.getCell(r1,5), null, '2F5496', exFont(11,false,'FFFFFF','Calibri'), exAlign('center','middle',true), '#,##0');
-        ws.mergeCells(r1,6,r2,6);
-        applyCell(ws.getCell(r1,6), makeOfertaComment(d), 'D9E2F3', exFont(10,true,'FF0000'), exAlign('left','middle',true));
-
-      } else {
-        // Múltiples locales: MAX y MIN con datos
-        applyCell(ws.getCell(r1,2), d.maxLocal,            '8EAADB', exFont(10,false,'3A3838'), exAlign('center','middle',false));
-        applyCell(ws.getCell(r1,3), 'PRECIO MAXIMO',        'FF0000', exFont(10,false,'FFFFFF'), exAlign('center','middle',false));
-        applyCell(ws.getCell(r1,4), Math.round(d.maxPrice), '8EAADB', exFont(10,false,'3A3838'), exAlign('center','middle',false), '#,##0');
-        applyCell(ws.getCell(r2,2), d.minLocal,            'B4C6E7', exFont(10,false,'3A3838'), exAlign('center','middle',false));
-        applyCell(ws.getCell(r2,3), 'PRECIO MINIMO',        'FFFF00', exFont(10,false,'3A3838'), exAlign('center','middle',false));
-        applyCell(ws.getCell(r2,4), Math.round(d.minPrice), 'B4C6E7', exFont(10,false,'3A3838'), exAlign('center','middle',false), '#,##0');
-        ws.mergeCells(r1,5,r2,5);
-        applyCell(ws.getCell(r1,5), Math.round(d.diff), '2F5496', exFont(11,false,'FFFFFF','Calibri'), exAlign('center','middle',true), '#,##0');
-        ws.mergeCells(r1,6,r2,6);
-        applyCell(ws.getCell(r1,6), makeOfertaComment(d), 'D9E2F3', exFont(10,true,'FF0000'), exAlign('left','middle',true));
-      }
-
-      row += 3;
-    }
-
-    // ── Observaciones ──
-    ws.getRow(row).height = 39;
-    applyCell(ws.getCell(row,1), 'OBSERVACIONES: ', null, exFont(10,false,'2F5496'), exAlign('left','middle',true));
-    if (sinOfertaList.length > 0) {
-      ws.getRow(row+1).height = 60;
-      ws.mergeCells(row+1,1,row+1,6);
-      const obsText = `NO SE REGISTRAN OFERTAS DE ESTOS CORTES, ${sinOfertaList.join(', ')}.`;
-      applyCell(ws.getCell(row+1,1), obsText, null, exFont(10,true,'FF0000'), exAlign('left','middle',true));
-    }
-
-    // ── Descargar ──
-    const buf  = await wb.xlsx.writeBuffer();
-    const blob = new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a'); a.href=url; a.download=GO.fileName; a.click(); URL.revokeObjectURL(url);
-    $('btxt-oferta').textContent = '✓ Descargado correctamente';
-    setTimeout(()=>{ $('btxt-oferta').textContent='Generar y descargar Excel con análisis de ofertas'; btn.disabled=false; }, 3000);
+    // Cargar marcaciones y ruteo en paralelo
+    const [rows] = await Promise.all([
+      fetchSheets(),
+      _ruteoLoaded ? Promise.resolve() : fetchRuteo(),
+    ]);
+    const records = parseRows(rows);
+    if (!records.length) throw new Error('Planilla vacía');
+    _allRecords = records;
+    _allFechas = getFechas(records);
+    applyFilters();
+    const info = document.getElementById('sync-info');
+    const ruteoInfo = _ruteoLoaded ? ` · ${_ruteo.size} PDVs en ruteo` : '';
+    if (info) info.innerHTML = `<i class="fas fa-circle" style="font-size:6px;color:var(--ok);margin-right:5px"></i>Live · ${records.length.toLocaleString()} registros${ruteoInfo} · ${new Date().toLocaleTimeString('es-PY',{hour:'2-digit',minute:'2-digit'})}`;
+    showToast(`✓ ${records.length.toLocaleString()} registros · ${_ruteo.size} PDVs ruteo`,'s');
   } catch(err) {
-    $('btxt-oferta').textContent = 'Error: '+err.message;
-    btn.disabled = false;
-    console.error(err);
+    showToast('Error: '+err.message,'e');
+    const info = document.getElementById('sync-info');
+    if (info) info.innerHTML = `<i class="fas fa-circle" style="font-size:6px;color:var(--er);margin-right:5px"></i>Error · ${err.message}`;
+  } finally {
+    _loading = false;
+    setLoadingUI(false);
   }
 }
+
+function setLoadingUI(on) {
+  const icon = document.getElementById('sync-icon');
+  const dot  = document.getElementById('sync-dot');
+  if (icon) icon.classList[on?'add':'remove']('fa-spin');
+  if (dot)  dot.style.background = on?'var(--wa)':'var(--ok)';
+}
+
+/* REQ1: injectFechaOptions ya no necesaria (inputs type=date) */
+function injectFechaOptions() {
+  // inputs type=date no necesitan inyección de opciones dinámicas
+}
+
+/* ── Apply Filters — REQ1: parseF maneja YYYY-MM-DD (input date) y DD/MM/YYYY (sheets) ── */
+function applyFilters() {
+  F.desde    = document.getElementById('f-desde')?.value||'';
+  F.hasta    = document.getElementById('f-hasta')?.value||'';
+  F.persona  = document.getElementById('f-persona')?.value||'';
+  F.regional = document.getElementById('f-regional')?.value||'';
+
+  // REQ1: parseF unificado — maneja YYYY-MM-DD (input[type=date]) y DD/MM/YYYY (Sheets)
+  const parseF = s => {
+    if(!s) return null;
+    if(s.includes('-') && s.indexOf('-') === 4){ const[y,m,d]=s.split('-'); return new Date(+y,+m-1,+d); }
+    const[d,m,y]=s.split('/'); return new Date(+y,+m-1,+d);
+  };
+  const parseFechaSheet = s => {
+    if(!s) return null;
+    const[d,m,y]=s.split('/'); return new Date(+y,+m-1,+d);
+  };
+  const dD=parseF(F.desde), dH=parseF(F.hasta);
+
+  let recs = _allRecords;
+  if (dD||dH) recs=recs.filter(r=>{
+    const d=parseFechaSheet(r['Fecha de la visita']); if(!d) return false;
+    if(dD&&d<dD) return false; if(dH&&d>dH) return false; return true;
+  });
+  if (F.persona)  recs=recs.filter(r=>r['Empleado']===F.persona);
+  if (F.regional) recs=recs.filter(r=>r['Regional']===F.regional);
+
+  const d = processRecords(recs);
+  _lastData = d;
+  renderAll(d);
+  updateActivePills();
+}
+
+function updateActivePills() {
+  const el = document.getElementById('active-pills'); if(!el) return;
+  const pills=[];
+  if(F.desde||F.hasta){
+    // Formatear fechas YYYY-MM-DD a DD/MM/YYYY para mostrar
+    const fmt = s => s ? s.split('-').reverse().join('/') : '';
+    pills.push(`<span class="active-pill" onclick="clearF('fechas')">${fmt(F.desde)||'inicio'} → ${fmt(F.hasta)||'hoy'} <i class="fas fa-times" style="font-size:9px;opacity:.6"></i></span>`);
+  }
+  if(F.persona)  pills.push(`<span class="active-pill" onclick="clearF('persona')">${F.persona.split(' ').slice(0,2).join(' ')} <i class="fas fa-times" style="font-size:9px;opacity:.6"></i></span>`);
+  if(F.regional) pills.push(`<span class="active-pill" onclick="clearF('regional')">${F.regional} <i class="fas fa-times" style="font-size:9px;opacity:.6"></i></span>`);
+  el.innerHTML=pills.join('')||'<span style="font-size:11px;color:var(--tx3)">Sin filtros activos</span>';
+}
+function clearF(tipo) {
+  if(tipo==='fechas'){['f-desde','f-hasta'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});F.desde='';F.hasta='';}
+  else{const m={persona:'f-persona',regional:'f-regional'};const e=document.getElementById(m[tipo]);if(e)e.value='';F[tipo]='';}
+  applyFilters();
+}
+function clearAll() {
+  ['f-desde','f-hasta','f-persona','f-regional'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  Object.assign(F,{desde:'',hasta:'',persona:'',regional:''});
+  applyFilters();
+}
+
+/* ── Render All ── */
+function renderAll(d) {
+  updateKPIs(d);
+  const fP=document.getElementById('f-persona');
+  if(fP){const cur=fP.value;fP.innerHTML='<option value="">Todas las personas</option>'+d.PERSONAS.map(p=>`<option value="${p.nombre}" ${cur===p.nombre?'selected':''}>${toTitle(p.nombre)}</option>`).join('');if(cur)fP.value=cur;}
+  const fR=document.getElementById('f-regional');
+  if(fR){const cur=fR.value;fR.innerHTML='<option value="">Todas las regionales</option>'+d.ZONAS.map(z=>`<option value="${z.zona}" ${cur===z.zona?'selected':''}>${z.zona}</option>`).join('');if(cur)fR.value=cur;}
+
+  const activePage = document.querySelector('.page.active')?.id;
+  if (activePage==='pg-dashboard') renderDashboard(d);
+  else if (activePage==='pg-personas') renderPersonas(d);
+  else if (activePage==='pg-zonas') renderZonas(d);
+  else if (activePage==='pg-justif') renderJustif(d);
+  else if (activePage==='pg-fueraruta') renderFueraRuta(d);
+  else if (activePage==='pg-mapa') renderMapaCobertura(d);
+  else if (activePage==='pg-seguimiento') renderSeguimiento(d);
+  else if (activePage==='pg-ruteo') renderRuteo(d);
+}
+
+function goPage(id) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  const page = document.getElementById('pg-'+id);
+  const ni   = document.querySelector(`.ni[data-p="${id}"]`);
+  if (page) page.classList.add('active');
+  if (ni)   ni.classList.add('active');
+  const titles={dashboard:'Dashboard general',personas:'Por persona',zonas:'Por regional / zona',justif:'Justificaciones',fueraruta:'Fuera de ruta',mapa:'Mapa de cobertura',seguimiento:'Seguimiento en campo',ruteo:'Cumplimiento de ruteo'};
+  const tb=document.getElementById('tb-title'); if(tb) tb.textContent=titles[id]||id;
+  if(_lastData) renderAll(_lastData);
+}
+
+/* ── KPIs — REQ4: métricas separadas ── */
+function updateKPIs(d) {
+  const s=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  // REQ4: efectividad = realizados efectivos / planificados (sin contar fuera de ruta)
+  const ef=d.totalPlan>0?(d.totalReal/d.totalPlan*100).toFixed(1):'0.0';
+  s('kpi-plan',d.totalPlan.toLocaleString());
+  s('kpi-real',d.totalReal.toLocaleString());     // REQ4: solo efectivos en ruta
+  s('kpi-pend',d.totalNoR.toLocaleString());
+  s('kpi-just',d.totalJust.toLocaleString());
+  s('kpi-fr',d.totalFR.toLocaleString());         // REQ4: fuera de ruta en su propio KPI
+  s('kpi-ef',ef+'% efectividad');
+  s('efect-num',ef+'%');
+  s('efect-sub',d.totalReal.toLocaleString()+'/'+d.totalPlan.toLocaleString());
+  if(document.getElementById('kpi-fr-pct')) {
+    const pctFR = d.totalPlan>0 ? (d.totalFR/(d.totalPlan+d.totalFR)*100).toFixed(1) : '0.0';
+    s('kpi-fr-pct', pctFR+'%');
+  }
+  const b1=document.getElementById('nb-just');if(b1)b1.textContent=d.totalJust;
+  const b2=document.getElementById('nb-fr');if(b2)b2.textContent=d.totalFR;
+
+  // Alert banner no realizadas
+  document.getElementById('alerta-banner')?.remove();
+  const pctNoR=d.totalPlan>0?(d.totalNoR/d.totalPlan*100):0;
+  if(pctNoR>10){
+    const banner=document.createElement('div');
+    banner.id='alerta-banner';
+    banner.className='alert wa';
+    banner.style.cursor='pointer';
+    banner.onclick=()=>{goPage('zonas');};
+    banner.innerHTML=`<i class="fas fa-exclamation-triangle" style="font-size:15px;flex-shrink:0"></i>
+      <div><b>${d.totalNoR.toLocaleString()} visitas sin realizar ni justificar (${pctNoR.toFixed(1)}%)</b> — Click para ver desglose por regional</div>`;
+    const pg=document.getElementById('pg-dashboard');
+    if(pg) pg.insertBefore(banner, pg.firstChild);
+  }
+}
+
+/* ── DASHBOARD ── */
+function renderDashboard(d) {
+  renderMacroTable(d);
+  renderTopProductores(d);
+  renderTopJustif(d);
+  renderTopFR(d);
+  renderCharts(d);
+}
+
+function renderMacroTable(d) {
+  const tb=document.getElementById('tb-macro'); if(!tb) return;
+  const macroGroups={ESTE:[],SUR:[],CENTRO:[],NORTE:[]};
+  d.ZONAS.forEach(z=>{const m=getMacro(z.zona);if(!macroGroups[m])macroGroups[m]=[];macroGroups[m].push(z);});
+  let rows='';
+  for(const[macro,zonas] of Object.entries(macroGroups)){
+    if(!zonas.length) continue;
+    const mPlan=zonas.reduce((s,z)=>s+z.plan,0),mReal=zonas.reduce((s,z)=>s+z.real,0);
+    const mNoR=zonas.reduce((s,z)=>s+(z.noReal||0),0);
+    const mEf=Math.round(mReal/Math.max(1,mPlan)*100);
+    const ec=mEf>=85?'var(--ok)':mEf>=70?'var(--wa)':'var(--er)';
+    const mc=MACRO_COLORS[macro]||'#60a5fa';
+    rows+=`<tr style="background:${mc}0d;cursor:pointer" onclick="toggleMacroRow('mgr-${macro}','mgi-${macro}')">
+      <td style="padding:8px 12px;font-weight:800;font-size:12px">
+        <i id="mgi-${macro}" class="fas fa-chevron-right" style="font-size:8px;margin-right:6px;color:${mc};transition:.2s"></i>
+        <span style="color:${mc}">${macro}</span>
+        <span style="font-size:9px;color:var(--tx3);margin-left:5px">${zonas.length}r</span>
+      </td>
+      <td style="text-align:center;font-weight:700;color:var(--bl);padding:8px 10px">${mPlan.toLocaleString()}</td>
+      <td style="text-align:center;font-weight:700;color:var(--ok);padding:8px 10px">${mReal.toLocaleString()}</td>
+      <td style="text-align:center;padding:8px 10px">${mNoR>0?`<span style="color:var(--wa);font-weight:700">${mNoR}</span>`:'<span style="color:var(--tx3)">—</span>'}</td>
+      <td style="padding:8px 12px"><div style="display:flex;align-items:center;gap:6px">
+        <div style="flex:1;height:5px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden"><div style="width:${mEf}%;height:100%;background:${ec};border-radius:3px"></div></div>
+        <span style="font-weight:800;color:${ec};min-width:32px;font-size:11px">${mEf}%</span>
+      </div></td>
+    </tr>`;
+    zonas.forEach(z=>{
+      const ef=Math.round((z.real/Math.max(1,z.plan))*100);
+      const ec2=ef>=85?'var(--ok)':ef>=70?'var(--wa)':'var(--er)';
+      rows+=`<tr class="mgr-${macro}" style="display:none">
+        <td style="padding:6px 12px 6px 26px;font-size:11px;color:var(--tx2)">${z.zona}</td>
+        <td style="text-align:center;color:var(--bl);padding:6px 10px;font-size:11px">${z.plan}</td>
+        <td style="text-align:center;color:var(--ok);font-weight:600;padding:6px 10px;font-size:11px">${z.real}</td>
+        <td style="text-align:center;padding:6px 10px">${(z.noReal||0)>0?`<span style="color:var(--wa);font-size:10px;font-weight:700">${z.noReal}</span>`:'<span style="color:var(--tx3);font-size:10px">—</span>'}</td>
+        <td style="padding:6px 12px"><div style="display:flex;align-items:center;gap:5px">
+          <div style="flex:1;height:4px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden"><div style="width:${ef}%;height:100%;background:${ec2};border-radius:2px"></div></div>
+          <span style="font-weight:700;color:${ec2};min-width:28px;text-align:right;font-size:11px">${ef}%</span>
+        </div></td>
+      </tr>`;
+    });
+  }
+  tb.innerHTML=rows||'<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--tx3)">Sin datos</td></tr>';
+  setTimeout(()=>renderDashMapa(d),100);
+}
+window.toggleMacroRow=function(cls,icoId){
+  const rows=document.querySelectorAll('.'+cls);
+  const ico=document.getElementById(icoId);
+  const vis=rows.length>0&&rows[0].style.display!=='none';
+  rows.forEach(r=>{r.style.display=vis?'none':'table-row';});
+  if(ico)ico.style.transform=vis?'rotate(-90deg)':'rotate(0deg)';
+};
+
+function renderTopProductores(d) {
+  const el=document.getElementById('top-productores'); if(!el) return;
+  const sorted=[...d.PERSONAS].sort((a,b)=>(b.real/Math.max(1,b.plan))-(a.real/Math.max(1,a.plan))).slice(0,8);
+  const maxReal=sorted[0]?.real||1;
+  el.innerHTML=sorted.map((p,i)=>{
+    const ef=Math.round(p.real/Math.max(1,p.plan)*100);
+    const ec=ef>=85?'var(--ok)':ef>=70?'var(--wa)':'var(--er)';
+    return`<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--bd)">
+      <div class="av" style="width:28px;height:28px;font-size:9px;font-weight:800;background:${p.color}22;color:${p.color};flex-shrink:0">${p.ini}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${toTitle(p.nombre)}</div>
+        <div style="height:3px;background:rgba(255,255,255,.07);border-radius:2px;margin-top:4px;overflow:hidden">
+          <div style="width:${Math.round(p.real/maxReal*100)}%;height:100%;background:${ec};border-radius:2px"></div>
+        </div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:13px;font-weight:800;color:${ec}">${ef}%</div>
+        <div style="font-size:9px;color:var(--tx3)">${p.real}/${p.plan}</div>
+      </div>
+    </div>`;
+  }).join('')||'<div style="color:var(--tx3);padding:20px;text-align:center">Sin datos</div>';
+}
+
+function renderTopJustif(d) {
+  const el=document.getElementById('top-justif'); if(!el) return;
+  const mc={};d.justifs.forEach(j=>{mc[j.motivo]=(mc[j.motivo]||0)+1;});
+  const top=Object.entries(mc).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const maxM=top[0]?.[1]||1;
+  el.innerHTML=top.map(([m,n],i)=>{
+    const cols=['var(--wa)','var(--er)','var(--bl)','var(--vi)','var(--teal)'];
+    return`<div style="margin-bottom:11px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:11px;color:var(--tx2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px">${m||'Sin motivo'}</span>
+        <span style="font-size:11px;font-weight:700;color:${cols[i]};margin-left:8px">${n}</span>
+      </div>
+      <div class="prog-bar"><div class="prog-fill" style="width:${Math.round(n/maxM*100)}%;background:${cols[i]}"></div></div>
+    </div>`;
+  }).join('')||'<div style="color:var(--tx3);font-size:12px">Sin justificaciones</div>';
+}
+
+function renderTopFR(d) {
+  const el=document.getElementById('top-fueraruta'); if(!el) return;
+  const mc={};d.fueraRuta.forEach(x=>{mc[x.colab]=(mc[x.colab]||0)+1;});
+  const top=Object.entries(mc).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  el.innerHTML=top.map(([c,n],i)=>{
+    const col=d.colorMap[c]||SC[i%SC.length];
+    const ini=c.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    return`<div style="display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid var(--bd)">
+      <div class="av" style="width:28px;height:28px;font-size:9px;font-weight:800;background:${col}22;color:${col}">${ini}</div>
+      <div style="flex:1;font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${toTitle(c).split(' ').slice(0,2).join(' ')}</div>
+      <span class="pill vi" style="font-size:10px">${n}</span>
+    </div>`;
+  }).join('')||'<div style="color:var(--tx3);font-size:12px">Sin datos</div>';
+}
+
+function renderCharts(d) {
+  const labels=['Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const n=d.totalPlan,r=d.totalReal;
+  const planD=[Math.round(n/5),Math.round(n/5),Math.round(n/5),Math.round(n/5),Math.round(n/5),Math.round(n/20)];
+  const realD=[Math.round(r/5),Math.round(r/5),Math.round(r/5),Math.round(r/5),Math.round(r/5),Math.round(r/20)];
+  mkC('ch-pvr','bar',{labels,datasets:[
+    {label:'Planificado',data:planD,backgroundColor:'rgba(91,155,213,.2)',borderColor:'#5b9bd5',borderWidth:2,borderRadius:5},
+    {label:'Realizado',data:realD,backgroundColor:'rgba(60,179,168,.7)',borderColor:'#3cb3a8',borderWidth:0,borderRadius:5}
+  ]},{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:tc(),font:{size:11},padding:10}}},scales:{x:{ticks:{color:tc()},grid:{color:tg()}},y:{ticks:{color:tc()},grid:{color:tg()}}}});
+
+  mkC('ch-efect','doughnut',{labels:['Realizadas','Pendientes'],datasets:[{
+    data:[d.totalReal,Math.max(0,d.totalPlan-d.totalReal)],
+    backgroundColor:['rgba(60,179,168,.8)','rgba(255,255,255,.06)'],
+    borderWidth:0,hoverOffset:4
+  }]},{responsive:true,maintainAspectRatio:false,cutout:'72%',scales:{},plugins:{legend:{display:false}}});
+
+  const ps=d.PERSONAS.slice(0,10);
+  mkC('ch-pvr-p','bar',{labels:ps.map(p=>toTitle(p.nombre).split(' ')[0]),datasets:[
+    {label:'Planificado',data:ps.map(p=>p.plan),backgroundColor:'rgba(91,155,213,.2)',borderColor:'#5b9bd5',borderWidth:1.5,borderRadius:4},
+    {label:'Realizado',data:ps.map(p=>p.real),backgroundColor:'rgba(60,179,168,.7)',borderColor:'#3cb3a8',borderWidth:0,borderRadius:4}
+  ]},{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:tc(),font:{size:11},padding:10}}},scales:{x:{ticks:{color:tc(),font:{size:10}},grid:{color:tg()}},y:{ticks:{color:tc()},grid:{color:tg()}}}});
+
+  const zs=d.ZONAS.slice(0,8);
+  mkC('ch-zonas','bar',{labels:zs.map(z=>z.zona.split(' ').slice(0,2).join(' ')),datasets:[{
+    label:'Efectividad %',data:zs.map(z=>Math.round(z.real/Math.max(1,z.plan)*100)),
+    backgroundColor:zs.map(z=>{const ef=Math.round(z.real/Math.max(1,z.plan)*100);return ef>=85?'rgba(60,179,168,.75)':ef>=70?'rgba(232,160,69,.75)':'rgba(193,29,42,.75)';}),
+    borderWidth:0,borderRadius:5
+  }]},{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.parsed.x+'%'}}},scales:{x:{min:0,max:100,ticks:{color:tc(),callback:v=>v+'%'},grid:{color:tg()}},y:{ticks:{color:tc(),font:{size:10}},grid:{color:tg()}}}});
+}
+
+/* ── PERSONAS ── */
+function renderPersonas(d) {
+  const tb=document.getElementById('tb-personas'); if(!tb) return;
+  const q=(document.getElementById('personas-q')?.value||'').toLowerCase();
+  const ps=d.PERSONAS.filter(p=>!q||p.nombre.toLowerCase().includes(q));
+  tb.innerHTML=ps.map((p,i)=>{
+    const ef=Math.round(p.real/Math.max(1,p.plan)*100);
+    const ec=ef>=85?'var(--ok)':ef>=70?'var(--wa)':'var(--er)';
+    const tIco=p.tend==='up'?'fa-arrow-up':p.tend==='down'?'fa-arrow-down':'fa-minus';
+    const tc2=p.tend==='up'?'var(--ok)':p.tend==='down'?'var(--er)':'var(--tx3)';
+    return`<tr style="cursor:pointer" onclick="verPersona('${p.nombre.replace(/'/g,"\\'")}')">
+      <td><div style="display:flex;align-items:center;gap:10px">
+        <div class="av" style="background:${p.color}22;color:${p.color}">${p.ini}</div>
+        <div>
+          <div style="font-weight:600;font-size:12.5px">${toTitle(p.nombre)}</div>
+          <div style="font-size:10px;color:var(--tx3)">${p.zona}</div>
+        </div>
+      </div></td>
+      <td style="text-align:center;font-weight:700;color:var(--bl)">${p.plan}</td>
+      <td style="text-align:center;font-weight:700;color:var(--ok)">${p.real}</td>
+      <td style="text-align:center;color:var(--wa)">${p.plan-p.real}</td>
+      <td style="text-align:center;color:${p.just>0?'var(--er)':'var(--tx3)'}">${p.just}</td>
+      <td style="text-align:center;color:var(--teal)">${p.pdvsCount}</td>
+      <td style="text-align:center;font-size:11px;color:var(--tx2)">\${p.cin}</td>
+      <td style="text-align:center;font-size:11px;color:var(--teal)">\${p.promTiempo ? Math.floor(p.promTiempo/60)+'h '+p.promTiempo%60+'m' : '—'}</td>
+      <td style="text-align:center">\${p.ruteoPct !== null
+        ? \`<span class="pill \${p.ruteoPct>=85?'ok':p.ruteoPct>=60?'wa':'er'}" style="font-size:10px">\${p.ruteoRealiz}/\${p.ruteoTotal} · \${p.ruteoPct}%</span>\`
+        : '<span style="color:var(--tx3);font-size:11px">—</span>'}</td>
+      <td><div style="display:flex;align-items:center;gap:7px">
+        <div style="flex:1;height:5px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden">
+          <div style="width:\${ef}%;height:100%;background:\${ec};border-radius:3px"></div>
+        </div>
+        <span style="font-weight:800;color:\${ec};min-width:36px;text-align:right">\${ef}%</span>
+      </div></td>
+      <td><i class="fas \${tIco}" style="color:\${tc2};font-size:11px"></i></td>
+      <td><span class="pill bl" style="font-size:10px;cursor:pointer">Ver ruta →</span></td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="10" style="text-align:center;padding:24px;color:var(--tx3)">Sin datos</td></tr>';
+}
+
+window.verPersona=function(nombre){
+  document.getElementById('f-persona').value=nombre;
+  F.persona=nombre;
+  applyFilters();
+  goPage('seguimiento');
+};
+
+/* ── ZONAS ── */
+function renderZonas(d) {
+  const wrap=document.getElementById('zonas-wrap'); if(!wrap) return;
+  const macroGroups={ESTE:[],SUR:[],CENTRO:[],NORTE:[]};
+  d.ZONAS.forEach(z=>{const m=getMacro(z.zona);if(!macroGroups[m])macroGroups[m]=[];macroGroups[m].push(z);});
+  let html='';
+  for(const[macro,zonas] of Object.entries(macroGroups)){
+    if(!zonas.length) continue;
+    const mP=zonas.reduce((s,z)=>s+z.plan,0),mR=zonas.reduce((s,z)=>s+z.real,0);
+    const mNoR=zonas.reduce((s,z)=>s+(z.noReal||0),0);
+    const mEf=Math.round(mR/Math.max(1,mP)*100);
+    const ec=mEf>=85?'var(--ok)':mEf>=70?'var(--wa)':'var(--er)';
+    const mc=MACRO_COLORS[macro]||'#60a5fa';
+    html+=`<div class="tw" style="margin-bottom:20px">
+      <div style="padding:14px 20px;background:${mc}11;border-bottom:1px solid ${mc}33;display:flex;align-items:center;gap:12px;cursor:pointer" onclick="toggleMacroRow('mz-${macro}','mzico-${macro}')">
+        <i id="mzico-${macro}" class="fas fa-chevron-down" style="color:${mc};font-size:11px;transition:.2s"></i>
+        <div style="width:10px;height:10px;border-radius:50%;background:${mc}"></div>
+        <div style="font-size:15px;font-weight:900;color:${mc}">${macro}</div>
+        <div style="font-size:12px;color:var(--tx2)">${zonas.length} regionales</div>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:20px">
+          <div style="text-align:right"><div style="font-size:11px;color:var(--tx3)">Ruteo</div><div style="font-weight:800;color:var(--bl)">${mP.toLocaleString()}</div></div>
+          <div style="text-align:right"><div style="font-size:11px;color:var(--tx3)">Realizadas</div><div style="font-weight:800;color:var(--ok)">${mR.toLocaleString()}</div></div>
+          ${mNoR>0?`<div style="text-align:right"><div style="font-size:11px;color:var(--tx3)">Sin realizar</div><div style="font-weight:800;color:var(--wa)">${mNoR.toLocaleString()}</div></div>`:''}
+          <div style="text-align:center;min-width:70px"><div style="font-size:24px;font-weight:900;color:${ec}">${mEf}%</div></div>
+        </div>
+      </div>
+      <div id="mz-${macro}" style="overflow-x:auto"><table><thead><tr>
+        <th>Regional</th><th style="color:var(--bl)">Ruteo</th><th style="color:var(--ok)">Realizadas</th>
+        <th>Pendientes</th><th style="color:var(--vi)">Justificadas</th><th style="color:var(--wa)">Sin realizar ⚠</th>
+        <th>Progreso</th><th>Efectividad</th>
+      </tr></thead><tbody>
+      ${zonas.map(z=>{
+        const ef2=Math.round((z.real/Math.max(1,z.plan))*100);
+        const ec2=ef2>=85?'var(--ok)':ef2>=70?'var(--wa)':'var(--er)';
+        return`<tr><td style="padding-left:20px;font-weight:600">${z.zona}</td>
+          <td style="text-align:center;color:var(--bl)">${z.plan.toLocaleString()}</td>
+          <td style="text-align:center;color:var(--ok);font-weight:600">${z.real.toLocaleString()}</td>
+          <td style="text-align:center;color:var(--wa)">${(z.plan-z.real).toLocaleString()}</td>
+          <td style="text-align:center;color:var(--vi)">${(z.justifN||0).toLocaleString()}</td>
+          <td style="text-align:center">${(z.noReal||0)>0?`<span class="pill wa" style="font-size:10px">${z.noReal}</span>`:'<span style="color:var(--tx3)">—</span>'}</td>
+          <td style="min-width:120px"><div style="height:5px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden"><div style="width:${ef2}%;height:100%;background:${ec2};border-radius:3px"></div></div></td>
+          <td style="font-weight:800;color:${ec2}">${ef2}%</td>
+        </tr>`;
+      }).join('')}
+      </tbody></table></div>
+    </div>`;
+  }
+  wrap.innerHTML=html;
+
+  const macros=Object.keys(macroGroups).filter(m=>macroGroups[m].length);
+  const mc2=macros.map(m=>MACRO_COLORS[m]||'#60a5fa');
+  mkC('ch-macro-prod','bar',{labels:macros,datasets:[{label:'Efectividad %',data:macros.map(m=>{const zs=macroGroups[m];return Math.round(zs.reduce((s,z)=>s+z.real,0)/Math.max(1,zs.reduce((s,z)=>s+z.plan,0))*100);}),backgroundColor:mc2.map(c=>c+'bb'),borderColor:mc2,borderWidth:2,borderRadius:6}]},{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.parsed.x+'%'}}},scales:{x:{min:0,max:100,ticks:{color:tc(),callback:v=>v+'%'},grid:{color:tg()}},y:{ticks:{color:tc(),font:{size:13,weight:'bold'}},grid:{color:tg()}}}});
+  mkC('ch-macro-pvr','bar',{labels:macros,datasets:[{label:'Ruteo',data:macros.map(m=>macroGroups[m].reduce((s,z)=>s+z.plan,0)),backgroundColor:'rgba(91,155,213,.2)',borderColor:'#5b9bd5',borderWidth:1.5,borderRadius:4},{label:'Realizadas',data:macros.map(m=>macroGroups[m].reduce((s,z)=>s+z.real,0)),backgroundColor:mc2.map(c=>c+'99'),borderColor:mc2,borderWidth:0,borderRadius:4}]},{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:tc(),font:{size:11},padding:10}}},scales:{x:{ticks:{color:tc(),font:{size:12,weight:'bold'}},grid:{color:tg()}},y:{ticks:{color:tc()},grid:{color:tg()}}}});
+}
+
+/* ── JUSTIF — REQ2 + REQ3 ── */
+function renderJustif(d) {
+  const tb=document.getElementById('tb-justif'); if(!tb) return;
+  const q=(document.getElementById('justif-q')?.value||'').toLowerCase();
+  const motSel = document.getElementById('justif-mot');
+  const mot = motSel?.value||'';
+
+  // Poblar select con motivos reales del dataset (dinámico)
+  if(motSel){
+    const motivosUnicos = [...new Set(d.justifs.map(j=>j.motivo).filter(Boolean))].sort();
+    const curVal = motSel.value;
+    motSel.innerHTML = '<option value="">Todos los motivos</option>'
+      + motivosUnicos.map(m=>`<option value="${m}" ${curVal===m?'selected':''}>${m.slice(0,50)}</option>`).join('');
+    if(curVal) motSel.value = curVal;
+  }
+
+  // Filtro: búsqueda de texto Y motivo (coincidencia exacta con el seleccionado)
+  const jf=d.justifs.filter(j=>{
+    const matchQ = !q || (j.pdv+' '+j.colab+' '+j.zona).toLowerCase().includes(q);
+    const matchMot = !mot || j.motivo === mot;
+    return matchQ && matchMot;
+  });
+
+  const badge=document.getElementById('justif-badge');
+  if(badge) badge.textContent=jf.length+' justificaciones'+(mot?' · '+mot:'');
+
+  // REQ2: calcular PDVs con >5 justificaciones en el mes
+  const pdvsConAlerta = Object.entries(d.justifPorPDV||{})
+    .filter(([pdv,cnt])=>cnt>5)
+    .map(([pdv,cnt])=>({pdv,cnt}))
+    .sort((a,b)=>b.cnt-a.cnt);
+
+  // REQ2: banner de alerta en la página de justificaciones
+  const alertBanner = document.getElementById('justif-pdv-alert-banner');
+  if(alertBanner){
+    if(pdvsConAlerta.length>0){
+      alertBanner.innerHTML=`<div class="justif-alerta-banner">
+        <i class="fas fa-bell" style="font-size:16px;flex-shrink:0"></i>
+        <div>
+          <b>${pdvsConAlerta.length} PDV${pdvsConAlerta.length>1?'s':''} con más de 5 justificaciones este mes — evaluar exclusión de ruta:</b>
+          <div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap">
+            ${pdvsConAlerta.slice(0,6).map(x=>`<span style="padding:3px 9px;border-radius:20px;background:rgba(193,29,42,.2);font-size:11px;font-weight:700">${toTitle(x.pdv)} <b>(${x.cnt})</b></span>`).join('')}
+            ${pdvsConAlerta.length>6?`<span style="font-size:11px;opacity:.7">+${pdvsConAlerta.length-6} más</span>`:''}
+          </div>
+        </div>
+      </div>`;
+    } else {
+      alertBanner.innerHTML='';
+    }
+  }
+
+  // REQ2: set de PDVs con alerta para marcar en la tabla
+  const pdvsAlertaSet = new Set(pdvsConAlerta.map(x=>x.pdv));
+
+  tb.innerHTML=jf.map(j=>{
+    const tieneAlerta = pdvsAlertaSet.has(j.pdv);
+    const cntMes = d.justifPorPDV?.[j.pdv]||0;
+    return`<tr style="${tieneAlerta?'background:rgba(193,29,42,.04)':''}">
+      <td style="font-weight:600;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+        ${toTitle(j.pdv)}
+        ${tieneAlerta?`<span class="justif-alerta-badge"><i class="fas fa-exclamation-triangle" style="font-size:8px"></i>${cntMes} este mes</span>`:''}
+      </td>
+      <td style="font-size:12px">${toTitle(j.colab).split(' ').slice(0,2).join(' ')}</td>
+      <td style="font-size:11px;color:var(--tx2)">${j.zona}</td>
+      <td><span class="pill ${j.motivo==='PDV cerrado'?'wa':j.motivo.includes('permitió')?'er':'bl'}" style="font-size:10px">${j.motivo.slice(0,40)}</span></td>
+      <td style="color:var(--vi);font-size:12px">${j.hora}</td>
+      <!-- REQ2: columna Estado -->
+      <td>${tieneAlerta
+        ? `<span class="pill er" style="font-size:9px"><i class="fas fa-exclamation-triangle" style="font-size:8px;margin-right:3px"></i>Evaluar exclusión</span>`
+        : `<span class="pill ok" style="font-size:9px">Normal</span>`
+      }</td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--tx3)">Sin justificaciones</td></tr>';
+
+  // Donut motivos
+  const mc={};d.justifs.forEach(j=>{const k=j.motivo.slice(0,35);mc[k]=(mc[k]||0)+1;});
+  const top=Object.entries(mc).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  mkC('ch-justif-m','doughnut',{labels:top.map(x=>x[0]),datasets:[{data:top.map(x=>x[1]),backgroundColor:['rgba(232,160,69,.8)','rgba(193,29,42,.8)','rgba(91,155,213,.8)','rgba(155,127,212,.7)','rgba(60,179,168,.7)','rgba(248,113,113,.8)'],borderWidth:2,borderColor:isLight?'#fff':'#161414',hoverOffset:4}]},{responsive:true,maintainAspectRatio:false,cutout:'52%',scales:{},plugins:{legend:{position:'right',labels:{color:tc(),font:{size:10},padding:7}}}});
+}
+
+/* ── FUERA DE RUTA ── */
+function renderFueraRuta(d) {
+  const tb=document.getElementById('tb-fueraruta'); if(!tb) return;
+  const fr=d.fueraRuta;
+  ['fr-total','fr-colabs','fr-pdvs'].forEach((id,i)=>{const e=document.getElementById(id);if(e)e.textContent=[fr.length,new Set(fr.map(x=>x.colab)).size,new Set(fr.map(x=>x.pdv)).size][i];});
+  // REQ4: % fuera de ruta sobre total de visitas (planificadas + FR)
+  const pctFR = (d.totalPlan+d.totalFR)>0 ? (d.totalFR/(d.totalPlan+d.totalFR)*100).toFixed(1) : '0.0';
+  const eFrPct = document.getElementById('kpi-fr-pct'); if(eFrPct) eFrPct.textContent=pctFR+'%';
+
+  tb.innerHTML=fr.map(x=>`<tr>
+    <td><div style="display:flex;align-items:center;gap:8px">
+      <div class="av" style="width:26px;height:26px;font-size:9px;font-weight:800;background:${x.color}22;color:${x.color}">${x.colab.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)}</div>
+      <span style="font-size:12px;font-weight:600">${toTitle(x.colab).split(' ').slice(0,2).join(' ')}</span>
+    </div></td>
+    <td style="font-weight:600;font-size:12px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${toTitle(x.pdv)}</td>
+    <td style="font-size:11px;color:var(--tx2)">${x.zona}</td>
+    <td><span class="pill tx" style="font-size:10px">${x.cadena}</span></td>
+    <td style="font-size:11px;color:var(--vi)">${x.hora}</td>
+    <td style="font-size:11px;color:var(--tx2);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${x.motivo||'—'}</td>
+  </tr>`).join('')||'<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--tx3)">Sin visitas fuera de ruta</td></tr>';
+
+  const zFR={};d.ZONAS.forEach(z=>{zFR[z.zona.split(' ')[0]]={plan:z.plan,fr:0};});
+  fr.forEach(x=>{const k=x.zona.split(' ')[0];if(zFR[k])zFR[k].fr++;});
+  const lbs=Object.keys(zFR),frd=Object.values(zFR);
+  mkC('ch-fr-reg','bar',{labels:lbs,datasets:[{label:'Ruteo',data:frd.map(z=>z.plan),backgroundColor:'rgba(91,155,213,.2)',borderColor:'#5b9bd5',borderWidth:1.5,borderRadius:4},{label:'Fuera de ruta',data:frd.map(z=>z.fr),backgroundColor:'rgba(155,127,212,.7)',borderColor:'#9b7fd4',borderWidth:0,borderRadius:4}]},{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:tc(),font:{size:11},padding:10}}},scales:{x:{ticks:{color:tc(),font:{size:10}},grid:{color:tg()}},y:{ticks:{color:tc()},grid:{color:tg()}}}});
+  const mc2={};fr.forEach(x=>{const k=(x.motivo||'Sin motivo').trim();if(k.length>2)mc2[k]=(mc2[k]||0)+1;});
+  const topM=Object.entries(mc2).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  mkC('ch-fr-mot','doughnut',{labels:topM.map(x=>x[0].slice(0,30)),datasets:[{data:topM.map(x=>x[1]),backgroundColor:['rgba(155,127,212,.8)','rgba(91,155,213,.8)','rgba(60,179,168,.8)','rgba(232,160,69,.8)','rgba(193,29,42,.8)'],borderWidth:2,borderColor:isLight?'#fff':'#161414',hoverOffset:4}]},{responsive:true,maintainAspectRatio:false,cutout:'55%',scales:{},plugins:{legend:{position:'right',labels:{color:tc(),font:{size:10},padding:7}}}});
+}
+
+/* ── MAPA DASHBOARD ── */
+const REGIONAL_COORDS = {"CIUDAD DEL ESTE": [-25.5139, -54.6497], "SANTA RITA": [-25.8135, -55.1047], "SAN ALBERTO": [-24.9768, -54.9101], "HERNANDERIAS": [-25.4025, -54.6527], "ENCARNACION": [-27.3323, -55.8603], "CAAZAPA": [-26.1965, -56.3762], "SAN JUAN NEPOMUCENO": [-26.1144, -55.9398], "CORONEL BOGADO": [-27.1807, -56.2563], "SAN JOSE DE LOS ARROYOS": [-25.0516, -56.0223], "CORONEL OVIEDO": [-25.4422, -56.4404], "VILLARRICA": [-25.7753, -56.4474], "CAAGUAZU": [-25.4651, -56.0199]};
+let _dashMap = null;
+
+function renderDashMapa(d) {
+  const mapDiv = document.getElementById('dash-mapa');
+  if (!mapDiv) return;
+  if (!_dashMap) {
+    _dashMap = L.map('dash-mapa', {zoomControl:false, attributionControl:false, dragging:false, scrollWheelZoom:false}).setView([-25.8, -55.8], 6);
+    L.tileLayer(isLight?TILE_LIGHT:TILE_DARK, {maxZoom:19}).addTo(_dashMap);
+  } else {
+    _dashMap.eachLayer(l=>{if(!(l instanceof L.TileLayer))_dashMap.removeLayer(l);});
+  }
+  const efMap = {};
+  d.ZONAS.forEach(z => { efMap[z.zona.toUpperCase()] = Math.round(z.real/Math.max(1,z.plan)*100); });
+  const allCoords = [];
+  Object.entries(REGIONAL_COORDS).forEach(([zona, [lat,lng]]) => {
+    const ef = efMap[zona] !== undefined ? efMap[zona] : null;
+    if (ef === null) return;
+    allCoords.push([lat,lng]);
+    const col = ef >= 85 ? '#3cb3a8' : ef >= 70 ? '#e8a045' : '#c11d2a';
+    const r   = Math.max(14, Math.min(36, 10 + (100-ef)/4));
+    if (ef < 70) L.circle([lat,lng], {radius:r*1200, color:col, fillColor:col, fillOpacity:0.08, weight:0}).addTo(_dashMap);
+    L.circleMarker([lat,lng], {radius:r, fillColor:col, color:'rgba(255,255,255,.6)', weight:2, fillOpacity:ef>=85?0.7:0.85}).addTo(_dashMap)
+    .bindPopup(`<div style="font-family:'Outfit',sans-serif;min-width:160px"><div style="font-weight:700;font-size:13px;margin-bottom:4px">${zona}</div><div style="display:flex;align-items:center;gap:6px"><div style="flex:1;height:5px;background:rgba(0,0,0,.1);border-radius:3px;overflow:hidden"><div style="width:${ef}%;height:100%;background:${col};border-radius:3px"></div></div><span style="font-size:14px;font-weight:900;color:${col}">${ef}%</span></div><div style="font-size:10px;color:#888;margin-top:4px">${d.ZONAS.find(z=>z.zona.toUpperCase()===zona)?.real||0} / ${d.ZONAS.find(z=>z.zona.toUpperCase()===zona)?.plan||0} PDVs</div></div>`, {maxWidth:200});
+    const icon = L.divIcon({className:'',html:`<div style="font-family:'Outfit',sans-serif;font-size:9px;font-weight:800;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.8);white-space:nowrap;pointer-events:none">${zona.split(' ')[0]}<br><span style="font-size:10px;font-weight:900">${ef}%</span></div>`,iconSize:[60,28],iconAnchor:[30,0]});
+    L.marker([lat,lng], {icon}).addTo(_dashMap);
+  });
+  if (allCoords.length > 0) _dashMap.fitBounds(L.latLngBounds(allCoords), {padding:[20,20], maxZoom:8});
+  setTimeout(()=>_dashMap&&_dashMap.invalidateSize(),200);
+}
+
+/* ── MAPA COBERTURA ── */
+const CADENA_COL={'BODEGA':'#60a5fa','DESPENSA':'#34d399','AUTOSERVICIO':'#3cb3a8','COMERCIAL':'#f87171','C-STORE REGULAR':'#a78bfa','BIGGIE':'#fbbf24','RETAIL':'#ec4899','SUPERMERCADO INDEPENDIENTE':'#fb923c','REFRIGERADO REGULAR':'#4ade80'};
+const PDV_SAMPLE=[
+  {nombre:'BODEGA FERNANDEZ',cadena:'BODEGA',regional:'CIUDAD DEL ESTE',lat:-25.5139,lng:-54.6497},
+  {nombre:'DESPENSA SAN JUAN',cadena:'DESPENSA',regional:'CORONEL OVIEDO',lat:-25.4668,lng:-56.4672},
+  {nombre:'ARPA AUTOSERVICE',cadena:'AUTOSERVICIO',regional:'ENCARNACION',lat:-27.3323,lng:-55.8603},
+  {nombre:'BIGGIE CDE CAMPO VIA',cadena:'BIGGIE',regional:'CIUDAD DEL ESTE',lat:-25.5304,lng:-54.627},
+  {nombre:'BIGGIE CNEL OVIEDO',cadena:'BIGGIE',regional:'CORONEL OVIEDO',lat:-25.4422,lng:-56.4404},
+  {nombre:'COPETROL SAN CARLOS',cadena:'C-STORE REGULAR',regional:'CAAGUAZU',lat:-25.4586,lng:-56.0253},
+  {nombre:'RETAIL SA COSTANERA',cadena:'RETAIL',regional:'ENCARNACION',lat:-27.3238,lng:-55.8731},
+  {nombre:'GRAN VIA CDE',cadena:'RETAIL',regional:'CIUDAD DEL ESTE',lat:-25.5119,lng:-54.611},
+  {nombre:'BODEGA ALFREDITO',cadena:'BODEGA',regional:'VILLARRICA',lat:-25.7738,lng:-56.4602},
+  {nombre:'BIGGIE SA CENTRO',cadena:'BIGGIE',regional:'VILLARRICA',lat:-25.7753,lng:-56.4474},
+  {nombre:'SUPER DOS',cadena:'AUTOSERVICIO',regional:'VILLARRICA',lat:-25.7837,lng:-56.4507},
+  {nombre:'IDEAL SUPERMERCADO',cadena:'AUTOSERVICIO',regional:'SAN ALBERTO',lat:-24.9768,lng:-54.9101},
+  {nombre:'MERCADO 14 DE MAYO',cadena:'AUTOSERVICIO',regional:'SANTA RITA',lat:-25.8465,lng:-55.1191},
+  {nombre:'BODEGA CENTRAL ENC',cadena:'BODEGA',regional:'ENCARNACION',lat:-27.3359,lng:-55.8692},
+  {nombre:'DESPENSA GAUTO',cadena:'DESPENSA',regional:'CORONEL OVIEDO',lat:-25.4395,lng:-56.4332},
+  {nombre:'BODEGA LA VICTORIA',cadena:'BODEGA',regional:'CAAZAPA',lat:-26.1965,lng:-56.3762},
+  {nombre:'COMERCIAL CHE SY',cadena:'COMERCIAL',regional:'CAAGUAZU',lat:-25.462,lng:-56.0175},
+  {nombre:'DESPENSA COLMAN',cadena:'DESPENSA',regional:'VILLARRICA',lat:-25.7847,lng:-56.4441},
+  {nombre:'BODEGA SAN PATRICIO',cadena:'BODEGA',regional:'ENCARNACION',lat:-27.3352,lng:-55.8615},
+  {nombre:'BEER BROTHERS',cadena:'BODEGA',regional:'SAN ALBERTO',lat:-24.9709,lng:-54.9221},
+];
+
+function renderMapaCobertura(d) {
+  const mapDiv=document.getElementById('mapa-cobertura'); if(!mapDiv) return;
+  const regF=document.getElementById('mapa-reg')?.value||'';
+  const cadF=document.getElementById('mapa-cad')?.value||'';
+  const pdvs=PDV_SAMPLE.filter(p=>(!regF||p.regional===regF)&&(!cadF||p.cadena===cadF));
+  const counter=document.getElementById('mapa-counter');if(counter)counter.textContent=pdvs.length+' PDVs';
+  const leg=document.getElementById('mapa-legend');
+  if(leg){const cads=[...new Set(pdvs.map(p=>p.cadena))].sort();leg.innerHTML=cads.map(c=>`<div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--tx2)"><div style="width:9px;height:9px;border-radius:50%;background:${CADENA_COL[c]||'#9ca3af'}"></div>${c}</div>`).join('');}
+  if(!_coberMap){_coberMap=L.map('mapa-cobertura',{zoomControl:true,attributionControl:false}).setView([-25.5,-56.0],7);L.tileLayer(isLight?TILE_LIGHT:TILE_DARK,{maxZoom:19}).addTo(_coberMap);}
+  _coberMap.eachLayer(l=>{if(!(l instanceof L.TileLayer))_coberMap.removeLayer(l);});
+  const markers=L.layerGroup().addTo(_coberMap);
+  pdvs.forEach(p=>{
+    const col=CADENA_COL[p.cadena]||'#9ca3af';
+    const icon=L.divIcon({className:'',html:`<div style="width:11px;height:11px;border-radius:50%;background:${col};border:2px solid rgba(255,255,255,.85);box-shadow:0 1px 5px rgba(0,0,0,.4)"></div>`,iconSize:[11,11],iconAnchor:[5,5]});
+    L.marker([p.lat,p.lng],{icon}).addTo(markers).bindPopup(`<div style="font-family:'Outfit',sans-serif;min-width:180px"><b style="font-size:13px">${p.nombre}</b><br><span style="color:${col};font-weight:600;font-size:11px">${p.cadena}</span><br><span style="font-size:11px;color:#888">${p.regional}</span></div>`,{maxWidth:220});
+  });
+  if(pdvs.length>0)_coberMap.fitBounds(L.latLngBounds(pdvs.map(p=>[p.lat,p.lng])),{padding:[30,30],maxZoom:12});
+  setTimeout(()=>_coberMap&&_coberMap.invalidateSize(),200);
+}
+
+/* ── SEGUIMIENTO EN CAMPO ── */
+function renderSeguimiento(d) {
+  const personaFiltro=F.persona;
+  const c=document.getElementById('seg-content');
+  if(!c) return;
+  if(!personaFiltro){
+    c.innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
+      <div class="tw">
+        <div class="tf"><i class="fas fa-users" style="color:var(--teal)"></i><span style="font-weight:600;font-size:13px">Equipo en campo — ${d.PERSONAS.length} promotores</span></div>
+        <div style="max-height:560px;overflow-y:auto">
+          ${d.PERSONAS.map((p)=>{
+            const ef=Math.round(p.real/Math.max(1,p.plan)*100);
+            const ec=ef>=85?'var(--ok)':ef>=70?'var(--wa)':'var(--er)';
+            return`<div style="display:flex;align-items:center;gap:12px;padding:13px 18px;border-bottom:1px solid var(--bd);cursor:pointer;transition:var(--tr)" onmouseover="this.style.background='rgba(255,255,255,.03)'" onmouseout="this.style.background=''" onclick="selPersonaSeg('${p.nombre.replace(/'/g,"\\'")}')">
+              <div class="av" style="width:36px;height:36px;font-size:11px;font-weight:800;background:${p.color}22;color:${p.color};flex-shrink:0">${p.ini}</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:12.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${toTitle(p.nombre)}</div>
+                <div style="font-size:10px;color:var(--tx3);margin-top:2px">${p.zona} · ${p.pdvsCount} PDVs · Check-in: ${p.cin}</div>
+              </div>
+              <div style="text-align:right;flex-shrink:0">
+                <div style="font-size:14px;font-weight:900;color:${ec}">${ef}%</div>
+                <div style="font-size:10px;color:var(--tx3)">${p.real}/${p.plan}</div>
+              </div>
+              <i class="fas fa-chevron-right" style="color:var(--tx3);font-size:11px"></i>
+            </div>`;
+          }).join('')||'<div style="padding:32px;text-align:center;color:var(--tx3)">Sin actividad</div>'}
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div class="alert wa" style="align-items:center">
+          <i class="fas fa-hand-pointer" style="font-size:18px;flex-shrink:0"></i>
+          <div><b>Seleccioná un promotor</b> para ver su recorrido en mapa, horarios y visitas detalladas.</div>
+        </div>
+        <div class="card card-p">
+          <div class="card-title" style="margin-bottom:16px"><i class="fas fa-chart-bar" style="color:var(--red);margin-right:7px"></i>Resumen del período</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            ${[['var(--ok)',d.PERSONAS.length,'Promotores'],['var(--bl)',d.totalPlan.toLocaleString(),'Total ruteo'],['var(--teal)',d.totalReal.toLocaleString(),'Realizadas'],['var(--wa)',d.totalJust,'Justificaciones']].map(([col,val,lbl])=>`
+            <div style="background:var(--bg3);border-radius:var(--r2);padding:14px;text-align:center">
+              <div style="font-size:24px;font-weight:900;color:${col}">${val}</div>
+              <div style="font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:.5px;margin-top:4px">${lbl}</div>
+            </div>`).join('')}
+          </div>
+        </div>
+      </div>
+    </div>`;
+    return;
+  }
+
+  const p = d.PERSONAS.find(x=>x.nombre===personaFiltro);
+  if (!p) { c.innerHTML='<div style="padding:32px;color:var(--tx3)">Persona no encontrada en el período</div>'; return; }
+  const ef=Math.round(p.real/Math.max(1,p.plan)*100);
+  const ec=ef>=85?'var(--ok)':ef>=70?'var(--wa)':'var(--er)';
+  const regs=p.registros.filter(r=>r.lat&&r.lng&&!isNaN(r.lat));
+
+  c.innerHTML=`
+  <div style="display:grid;grid-template-columns:320px 1fr;gap:20px;align-items:start">
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="card card-p">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+          <div class="av" style="width:46px;height:46px;font-size:14px;font-weight:900;background:${p.color}22;color:${p.color}">${p.ini}</div>
+          <div style="flex:1"><div style="font-size:15px;font-weight:800">${toTitle(p.nombre)}</div><div style="font-size:11px;color:var(--tx3);margin-top:3px">${p.zona}</div></div>
+          <button class="pill tx" style="cursor:pointer;border:none;font-size:10px" onclick="selPersonaSeg('')"><i class="fas fa-arrow-left" style="margin-right:4px"></i>Volver</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div style="background:var(--bg3);border-radius:var(--r2);padding:12px;text-align:center"><div style="font-size:22px;font-weight:900;color:${ec}">${ef}%</div><div style="font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:.6px;margin-top:3px">Efectividad</div></div>
+          <div style="background:var(--bg3);border-radius:var(--r2);padding:12px;text-align:center"><div style="font-size:22px;font-weight:900;color:var(--red)">${p.plan}</div><div style="font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:.6px;margin-top:3px">Ruteo</div></div>
+          <div style="background:var(--bg3);border-radius:var(--r2);padding:12px;text-align:center"><div style="font-size:22px;font-weight:900;color:var(--ok)">${p.real}</div><div style="font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:.6px;margin-top:3px">Realizadas</div></div>
+          <div style="background:var(--bg3);border-radius:var(--r2);padding:12px;text-align:center"><div style="font-size:22px;font-weight:900;color:var(--ok)">${p.cin}</div><div style="font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:.6px;margin-top:3px">Check-in prom</div></div>
+        </div>
+      </div>
+      <div class="tw">
+        <div class="tf"><i class="fas fa-list-ol" style="color:var(--red)"></i><span style="font-weight:600;font-size:12px">PDVs visitados</span><span class="pill bl" style="margin-left:auto">${p.registros.filter(r=>r.visitado).length}</span></div>
+        <div style="max-height:340px;overflow-y:auto">
+        <table><thead><tr><th>#</th><th>PDV</th><th>Cadena</th><th style="color:var(--ok)">In</th><th style="color:var(--wa)">Out</th><th>Estado</th></tr></thead><tbody>
+        ${p.registros.map((r,i)=>`<tr style="${!r.visitado?'opacity:.6':''}">
+          <td style="color:var(--tx3);font-size:11px">${i+1}</td>
+          <td style="font-size:11.5px;font-weight:600;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${toTitle(r.pdv)}</td>
+          <td><span class="pill tx" style="font-size:9px">${r.cadena.slice(0,12)}</span></td>
+          <td><span class="pill ok" style="font-size:9px">${horaStr(r.cin)}</span></td>
+          <td style="font-size:11px;color:var(--tx2)">${horaStr(r.cout)}</td>
+          <td><span class="pill ${r.visitado?'ok':r.motivo?'wa':'er'}" style="font-size:9px">${r.visitado?'Visitado':r.motivo?'Justif.':'No realiz.'}</span></td>
+        </tr>`).join('')}
+        </tbody></table></div>
+      </div>
+    </div>
+    <div class="card" style="overflow:hidden;position:sticky;top:20px">
+      <div style="padding:14px 18px 10px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between">
+        <div><div class="card-title"><i class="fas fa-route" style="color:var(--red);margin-right:7px"></i>Recorrido en mapa</div><div class="card-sub">${regs.length} puntos con coordenadas</div></div>
+      </div>
+      <div id="ruta-map" style="height:560px"></div>
+    </div>
+  </div>`;
+
+  setTimeout(()=>{
+    const mapDiv=document.getElementById('ruta-map'); if(!mapDiv) return;
+    if(_rutaMap){try{_rutaMap.remove();}catch{} _rutaMap=null;}
+    if(!regs.length){mapDiv.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--tx3);font-size:12px"><i class="fas fa-map-marker-alt" style="margin-right:7px"></i>Sin coordenadas para este período</div>';return;}
+    _rutaMap=L.map('ruta-map',{zoomControl:true,attributionControl:false}).setView([regs[0].lat,regs[0].lng],12);
+    L.tileLayer(isLight?TILE_LIGHT:TILE_DARK,{maxZoom:19}).addTo(_rutaMap);
+    L.polyline(regs.map(r=>[r.lat,r.lng]),{color:'#c11d2a',weight:2.5,opacity:.6,dashArray:'7,5'}).addTo(_rutaMap);
+    regs.forEach((r,i)=>{
+      const isFirst=i===0,isLast=i===regs.length-1;
+      const col=isFirst?'#3cb3a8':isLast?'#e8a045':'#5b9bd5';
+      const icon=L.divIcon({className:'',html:`<div style="width:30px;height:30px;border-radius:50%;background:${col};border:2.5px solid rgba(255,255,255,.9);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#fff;box-shadow:0 2px 10px rgba(0,0,0,.4)">${i+1}</div>`,iconSize:[30,30],iconAnchor:[15,15]});
+      L.marker([r.lat,r.lng],{icon}).addTo(_rutaMap).bindPopup(`<div style="font-family:'Outfit',sans-serif;min-width:180px"><div style="font-weight:700;font-size:13px;margin-bottom:5px">${i+1}. ${toTitle(r.pdv)}</div><div style="color:#888;font-size:11px;margin-bottom:5px">${r.cadena}</div><div style="display:flex;gap:10px"><span style="color:#3cb3a8"><i class="fas fa-sign-in-alt" style="margin-right:3px"></i>${horaStr(r.cin)}</span><span style="color:#e8a045"><i class="fas fa-sign-out-alt" style="margin-right:3px"></i>${horaStr(r.cout)||'—'}</span></div><div style="margin-top:5px"><span class="${r.visitado?'pill ok':'pill wa'}" style="font-size:9px">${r.visitado?'Visitado':r.motivo?'Justificado':'No realizado'}</span></div></div>`,{maxWidth:220});
+    });
+    _rutaMap.fitBounds(L.latLngBounds(regs.map(r=>[r.lat,r.lng])),{padding:[30,30],maxZoom:14});
+    setTimeout(()=>_rutaMap&&_rutaMap.invalidateSize(),200);
+  },150);
+}
+
+window.selPersonaSeg=function(nombre){
+  F.persona=nombre;
+  const el=document.getElementById('f-persona');if(el)el.value=nombre;
+  updateActivePills();
+  if(_lastData) renderSeguimiento(_lastData);
+};
+
+
+/* ── RUTEO — Cumplimiento semanal ── */
+function renderRuteo(d) {
+  const c = document.getElementById('ruteo-content');
+  if(!c) return;
+
+  if(!_ruteoLoaded) {
+    c.innerHTML = '<div class="alert wa"><i class="fas fa-spinner fa-spin"></i><div>Cargando planilla de ruteo...</div></div>';
+    fetchRuteo().then(()=>{ if(_lastData) renderRuteo(_lastData); });
+    return;
+  }
+
+  const rows = [];
+  d.PERSONAS.forEach(p => {
+    const ruteoPDVs = getRuteoPorMerchant(p.nombre);
+    if(!ruteoPDVs.length) return;
+    const visitadosNorm = new Set(
+      p.registros.filter(r=>r.visitado)
+        .map(r=>r.pdv.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim())
+    );
+    const tiempos = p.tiemposPDV||[];
+    const promT = tiempos.length ? Math.round(tiempos.reduce((s,v)=>s+v.tiempo,0)/tiempos.length) : null;
+    const pdvStatus = ruteoPDVs.map(rpdv => {
+      const rNorm = rpdv.pdv.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+      const visitado = [...visitadosNorm].some(v=>v.includes(rNorm.slice(0,15))||rNorm.includes(v.slice(0,15)));
+      const match = tiempos.find(t=>{
+        const tNorm = t.pdv.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+        return tNorm.includes(rNorm.slice(0,12))||rNorm.includes(tNorm.slice(0,12));
+      });
+      return { ...rpdv, visitado, tiempo:match?.tiempo||null, cin:match?.cin||null, fecha:match?.fecha||null };
+    });
+    const visitados = pdvStatus.filter(s=>s.visitado).length;
+    const total = pdvStatus.length;
+    const pct = Math.round(visitados/Math.max(1,total)*100);
+    rows.push({ persona:p, pdvStatus, visitados, total, pct, promT, color:p.color });
+  });
+
+  rows.sort((a,b) => a.pct - b.pct);
+
+  const sinRuteo = d.PERSONAS.filter(p => !getRuteoPorMerchant(p.nombre).length);
+  const totalPDVsRuteo = _ruteo.size;
+  const totalVisitados = rows.reduce((s,r)=>s+r.visitados,0);
+  const totalRuteo = rows.reduce((s,r)=>s+r.total,0);
+  const pctGlobal = Math.round(totalVisitados/Math.max(1,totalRuteo)*100);
+  const ecG = pctGlobal>=85?'var(--ok)':pctGlobal>=60?'var(--wa)':'var(--er)';
+
+  const tpoStr = t => t ? Math.floor(t/60)+'h '+t%60+'m' : '—';
+
+  const rowsHtml = rows.map((r,i) => {
+    const ec = r.pct>=85?'var(--ok)':r.pct>=60?'var(--wa)':'var(--er)';
+    const ts = tpoStr(r.promT);
+    const nEnc = encodeURIComponent(r.persona.nombre);
+    return '<tr style="cursor:pointer" onclick="selRuteoDetalle(\''+nEnc+'\')">'
+      + '<td style="color:var(--tx3);font-size:12px">'+(i+1)+'</td>'
+      + '<td><div style="display:flex;align-items:center;gap:10px">'
+        + '<div class="av" style="background:'+r.color+'22;color:'+r.color+'">'+r.persona.ini+'</div>'
+        + '<div><div style="font-weight:600;font-size:12.5px">'+toTitle(r.persona.nombre)+'</div>'
+        + '<div style="font-size:10px;color:var(--tx3)">'+r.persona.zona+'</div></div>'
+      + '</div></td>'
+      + '<td style="text-align:center;color:var(--bl);font-weight:700">'+r.total+'</td>'
+      + '<td style="text-align:center;color:var(--ok);font-weight:700">'+r.visitados+'</td>'
+      + '<td style="text-align:center;color:'+(r.total-r.visitados>0?'var(--er)':'var(--tx3)')+';font-weight:'+(r.total-r.visitados>0?700:400)+'">'+( r.total-r.visitados)+'</td>'
+      + '<td style="text-align:center;color:var(--teal);font-size:12px">'+ts+'</td>'
+      + '<td style="min-width:180px"><div style="display:flex;align-items:center;gap:8px">'
+        + '<div style="flex:1;height:6px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden">'
+          + '<div style="width:'+r.pct+'%;height:100%;background:'+ec+';border-radius:3px"></div></div>'
+        + '<span style="font-weight:800;color:'+ec+';min-width:36px">'+r.pct+'%</span></div></td>'
+      + '<td><span class="pill bl" style="font-size:10px;cursor:pointer">Ver →</span></td>'
+      + '</tr>';
+  }).join('') || '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--tx3)">Sin datos de ruteo</td></tr>';
+
+  const sinRuteoHtml = sinRuteo.length
+    ? '<div class="alert wa"><i class="fas fa-user-slash" style="font-size:16px;flex-shrink:0"></i><div><b>'+sinRuteo.length+' sin asignación en planilla:</b> '+sinRuteo.map(p=>p.nombre.split(' ').slice(0,2).join(' ')).join(' · ')+'</div></div>'
+    : '';
+
+  c.innerHTML =
+    '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:20px">'
+    + '<div class="kpi t-bl"><div class="kpi-lbl">PDVs en ruteo</div><div class="kpi-val" style="color:var(--bl)">'+totalPDVsRuteo.toLocaleString()+'</div><div class="kpi-sub">válidos (cód. numérico)</div><i class="fas fa-clipboard-list kpi-ico"></i></div>'
+    + '<div class="kpi t-'+(pctGlobal>=85?'ok':pctGlobal>=60?'wa':'er')+'"><div class="kpi-lbl">Cumplimiento global</div><div class="kpi-val" style="color:'+ecG+'">'+pctGlobal+'%</div><div class="kpi-sub">'+totalVisitados+'/'+totalRuteo+' PDVs</div><i class="fas fa-check-circle kpi-ico"></i></div>'
+    + '<div class="kpi t-vi"><div class="kpi-lbl">Sin ruteo asignado</div><div class="kpi-val" style="color:var(--vi)">'+sinRuteo.length+'</div><div class="kpi-sub">no están en la planilla</div><i class="fas fa-user-slash kpi-ico"></i></div>'
+    + '<div class="kpi t-teal"><div class="kpi-lbl">Promotores con ruteo</div><div class="kpi-val" style="color:var(--teal)">'+rows.length+'</div><div class="kpi-sub">en la planilla de junio</div><i class="fas fa-users kpi-ico"></i></div>'
+    + '</div>'
+    + '<div class="tw">'
+      + '<div class="tf"><i class="fas fa-clipboard-list" style="color:var(--red)"></i><span style="font-weight:700;font-size:13px">Cumplimiento por promotor — '+rows.length+' en ruteo</span><span style="font-size:11px;color:var(--tx3);margin-left:auto">Menor cumplimiento primero</span></div>'
+      + '<div style="overflow-x:auto;overflow-y:auto;max-height:560px">'
+      + '<table><thead style="position:sticky;top:0;z-index:2"><tr>'
+        + '<th>#</th><th>Promotor</th>'
+        + '<th style="text-align:center;color:var(--bl)">PDVs ruteo</th>'
+        + '<th style="text-align:center;color:var(--ok)">Visitados</th>'
+        + '<th style="text-align:center;color:var(--er)">Faltantes</th>'
+        + '<th style="text-align:center;color:var(--teal)">Tpo prom/PDV</th>'
+        + '<th>Cumplimiento</th><th></th>'
+      + '</tr></thead><tbody>'
+      + rowsHtml
+      + '</tbody></table></div></div>'
+    + sinRuteoHtml
+    + '<div id="ruteo-detalle"></div>';
+}
+
+window.renderRuteoDetalle = function() {
+  const nombre = window._ruteoDetalle;
+  const det = document.getElementById('ruteo-detalle');
+  if(!det || !nombre || !_lastData) return;
+  const p = _lastData.PERSONAS.find(x=>x.nombre===nombre);
+  if(!p) return;
+  const tpoStr = t => t ? Math.floor(t/60)+'h '+t%60+'m' : '—';
+  const ruteoPDVs = getRuteoPorMerchant(nombre);
+  const visitadosNorm = new Set(
+    p.registros.filter(r=>r.visitado)
+      .map(r=>r.pdv.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim())
+  );
+  const tiempos = p.tiemposPDV||[];
+  const pdvStatus = ruteoPDVs.map(rpdv => {
+    const rNorm = rpdv.pdv.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+    const visitado = [...visitadosNorm].some(v=>v.includes(rNorm.slice(0,15))||rNorm.includes(v.slice(0,15)));
+    const match = tiempos.find(t=>{
+      const tNorm = t.pdv.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+      return tNorm.includes(rNorm.slice(0,12))||rNorm.includes(tNorm.slice(0,12));
+    });
+    return { ...rpdv, visitado, tiempo:match?.tiempo||null, cin:match?.cin||null, fecha:match?.fecha||null };
+  });
+  const visitados = pdvStatus.filter(s=>s.visitado).length;
+  const pdvsHtml = pdvStatus.map((s,i) =>
+    '<tr style="'+(s.visitado?'':'opacity:.6')+'">'
+    + '<td style="color:var(--tx3);font-size:11px">'+(i+1)+'</td>'
+    + '<td style="font-weight:600;font-size:12px">'+toTitle(s.pdv)+'</td>'
+    + '<td style="font-size:11px;color:var(--tx2)">'+(s.region||'—')+'</td>'
+    + '<td style="font-size:11px;color:var(--tx2)">'+(s.ciudad||'—')+'</td>'
+    + '<td><span class="pill tx" style="font-size:9px">'+(s.canal||'—')+'</span></td>'
+    + '<td style="text-align:center">'+(s.visitado
+        ? '<span class="pill ok" style="font-size:10px"><i class="fas fa-check" style="font-size:8px"></i> Sí</span>'
+        : '<span class="pill er" style="font-size:10px"><i class="fas fa-times" style="font-size:8px"></i> No</span>')+'</td>'
+    + '<td style="text-align:center;color:var(--teal);font-size:12px;font-weight:600">'+tpoStr(s.tiempo)+'</td>'
+    + '<td style="text-align:center;font-size:11px;color:var(--tx3)">'+(s.fecha||'—')+'</td>'
+    + '</tr>'
+  ).join('');
+  det.innerHTML =
+    '<div class="tw" style="border-top:3px solid '+p.color+'">'
+    + '<div class="tf" style="background:'+p.color+'11;border-color:'+p.color+'33">'
+      + '<div class="av" style="background:'+p.color+'22;color:'+p.color+';width:34px;height:34px;font-size:11px;font-weight:800">'+p.ini+'</div>'
+      + '<span style="font-weight:700;font-size:13px">'+toTitle(nombre)+' — '+visitados+'/'+pdvStatus.length+' PDVs visitados</span>'
+      + '<button onclick="window._ruteoDetalle=null;document.getElementById(\'ruteo-detalle\').innerHTML=\'\'" style="margin-left:auto;background:none;border:1px solid var(--bd);border-radius:var(--r2);color:var(--tx3);padding:5px 12px;cursor:pointer;font-size:11px"><i class="fas fa-times"></i> Cerrar</button>'
+    + '</div>'
+    + '<div style="overflow-x:auto;max-height:400px;overflow-y:auto">'
+    + '<table><thead style="position:sticky;top:0;z-index:2"><tr>'
+      + '<th>#</th><th>PDV del ruteo</th><th>Regional</th><th>Ciudad</th><th>Canal</th>'
+      + '<th style="text-align:center;color:var(--ok)">Visitado</th>'
+      + '<th style="text-align:center;color:var(--teal)">Tiempo en PDV</th>'
+      + '<th style="text-align:center">Fecha visita</th>'
+    + '</tr></thead><tbody>'
+    + pdvsHtml
+    + '</tbody></table></div></div>';
+  det.scrollIntoView({behavior:'smooth', block:'start'});
+};
+window._ruteoDetalle = null;
+window.renderRuteoDetalle = function() {
+  const nombre = window._ruteoDetalle;
+  const det = document.getElementById('ruteo-detalle');
+  if(!det || !nombre || !_lastData) return;
+
+  const p = _lastData.PERSONAS.find(x=>x.nombre===nombre);
+  if(!p) return;
+
+  const ruteoPDVs = getRuteoPorMerchant(nombre);
+  const visitadosNorm = new Set(
+    p.registros.filter(r=>r.visitado)
+      .map(r=>r.pdv.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim())
+  );
+  const tiempos = p.tiemposPDV||[];
+
+  const pdvStatus = ruteoPDVs.map(rpdv => {
+    const rNorm = rpdv.pdv.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+    const visitado = [...visitadosNorm].some(v=>v.includes(rNorm.slice(0,15))||rNorm.includes(v.slice(0,15)));
+    const match = tiempos.find(t=>{
+      const tNorm = t.pdv.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+      return tNorm.includes(rNorm.slice(0,12))||rNorm.includes(tNorm.slice(0,12));
+    });
+    return { ...rpdv, visitado, tiempo:match?.tiempo||null, cin:match?.cin||null, fecha:match?.fecha||null };
+  });
+
+  const visitados = pdvStatus.filter(s=>s.visitado).length;
+  const tpoStr = t => t ? Math.floor(t/60)+'h '+t%60+'m' : '—';
+
+  det.innerHTML = `
+  <div class="tw" style="border-top:3px solid ${p.color}">
+    <div class="tf" style="background:${p.color}11;border-color:${p.color}33">
+      <div class="av" style="background:${p.color}22;color:${p.color};width:34px;height:34px;font-size:11px;font-weight:800">${p.ini}</div>
+      <span style="font-weight:700;font-size:13px">${toTitle(nombre)} — ${visitados}/${pdvStatus.length} PDVs visitados</span>
+      <button onclick="window._ruteoDetalle=null;document.getElementById('ruteo-detalle').innerHTML=''"
+        style="margin-left:auto;background:none;border:1px solid var(--bd);border-radius:var(--r2);color:var(--tx3);padding:5px 12px;cursor:pointer;font-size:11px">
+        <i class="fas fa-times"></i> Cerrar
+      </button>
+    </div>
+    <div style="overflow-x:auto;max-height:380px;overflow-y:auto">
+    <table><thead style="position:sticky;top:0;z-index:2"><tr>
+      <th>#</th><th>PDV del ruteo</th><th>Regional</th><th>Ciudad</th><th>Canal</th>
+      <th style="text-align:center;color:var(--ok)">Visitado</th>
+      <th style="text-align:center;color:var(--teal)">Tiempo en PDV</th>
+      <th style="text-align:center">Fecha visita</th>
+    </tr></thead><tbody>
+    ${pdvStatus.map((s,i) => `<tr style="${!s.visitado?'opacity:.65':''}">
+      <td style="color:var(--tx3);font-size:11px">${i+1}</td>
+      <td style="font-weight:600;font-size:12px">${toTitle(s.pdv)}</td>
+      <td style="font-size:11px;color:var(--tx2)">${s.region||'—'}</td>
+      <td style="font-size:11px;color:var(--tx2)">${s.ciudad||'—'}</td>
+      <td><span class="pill tx" style="font-size:9px">${s.canal||'—'}</span></td>
+      <td style="text-align:center">${s.visitado
+        ? '<span class="pill ok" style="font-size:10px"><i class="fas fa-check" style="font-size:8px"></i> Sí</span>'
+        : '<span class="pill er" style="font-size:10px"><i class="fas fa-times" style="font-size:8px"></i> No</span>'
+      }</td>
+      <td style="text-align:center;color:var(--teal);font-size:12px;font-weight:600">${tpoStr(s.tiempo)}</td>
+      <td style="text-align:center;font-size:11px;color:var(--tx3)">${s.fecha||'—'}</td>
+    </tr>`).join('')}
+    </tbody></table>
+    </div>
+  </div>`;
+  det.scrollIntoView({behavior:'smooth', block:'start'});
+};
+
+/* ── Toast ── */
+function showToast(msg, t='s'){
+  const el=document.getElementById('toast');
+  if(!el) return;
+  el.textContent=msg; el.className='show '+t;
+  setTimeout(()=>el.classList.remove('show'),2600);
+}
+
+/* ── Chart helpers ── */
+function tc(){ return isLight?'#9a8e8e':'#524a4a'; }
+function tg(){ return isLight?'rgba(0,0,0,.06)':'rgba(255,255,255,.04)'; }
+function mkC(id,type,d,opts){
+  const el=document.getElementById(id); if(!el) return;
+  if(charts[id]){try{charts[id].destroy();}catch{} delete charts[id];}
+  charts[id]=new Chart(el,{type,data:d,options:{responsive:true,maintainAspectRatio:false,...opts}});
+}
+
+/* ── String helpers ── */
+function toTitle(s){
+  if(!s) return '';
+  const lw=new Set(['de','del','la','las','los','el','y','e','o','u','en','con','por','para','a','al']);
+  return s.trim().toLowerCase().split(' ').filter(Boolean).map((w,i)=>{
+    if(i>0&&lw.has(w)) return w;
+    return w.charAt(0).toUpperCase()+w.slice(1);
+  }).join(' ');
+}
+
+/* ── Theme ── */
+TILE_DARK  = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+TILE_LIGHT = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+let isLight = localStorage.getItem('cvp-theme')==='light';
+function applyTheme(light){
+  isLight=light;
+  document.body.classList.toggle('light',light);
+  const ico=document.getElementById('theme-icon');if(ico)ico.className=light?'fas fa-moon':'fas fa-sun';
+  localStorage.setItem('cvp-theme',light?'light':'dark');
+  [_liveMap,_rutaMap,_coberMap,_dashMap].forEach(m=>{if(!m)return;m.eachLayer(l=>{if(l instanceof L.TileLayer)m.removeLayer(l);});L.tileLayer(light?TILE_LIGHT:TILE_DARK,{maxZoom:19}).addTo(m);});
+  Object.values(charts).forEach(ch=>{try{ch.options.scales?.x&&(ch.options.scales.x.ticks.color=tc());ch.options.scales?.y&&(ch.options.scales.y.ticks.color=tc());ch.update();}catch{}});
+}
+function toggleTheme(){ applyTheme(!isLight); }
+
+/* ── Init ── */
+document.addEventListener('DOMContentLoaded',()=>{
+  if(isLight) applyTheme(true);
+  goPage('dashboard');
+  setTimeout(()=>syncData(),300);
+});
+
 </script>
 </body>
 </html>
