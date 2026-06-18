@@ -886,8 +886,8 @@ function processRecords(records) {
     // - justificado (sin CI + motivo) → real++ (cuenta como gestionado)
     // - fuera de ruta → fuera++ (KPI separado, no afecta productividad del ruteo)
     // - no realizado (sin CI + sin motivo) → noReal++
-    if (visitado && !fuera) e.real++;   // visitado en ruta
-    if (justif)             { e.real++; e.justifN++; }  // justificado = realizado
+    if (visitado)           e.real++;    // visitado en ruta O fuera de itinerario
+    if (justif && !fuera)  { e.justifN++; if(!visitado) e.real++; }  // justificado en ruta = realizado
     if (motivo)             e.just++;
     if (noRealiz && !fuera) e.noReal++;
     if (fuera)              e.fuera++;
@@ -898,8 +898,8 @@ function processRecords(records) {
     if (!zonaMap[zona]) zonaMap[zona]={zona,plan:0,real:0,justifN:0,noReal:0,cins:[],couts:[]};
     const z=zonaMap[zona];
     z.plan++;
-    if (visitado && !fuera) z.real++;
-    if (justif)  { z.real++; z.justifN++; }
+    if (visitado)           z.real++;    // visitado en ruta O fuera de itinerario
+    if (justif && !fuera)  { z.justifN++; if(!visitado) z.real++; }
     if (noRealiz && !fuera) z.noReal++;
     if (cin) z.cins.push(cin); if (cout) z.couts.push(cout);
 
@@ -950,15 +950,15 @@ function processRecords(records) {
 
   // Totales globales con lógica correcta
   const totalFR      = records.filter(r=>r['¿Fuera del itinerario?']==='Sí').length;
-  const totalPlan    = records.filter(r=>r['¿Fuera del itinerario?']!=='Sí').length;
+  const totalPlan    = records.length; // incluye en ruta + fuera de itinerario
 
-  // Realizados = visitados en ruta + justificados (ambos cuentan como gestionados)
+  // Realizados = visitados en ruta + visitados fuera de itinerario + justificados en ruta
   const totalReal    = records.filter(r=>{
     const ci=r['Tipo de check-in']||'';
     const fuera=r['¿Fuera del itinerario?']==='Sí';
     const visitado = ci!==''&&ci!=='Sin check-in';
-    const justif   = (ci===''||ci==='Sin check-in') && r['Motivo para no realizar la visita'];
-    return !fuera && (visitado || justif);
+    const justif   = !fuera && (ci===''||ci==='Sin check-in') && r['Motivo para no realizar la visita'];
+    return visitado || justif;
   }).length;
 
   const totalJustF   = records.filter(r=>{
