@@ -1315,18 +1315,18 @@ function renderPersonas(d) {
       <td style="text-align:center;color:var(--wa)">${p.plan-p.real}</td>
       <td style="text-align:center;color:${p.just>0?'var(--er)':'var(--tx3)'}">${p.just}</td>
       <td style="text-align:center;color:var(--teal)">${p.pdvsCount}</td>
-      <td style="text-align:center;font-size:11px;color:var(--tx2)">\${p.cin}</td>
-      <td style="text-align:center;font-size:11px;color:var(--teal)">\${p.promTiempo ? Math.floor(p.promTiempo/60)+'h '+p.promTiempo%60+'m' : '—'}</td>
-      <td style="text-align:center">\${p.ruteoPct !== null
-        ? \`<span class="pill \${p.ruteoPct>=85?'ok':p.ruteoPct>=60?'wa':'er'}" style="font-size:10px">\${p.ruteoRealiz}/\${p.ruteoTotal} · \${p.ruteoPct}%</span>\`
+      <td style="text-align:center;font-size:11px;color:var(--tx2)">${p.cin}</td>
+      <td style="text-align:center;font-size:11px;color:var(--teal)">${p.promTiempo ? Math.floor(p.promTiempo/60)+'h '+p.promTiempo%60+'m' : '—'}</td>
+      <td style="text-align:center">${p.ruteoPct !== null
+        ? `<span class="pill ${p.ruteoPct>=85?'ok':p.ruteoPct>=60?'wa':'er'}" style="font-size:10px">${p.ruteoRealiz}/${p.ruteoTotal} · ${p.ruteoPct}%</span>`
         : '<span style="color:var(--tx3);font-size:11px">—</span>'}</td>
       <td><div style="display:flex;align-items:center;gap:7px">
         <div style="flex:1;height:5px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden">
-          <div style="width:\${ef}%;height:100%;background:\${ec};border-radius:3px"></div>
+          <div style="width:${ef}%;height:100%;background:${ec};border-radius:3px"></div>
         </div>
-        <span style="font-weight:800;color:\${ec};min-width:36px;text-align:right">\${ef}%</span>
+        <span style="font-weight:800;color:${ec};min-width:36px;text-align:right">${ef}%</span>
       </div></td>
-      <td><i class="fas \${tIco}" style="color:\${tc2};font-size:11px"></i></td>
+      <td><i class="fas ${tIco}" style="color:${tc2};font-size:11px"></i></td>
       <td><span class="pill bl" style="font-size:10px;cursor:pointer">Ver ruta →</span></td>
     </tr>`;
   }).join('')||'<tr><td colspan="10" style="text-align:center;padding:24px;color:var(--tx3)">Sin datos</td></tr>';
