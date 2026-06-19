@@ -1497,8 +1497,8 @@ function renderFueraRuta(d) {
   const tb=document.getElementById('tb-fueraruta'); if(!tb) return;
   const fr=d.fueraRuta;
   ['fr-total','fr-colabs','fr-pdvs'].forEach((id,i)=>{const e=document.getElementById(id);if(e)e.textContent=[fr.length,new Set(fr.map(x=>x.colab)).size,new Set(fr.map(x=>x.pdv)).size][i];});
-  // REQ4: % fuera de ruta sobre total de visitas (planificadas + FR)
-  const pctFR = (d.totalPlan+d.totalFR)>0 ? (d.totalFR/(d.totalPlan+d.totalFR)*100).toFixed(1) : '0.0';
+  // % fuera de ruta sobre total planificado (consistente con dashboard)
+  const pctFR = d.totalPlan>0 ? (d.totalFR/d.totalPlan*100).toFixed(1) : '0.0';
   const eFrPct = document.getElementById('kpi-fr-pct'); if(eFrPct) eFrPct.textContent=pctFR+'%';
 
   tb.innerHTML=fr.map(x=>`<tr>
