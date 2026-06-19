@@ -1148,17 +1148,18 @@ function updateKPIs(d) {
     if(pg) pg.insertBefore(banner, pg.firstChild);
   }
 
-  // Alerta: fuera de ruta supera el 20% del planificado
-  if(parseFloat(pctFR)>20){
+  // Alerta fuera de ruta: siempre visible, color según umbral
+  if(d.totalFR>0){
+    const sobre10=parseFloat(pctFR)>10;
     const bannerFR=document.createElement('div');
     bannerFR.id='alerta-fr-banner';
-    bannerFR.className='alert vi';
+    bannerFR.className=sobre10?'alert vi':'alert bl';
     bannerFR.style.cssText='cursor:pointer;margin-top:8px';
     bannerFR.onclick=()=>{goPage('fueraruta');};
     bannerFR.innerHTML=`<i class="fas fa-random" style="font-size:15px;flex-shrink:0"></i>
       <div>
-        <b>Fuera de ruta representa el ${pctFR}% del ruteo planificado (${d.totalFR.toLocaleString()} visitas)</b><br>
-        <span style="font-size:11px;opacity:.85">El alto volumen de visitas fuera de itinerario puede explicar el incumplimiento del ruteo planificado. Click para ver detalle.</span>
+        <b>Fuera de ruta: ${d.totalFR.toLocaleString()} visitas (${pctFR}% del ruteo planificado)${sobre10?' ⚠ Supera el 10%':''}</b><br>
+        <span style="font-size:11px;opacity:.85">${sobre10?'El alto volumen de visitas fuera de itinerario puede explicar el incumplimiento del ruteo planificado.':'Monitorear para evitar desvíos del itinerario.'} Click para ver detalle.</span>
       </div>`;
     if(pg) pg.insertBefore(bannerFR, pg.firstChild);
   }
@@ -1496,8 +1497,10 @@ function renderJustif(d) {
 function renderFueraRuta(d) {
   const tb=document.getElementById('tb-fueraruta'); if(!tb) return;
   const fr=d.fueraRuta;
-  ['fr-total','fr-colabs','fr-pdvs'].forEach((id,i)=>{const e=document.getElementById(id);if(e)e.textContent=[fr.length,new Set(fr.map(x=>x.colab)).size,new Set(fr.map(x=>x.pdv)).size][i];});
-  // % fuera de ruta sobre total planificado (consistente con dashboard)
+  // Usar totalFR para el conteo real (fueraRuta array está cappado a 300)
+  const eFrTotal=document.getElementById('fr-total'); if(eFrTotal) eFrTotal.textContent=d.totalFR.toLocaleString();
+  const eFrColabs=document.getElementById('fr-colabs'); if(eFrColabs) eFrColabs.textContent=new Set(fr.map(x=>x.colab)).size;
+  const eFrPdvs=document.getElementById('fr-pdvs'); if(eFrPdvs) eFrPdvs.textContent=new Set(fr.map(x=>x.pdv)).size;
   const pctFR = d.totalPlan>0 ? (d.totalFR/d.totalPlan*100).toFixed(1) : '0.0';
   const eFrPct = document.getElementById('kpi-fr-pct'); if(eFrPct) eFrPct.textContent=pctFR+'%';
 
