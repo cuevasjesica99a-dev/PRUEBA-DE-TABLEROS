@@ -1161,8 +1161,7 @@ function updateKPIs(d) {
     bannerFR.onclick=()=>{goPage('fueraruta');};
     bannerFR.innerHTML=`<i class="fas fa-random" style="font-size:15px;flex-shrink:0"></i>
       <div>
-        <b>Fuera de ruta: ${d.totalFR.toLocaleString()} visitas (${pctFR}% del ruteo planificado)${sobre10?' ⚠ Supera el 10%':''}</b><br>
-        <span style="font-size:11px;opacity:.85">${sobre10?'El alto volumen de visitas fuera de itinerario puede explicar el incumplimiento del ruteo planificado.':'Monitorear para evitar desvíos del itinerario.'} Click para ver detalle.</span>
+        <b>Fuera de ruta: ${d.totalFR.toLocaleString()} visitas (${pctFR}% del ruteo planificado)${sobre10?' ⚠ Supera el 10%':''}</b>
       </div>`;
     if(pg) pg.insertBefore(bannerFR, pg.firstChild);
   }
