@@ -881,13 +881,13 @@ function processRecords(records) {
     const e=empMap[emp];
     e.plan++; e.registros.push({pdv,zona,cadena,cin,cout,lat,lng,fuera,motivo,checkin,visitado});
 
-    // Lógica de negocio correcta:
     // - visitado en ruta → real++
-    // - justificado (sin CI + motivo) → real++ (cuenta como gestionado)
-    // - fuera de ruta → fuera++ (KPI separado, no afecta productividad del ruteo)
+    // - justificado en ruta (sin CI + motivo) → real++
+    // - fuera de ruta con check-in → real++ (suma a productividad)
     // - no realizado (sin CI + sin motivo) → noReal++
-    if (visitado && !fuera) e.real++;    // visitado en ruta (fuera de ruta no suma)
-    if (justif && !fuera)  { e.real++; e.justifN++; }  // justificado en ruta = realizado
+    if (visitado && !fuera) e.real++;             // visitado en ruta
+    if (justif && !fuera)  { e.real++; e.justifN++; }  // justificado en ruta
+    if (visitado && fuera)  e.real++;             // fuera de ruta con check-in
     if (motivo)             e.just++;
     if (noRealiz && !fuera) e.noReal++;
     if (fuera)              e.fuera++;
@@ -898,8 +898,9 @@ function processRecords(records) {
     if (!zonaMap[zona]) zonaMap[zona]={zona,plan:0,real:0,justifN:0,noReal:0,cins:[],couts:[]};
     const z=zonaMap[zona];
     z.plan++;
-    if (visitado && !fuera) z.real++;    // fuera de ruta no suma
-    if (justif && !fuera)  { z.real++; z.justifN++; }
+    if (visitado && !fuera) z.real++;             // visitado en ruta
+    if (justif && !fuera)  { z.real++; z.justifN++; }  // justificado en ruta
+    if (visitado && fuera)  z.real++;             // fuera de ruta con check-in
     if (noRealiz && !fuera) z.noReal++;
     if (cin) z.cins.push(cin); if (cout) z.couts.push(cout);
 
@@ -950,15 +951,15 @@ function processRecords(records) {
 
   // Totales globales con lógica correcta
   const totalFR      = records.filter(r=>r['¿Fuera del itinerario?']==='Sí').length;
-  const totalPlan    = records.filter(r=>r['¿Fuera del itinerario?']!=='Sí').length; // solo ruteo planificado
+  const totalPlan    = records.length; // ruteo planificado + fuera de ruta
 
-  // Realizados = visitados en ruta + justificados en ruta (fuera de ruta no suma)
+  // Realizados = visitados en ruta + justificados en ruta + fuera de ruta con check-in
   const totalReal    = records.filter(r=>{
     const ci=r['Tipo de check-in']||'';
     const fuera=r['¿Fuera del itinerario?']==='Sí';
     const visitado = ci!==''&&ci!=='Sin check-in';
-    const justif   = (ci===''||ci==='Sin check-in') && r['Motivo para no realizar la visita'];
-    return !fuera && (visitado || justif);
+    const justif   = !fuera && (ci===''||ci==='Sin check-in') && r['Motivo para no realizar la visita'];
+    return visitado || justif;
   }).length;
 
   const totalJustF   = records.filter(r=>{
@@ -976,8 +977,10 @@ function processRecords(records) {
 
   const totalJust    = records.filter(r=>r['Motivo para no realizar la visita']).length;
 
+  const totalPlanificado = records.filter(r=>r['¿Fuera del itinerario?']!=='Sí').length;
+
   return { PERSONAS, ZONAS, justifs, fueraRuta, colorMap, justifPorPDV,
-    totalPlan, totalReal, totalJust, totalFR, totalNoR, totalJustF,
+    totalPlan, totalReal, totalJust, totalFR, totalNoR, totalJustF, totalPlanificado,
   };
 }
 
@@ -1114,8 +1117,8 @@ function goPage(id) {
 function updateKPIs(d) {
   const s=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
   const ef=d.totalPlan>0?(d.totalReal/d.totalPlan*100).toFixed(1):'0.0';
-  // % fuera de ruta sobre el total planificado
-  const pctFR = d.totalPlan>0 ? (d.totalFR/d.totalPlan*100).toFixed(1) : '0.0';
+  // % fuera de ruta sobre el ruteo planificado (sin FDR)
+  const pctFR = d.totalPlanificado>0 ? (d.totalFR/d.totalPlanificado*100).toFixed(1) : '0.0';
 
   s('kpi-plan',d.totalPlan.toLocaleString());
   s('kpi-real',d.totalReal.toLocaleString());
@@ -1501,7 +1504,7 @@ function renderFueraRuta(d) {
   const eFrTotal=document.getElementById('fr-total'); if(eFrTotal) eFrTotal.textContent=d.totalFR.toLocaleString();
   const eFrColabs=document.getElementById('fr-colabs'); if(eFrColabs) eFrColabs.textContent=new Set(fr.map(x=>x.colab)).size;
   const eFrPdvs=document.getElementById('fr-pdvs'); if(eFrPdvs) eFrPdvs.textContent=new Set(fr.map(x=>x.pdv)).size;
-  const pctFR = d.totalPlan>0 ? (d.totalFR/d.totalPlan*100).toFixed(1) : '0.0';
+  const pctFR = d.totalPlanificado>0 ? (d.totalFR/d.totalPlanificado*100).toFixed(1) : '0.0';
   const eFrPct = document.getElementById('kpi-fr-pct'); if(eFrPct) eFrPct.textContent=pctFR+'%';
 
   tb.innerHTML=fr.map(x=>`<tr>
