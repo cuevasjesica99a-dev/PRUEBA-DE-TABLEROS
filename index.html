@@ -1113,25 +1113,29 @@ function goPage(id) {
 /* ── KPIs — REQ4: métricas separadas ── */
 function updateKPIs(d) {
   const s=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
-  // REQ4: efectividad = realizados efectivos / planificados (sin contar fuera de ruta)
   const ef=d.totalPlan>0?(d.totalReal/d.totalPlan*100).toFixed(1):'0.0';
+  // % fuera de ruta sobre el total planificado
+  const pctFR = d.totalPlan>0 ? (d.totalFR/d.totalPlan*100).toFixed(1) : '0.0';
+
   s('kpi-plan',d.totalPlan.toLocaleString());
-  s('kpi-real',d.totalReal.toLocaleString());     // REQ4: solo efectivos en ruta
+  s('kpi-real',d.totalReal.toLocaleString());
   s('kpi-pend',d.totalNoR.toLocaleString());
   s('kpi-just',d.totalJust.toLocaleString());
-  s('kpi-fr',d.totalFR.toLocaleString());         // REQ4: fuera de ruta en su propio KPI
+  s('kpi-fr',d.totalFR.toLocaleString());
   s('kpi-ef',ef+'% efectividad');
   s('efect-num',ef+'%');
   s('efect-sub',d.totalReal.toLocaleString()+'/'+d.totalPlan.toLocaleString());
-  if(document.getElementById('kpi-fr-pct')) {
-    const pctFR = d.totalPlan>0 ? (d.totalFR/(d.totalPlan+d.totalFR)*100).toFixed(1) : '0.0';
-    s('kpi-fr-pct', pctFR+'%');
-  }
+  if(document.getElementById('kpi-fr-pct')) s('kpi-fr-pct', pctFR+'%');
   const b1=document.getElementById('nb-just');if(b1)b1.textContent=d.totalJust;
   const b2=document.getElementById('nb-fr');if(b2)b2.textContent=d.totalFR;
 
-  // Alert banner no realizadas
+  // Limpiar banners anteriores
   document.getElementById('alerta-banner')?.remove();
+  document.getElementById('alerta-fr-banner')?.remove();
+
+  const pg=document.getElementById('pg-dashboard');
+
+  // Alerta: visitas sin realizar ni justificar > 10%
   const pctNoR=d.totalPlan>0?(d.totalNoR/d.totalPlan*100):0;
   if(pctNoR>10){
     const banner=document.createElement('div');
@@ -1141,8 +1145,22 @@ function updateKPIs(d) {
     banner.onclick=()=>{goPage('zonas');};
     banner.innerHTML=`<i class="fas fa-exclamation-triangle" style="font-size:15px;flex-shrink:0"></i>
       <div><b>${d.totalNoR.toLocaleString()} visitas sin realizar ni justificar (${pctNoR.toFixed(1)}%)</b> — Click para ver desglose por regional</div>`;
-    const pg=document.getElementById('pg-dashboard');
     if(pg) pg.insertBefore(banner, pg.firstChild);
+  }
+
+  // Alerta: fuera de ruta supera el 20% del planificado
+  if(parseFloat(pctFR)>20){
+    const bannerFR=document.createElement('div');
+    bannerFR.id='alerta-fr-banner';
+    bannerFR.className='alert vi';
+    bannerFR.style.cssText='cursor:pointer;margin-top:8px';
+    bannerFR.onclick=()=>{goPage('fueraruta');};
+    bannerFR.innerHTML=`<i class="fas fa-random" style="font-size:15px;flex-shrink:0"></i>
+      <div>
+        <b>Fuera de ruta representa el ${pctFR}% del ruteo planificado (${d.totalFR.toLocaleString()} visitas)</b><br>
+        <span style="font-size:11px;opacity:.85">El alto volumen de visitas fuera de itinerario puede explicar el incumplimiento del ruteo planificado. Click para ver detalle.</span>
+      </div>`;
+    if(pg) pg.insertBefore(bannerFR, pg.firstChild);
   }
 }
 
