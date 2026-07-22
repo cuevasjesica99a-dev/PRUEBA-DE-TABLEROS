@@ -510,12 +510,12 @@ function renderCumplTable(rows){
       </tr>`).join('');
 
     return `<tr>
-      <td><div class="brecha-toggle" onclick="toggleCumpl('${uid}',this)"><span class="brecha-arrow">▶</span><strong>${r.cuadrilla}</strong></div></td>
+      <td><div class="brecha-toggle" onclick="toggleCumpl('${uid}',this)"><span class="brecha-arrow open">▶</span><strong>${r.cuadrilla}</strong></div></td>
       <td>${ev.juez||'—'}</td>
-      <td colspan="2" style="color:var(--muted);font-size:11px">${criterios.length} criterios evaluados — click para ver detalle</td>
+      <td colspan="2" style="color:var(--muted);font-size:11px">${criterios.length} criterios evaluados</td>
       <td class="mono" style="color:var(--g);font-weight:700">${ev.puntaje.toLocaleString('es-PY',{maximumFractionDigits:1})} pts</td>
     </tr>
-    <tr class="brecha-detail" id="${uid}"><td colspan="5" style="padding:0">
+    <tr class="brecha-detail open" id="${uid}"><td colspan="5" style="padding:0">
       <table style="width:100%;border-collapse:collapse">${detailRows}</table>
     </td></tr>`;
   }).join('');
