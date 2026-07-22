@@ -199,10 +199,18 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
           <div id="chart-cumpl-stacked"></div>
         </div>
         <div class="panel">
-          <div class="ptitle"><div class="d" style="background:var(--muted)"></div>Detalle de Cobertura — click para expandir</div>
+          <div class="ptitle" style="justify-content:space-between;flex-wrap:wrap;gap:10px">
+            <span style="display:flex;align-items:center;gap:7px"><div class="d" style="background:var(--muted)"></div>Detalle de Cobertura</span>
+            <div style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:normal;font-weight:500">
+              <label for="selModalidadFiltro" style="font-size:11px;color:var(--muted)">Modalidad:</label>
+              <select id="selModalidadFiltro" onchange="renderAll()" style="background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-sm);padding:5px 10px;font-size:12px;font-family:'DM Sans',sans-serif;">
+                <option value="">Todas (vista resumen)</option>
+              </select>
+            </div>
+          </div>
           <div class="twrap">
-            <table class="dt">
-              <thead><tr><th>Cuadrilla</th><th>Evaluadas</th><th>Pendientes</th><th>Cumpl.</th></tr></thead>
+            <table class="dt" id="tbl-cumpl-wrap">
+              <thead id="thead-cumpl"><tr><th>Cuadrilla</th><th>Evaluadas</th><th>Pendientes</th><th>Cumpl.</th></tr></thead>
               <tbody id="tbl-cumpl"></tbody>
             </table>
           </div>
@@ -261,6 +269,7 @@ function normaliza(s){
 let CUADRILLAS=[];       // ["CUADRILLA 1", ...]
 let MODALIDADES=[];      // ["USO DE MACHETE", ...] en orden de la rúbrica
 let EVALS={};            // key "CUADRILLA|MODALIDAD" -> {puntaje, fecha, juez}
+let DETALLE_CRITERIOS={};// key "CUADRILLA|MODALIDAD" -> [{criterio,cumplimiento,puntaje,juez,fecha}, ...]
 const TOTAL_ESPERADO_LBL = "TOTAL MODALIDAD";
 
 function setSync(state,msg){
@@ -312,6 +321,22 @@ async function loadData(manual){
           EVALS[key]={puntaje, fecha, juez, cuadrilla, modalidad};
         }
       });
+
+      // Detalle por criterio (para mostrar juez + texto de cumplimiento por criterio)
+      DETALLE_CRITERIOS={};
+      filasHoja4.slice(1).forEach(f=>{
+        const criterio=(f[headerIdx["CRITERIO"]]||"").trim().toUpperCase();
+        const juez=f[headerIdx["JUEZ"]]||"";
+        const cuadrilla=f[headerIdx["CUADRILLA"]]||"";
+        const modalidad=f[headerIdx["MODALIDAD"]]||"";
+        const cumplimientoTxt=f[headerIdx["CUMPLIMIENTO"]]||"";
+        const puntajeCrit=parseFloat((f[headerIdx["PUNTAJE"]]||"0").toString().replace(",","."))||0;
+        const fecha=f[headerIdx["FECHA Y HORA"]]||"";
+        if(!cuadrilla||!modalidad||criterio===TOTAL_ESPERADO_LBL) return;
+        const key=normaliza(cuadrilla)+"|"+normaliza(modalidad);
+        if(!DETALLE_CRITERIOS[key]) DETALLE_CRITERIOS[key]=[];
+        DETALLE_CRITERIOS[key].push({criterio:f[headerIdx["CRITERIO"]], cumplimiento:cumplimientoTxt, puntaje:puntajeCrit, juez, fecha});
+      });
     }
 
     const now=new Date();
@@ -319,6 +344,7 @@ async function loadData(manual){
       'Última actualización: '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
     setSync('live', `En vivo — ${Object.keys(EVALS).length} evaluaciones registradas en Hoja 4`);
 
+    poblarSelectorModalidad();
     renderAll();
   }catch(err){
     setSync('error','Sin conexión — revisá que "Hoja 4" esté publicada en la Web (Archivo → Compartir → Publicar en la Web)');
@@ -419,23 +445,77 @@ function renderAlertsSinEvaluar(rows){
     ${sinEval.length>8?`<div style="font-size:11px;color:var(--muted);margin-top:8px;text-align:center">+${sinEval.length-8} más sin evaluar</div>`:''}`;
 }
 
+function poblarSelectorModalidad(){
+  const sel = el('selModalidadFiltro');
+  const valorPrevio = sel.value;
+  sel.innerHTML = '<option value="">Todas (vista resumen)</option>' +
+    MODALIDADES.map(m=>`<option value="${m}">${m}</option>`).join('');
+  if(MODALIDADES.includes(valorPrevio)) sel.value = valorPrevio;
+}
+
 function renderCumplTable(rows){
+  const modalidadFiltro = el('selModalidadFiltro').value;
+  const thead = el('thead-cumpl');
   const t = el('tbl-cumpl');
+
+  if(!modalidadFiltro){
+    // ---- VISTA RESUMEN (todas las modalidades, accordion) ----
+    thead.innerHTML = '<tr><th>Cuadrilla</th><th>Evaluadas</th><th>Pendientes</th><th>Cumpl.</th></tr>';
+    t.innerHTML = rows.map((r,idx)=>{
+      const color = r.pct>=80?'var(--g)':r.pct>=50?'var(--y)':'var(--r)';
+      const uid = `cumpl-${idx}`;
+      const detailRows = r.detalle.map(d=>{
+        const key = normaliza(r.cuadrilla)+"|"+normaliza(d.modalidad);
+        const juez = EVALS[key] ? EVALS[key].juez : '';
+        return `<tr class="brecha-mod-row">
+          <td colspan="2">${d.modalidad}</td>
+          <td>${juez||'—'}</td>
+          <td><span class="mod-status ${d.evaluado?'mod-ok':'mod-pend'}">${d.evaluado ? '✓ '+d.puntaje.toLocaleString('es-PY',{maximumFractionDigits:1})+' pts' : '✗ Pendiente'}</span></td>
+        </tr>`;
+      }).join('');
+      return `<tr>
+        <td><div class="brecha-toggle" onclick="toggleCumpl('${uid}',this)"><span class="brecha-arrow">▶</span><strong>${r.cuadrilla}</strong></div></td>
+        <td class="mono" style="color:var(--g)">${r.evaluadas}</td>
+        <td class="mono" style="color:${r.pendientes>0?'var(--r)':'var(--g)'}">${r.pendientes}</td>
+        <td class="mono" style="color:${color};font-weight:700">${r.pct}%</td>
+      </tr>
+      <tr class="brecha-detail" id="${uid}"><td colspan="4" style="padding:0">
+        <table style="width:100%;border-collapse:collapse">${detailRows}</table>
+      </td></tr>`;
+    }).join('');
+    return;
+  }
+
+  // ---- VISTA POR MODALIDAD ESPECÍFICA (juez + cumplimiento + puntaje, criterio por criterio) ----
+  thead.innerHTML = '<tr><th>Cuadrilla</th><th>Juez</th><th>Criterio</th><th>Cumplimiento logrado</th><th>Puntaje</th></tr>';
   t.innerHTML = rows.map((r,idx)=>{
-    const color = r.pct>=80?'var(--g)':r.pct>=50?'var(--y)':'var(--r)';
+    const key = normaliza(r.cuadrilla)+"|"+normaliza(modalidadFiltro);
+    const ev = EVALS[key];
     const uid = `cumpl-${idx}`;
-    const detailRows = r.detalle.map(d=>`
+
+    if(!ev){
+      return `<tr>
+        <td><strong>${r.cuadrilla}</strong></td>
+        <td colspan="3" style="color:var(--muted);font-style:italic">Sin evaluar en esta modalidad</td>
+        <td><span class="mod-status mod-pend">✗ Pendiente</span></td>
+      </tr>`;
+    }
+
+    const criterios = (DETALLE_CRITERIOS[key]||[]);
+    const detailRows = criterios.map(c=>`
       <tr class="brecha-mod-row">
-        <td colspan="3">${d.modalidad}</td>
-        <td><span class="mod-status ${d.evaluado?'mod-ok':'mod-pend'}">${d.evaluado ? '✓ '+d.puntaje.toLocaleString('es-PY',{maximumFractionDigits:1})+' pts' : '✗ Pendiente'}</span></td>
+        <td colspan="2">${c.criterio}</td>
+        <td colspan="2">${c.cumplimiento||'—'}</td>
+        <td><span class="mod-status mod-ok">${c.puntaje.toLocaleString('es-PY',{maximumFractionDigits:1})} pts</span></td>
       </tr>`).join('');
+
     return `<tr>
       <td><div class="brecha-toggle" onclick="toggleCumpl('${uid}',this)"><span class="brecha-arrow">▶</span><strong>${r.cuadrilla}</strong></div></td>
-      <td class="mono" style="color:var(--g)">${r.evaluadas}</td>
-      <td class="mono" style="color:${r.pendientes>0?'var(--r)':'var(--g)'}">${r.pendientes}</td>
-      <td class="mono" style="color:${color};font-weight:700">${r.pct}%</td>
+      <td>${ev.juez||'—'}</td>
+      <td colspan="2" style="color:var(--muted);font-size:11px">${criterios.length} criterios evaluados — click para ver detalle</td>
+      <td class="mono" style="color:var(--g);font-weight:700">${ev.puntaje.toLocaleString('es-PY',{maximumFractionDigits:1})} pts</td>
     </tr>
-    <tr class="brecha-detail" id="${uid}"><td colspan="4" style="padding:0">
+    <tr class="brecha-detail" id="${uid}"><td colspan="5" style="padding:0">
       <table style="width:100%;border-collapse:collapse">${detailRows}</table>
     </td></tr>`;
   }).join('');
