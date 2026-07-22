@@ -7,12 +7,12 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=DM+Mono:wght@400;500&family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
 <style>
 :root{
-  --bg:#080d14;--surface:#0e1520;--surface2:#141e2e;--surface3:#1a263a;
-  --border:#1e2d42;--text:#dce6f0;--muted:#5c7a94;--faint:#162033;
-  --g:#2dd4a0;--g2:#1ab585;--r:#f05c6b;--r2:#d94455;
-  --b:#4a9fd4;--y:#e8b84b;--o:#e8834b;
-  --accent:#c8a96e;--accent2:#a07840;
-  --shadow:0 4px 32px rgba(0,0,0,.6);--radius:14px;--radius-sm:8px;
+  --bg:#0a2416;--surface:#0f2f1d;--surface2:#153a24;--surface3:#1b4a2d;
+  --border:#28603a;--text:#eef5ee;--muted:#7ba889;--faint:#0c2a1a;
+  --g:#4fbf6b;--g2:#3a9a54;--r:#f2555e;--r2:#d93f47;
+  --b:#5ea8d8;--y:#f2c230;--o:#e8834b;
+  --accent:#f2c230;--accent2:#b8862a;
+  --shadow:0 4px 32px rgba(0,0,0,.5);--radius:14px;--radius-sm:8px;
   --sidebar-w:220px;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -20,26 +20,29 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .app-layout{display:flex;flex:1;min-height:0;}
 
 /* TOPBAR */
-.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 20px 0 16px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:200;box-shadow:var(--shadow);height:52px;flex-shrink:0;}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 20px 0 16px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:200;box-shadow:var(--shadow);height:56px;flex-shrink:0;}
 .topbar-left{display:flex;align-items:center;gap:14px;width:var(--sidebar-w);}
-.brand{display:flex;align-items:center;gap:0;flex-shrink:0;}
-.brand-plus{font-family:'Montserrat',sans-serif;font-size:9px;font-weight:700;letter-spacing:.3em;color:var(--accent);text-transform:uppercase;padding:3px 8px 3px 9px;border:1px solid rgba(200,169,110,.3);border-radius:3px 0 0 3px;background:rgba(200,169,110,.06);}
-.brand-word{font-family:'Montserrat',sans-serif;font-size:9px;font-weight:700;letter-spacing:.3em;color:var(--text);text-transform:uppercase;padding:3px 9px 3px 8px;border:1px solid rgba(200,169,110,.3);border-left:none;border-radius:0 3px 3px 0;background:rgba(200,169,110,.06);}
+.brand{display:flex;align-items:center;gap:9px;flex-shrink:0;}
+.brand-logo{width:34px;height:34px;border-radius:50%;object-fit:cover;border:1.5px solid var(--accent);flex-shrink:0;}
+.brand-text{display:flex;flex-direction:column;line-height:1.15;}
+.brand-word{font-family:'Montserrat',sans-serif;font-size:11px;font-weight:800;letter-spacing:.14em;color:var(--accent);text-transform:uppercase;}
+.brand-sub{font-size:9px;font-weight:600;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;}
 .topbar-center{flex:1;display:flex;align-items:center;gap:10px;padding-left:20px;}
 .topbar-title{font-family:'Montserrat',sans-serif;font-size:13px;font-weight:600;letter-spacing:.06em;color:var(--text);}
 .topbar-subtitle{font-size:11px;color:var(--muted);}
 
 /* SIDEBAR */
-.sidebar{width:var(--sidebar-w);flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:52px;height:calc(100vh - 52px);overflow-y:auto;padding:16px 0 24px;z-index:100;}
+.sidebar{width:var(--sidebar-w);flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto;padding:16px 0 24px;z-index:100;}
 .sidebar-label{font-size:9px;font-weight:700;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;padding:8px 10px 4px 20px;}
 .sidebar-tab{display:flex;align-items:center;gap:10px;padding:9px 10px;margin:0 10px;border-radius:var(--radius-sm);cursor:pointer;font-size:12.5px;font-weight:500;color:var(--muted);transition:background .15s,color .15s;border:none;background:none;width:calc(100% - 20px);text-align:left;}
 .sidebar-tab:hover{background:var(--surface2);color:var(--text);}
-.sidebar-tab.at-g{background:rgba(45,212,160,.1);color:var(--g);}
-.sidebar-tab.at-b{background:rgba(74,159,212,.1);color:var(--b);}
+.sidebar-tab.at-g{background:rgba(79,191,107,.15);color:var(--g);}
+.sidebar-tab.at-b{background:rgba(242,194,48,.15);color:var(--y);}
 .sidebar-icon{font-size:14px;}
 .sidebar-sep{height:1px;background:var(--border);margin:10px 20px;}
 .sidebar-bottom{margin-top:auto;padding:16px 20px 0;}
-.client-logo-wrap{display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);}
+.client-logo-wrap{display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);}
+.client-logo-img{width:64px;height:64px;object-fit:contain;}
 .client-logo-label{font-size:9px;font-weight:600;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;}
 .client-logo-name{font-family:'Montserrat',sans-serif;font-size:13px;font-weight:700;letter-spacing:.06em;color:var(--accent);text-align:center;}
 
@@ -74,7 +77,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 
 .brow{display:flex;align-items:center;gap:8px;margin-bottom:9px;}
 .brank{font-size:9px;font-weight:700;width:18px;height:18px;border-radius:4px;background:var(--surface2);color:var(--muted);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.brank.top{background:var(--accent);color:#080d14;}
+.brank.top{background:var(--accent);color:#0a2416;}
 .blbl{font-size:11px;color:var(--text);min-width:120px;max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .btrack{flex:1;height:7px;background:var(--surface2);border-radius:4px;overflow:hidden;}
 .bfill{height:100%;border-radius:4px;transition:width .6s cubic-bezier(.4,0,.2,1);}
@@ -94,7 +97,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .alert-name{font-size:13px;font-weight:700;color:var(--text);}
 .alert-meta{font-size:11px;color:var(--muted);}
 .badge-crit{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:.05em;white-space:nowrap;}
-.bc-r{background:rgba(240,92,107,.15);color:var(--r);}
+.bc-r{background:rgba(242,85,94,.15);color:var(--r);}
 
 .twrap{max-height:420px;overflow-y:auto;border-radius:var(--radius-sm);}
 .dt{width:100%;border-collapse:collapse;font-size:12px;}
@@ -110,12 +113,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .brecha-detail.open{display:table-row-group;}
 .brecha-mod-row td{padding:5px 10px 5px 28px;font-size:11px;border-bottom:1px solid var(--border);color:var(--muted);}
 .mod-status{font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;}
-.mod-ok{background:rgba(45,212,160,.12);color:var(--g);}
-.mod-pend{background:rgba(240,92,107,.12);color:var(--r);}
+.mod-ok{background:rgba(79,191,107,.14);color:var(--g);}
+.mod-pend{background:rgba(242,85,94,.14);color:var(--r);}
 
 .abox{display:flex;gap:10px;padding:12px 14px;border-radius:var(--radius-sm);border-left:4px solid;margin-bottom:14px;font-size:12.5px;line-height:1.5;}
-.abox.danger{border-color:var(--r);background:rgba(240,92,107,.07);}
-.abox.ok{border-color:var(--g);background:rgba(45,212,160,.07);}
+.abox.danger{border-color:var(--r);background:rgba(242,85,94,.08);}
+.abox.ok{border-color:var(--g);background:rgba(79,191,107,.08);}
 
 .empty{text-align:center;padding:32px;color:var(--muted);font-size:13px;}
 
@@ -132,7 +135,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 
 <div class="topbar">
   <div class="topbar-left">
-    <div class="brand"><div class="brand-plus">UFIR</div><div class="brand-word">CBVP</div></div>
+    <div class="brand">
+      <img class="brand-logo" src="assets/logo-movilizacion-forestal.png" alt="Logo"/>
+      <div class="brand-text"><div class="brand-word">UFIR · CBVP</div><div class="brand-sub">8va edición</div></div>
+    </div>
   </div>
   <div class="topbar-center">
     <div class="topbar-title">Tablero de Puntaje</div>
@@ -148,8 +154,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <div class="sidebar-sep"></div>
     <div class="sidebar-bottom">
       <div class="client-logo-wrap">
+        <img class="client-logo-img" src="assets/logo-movilizacion-forestal.png" alt="Movilización Forestal"/>
         <div class="client-logo-label">Evento</div>
-        <div class="client-logo-name">8va Movilización<br/>Forestal</div>
+        <div class="client-logo-name">8va Movilización<br/>Forestal 2026</div>
       </div>
     </div>
   </nav>
